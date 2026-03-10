@@ -16,7 +16,8 @@ def save_interview_session(
     candidate_name: str,
     report: dict,
     confidence_data: dict,
-    duration_seconds: int
+    duration_seconds: int,
+    messages: list = None,
 ) -> dict:
     """Save completed interview session to Supabase."""
     data = {
@@ -28,8 +29,10 @@ def save_interview_session(
         "summary": report.get("summary"),
         "report_json": report,
         "confidence_score": confidence_data.get("confidence_score", 0),
+        "confidence_json": confidence_data,
         "filler_word_count": confidence_data.get("total_filler_words", 0),
         "duration_seconds": duration_seconds,
+        "messages_json": messages or [],
     }
 
     result = supabase.table("interview_sessions").insert(data).execute()
@@ -46,6 +49,18 @@ def get_user_sessions(user_id: str) -> list:
         .execute()
     )
     return result.data or []
+
+
+def get_session_by_id(session_id: str) -> dict:
+    """Get a single interview session by ID with full report data."""
+    result = (
+        supabase.table("interview_sessions")
+        .select("*")
+        .eq("id", session_id)
+        .single()
+        .execute()
+    )
+    return result.data or {}
 
 
 def get_session_by_id(session_id: str) -> dict:

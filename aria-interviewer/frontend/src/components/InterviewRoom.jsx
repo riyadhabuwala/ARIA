@@ -74,7 +74,7 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
           analyzeAll(),
         ]);
         const durationSeconds = Math.round((Date.now() - startTimeRef.current) / 1000);
-        onComplete(report, confidenceData, durationSeconds);
+        onComplete(report, confidenceData, durationSeconds, messages);
       } catch (err) {
         setError("Failed to generate report. Please try again.");
         setIsGeneratingReport(false);
@@ -198,32 +198,37 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
       {!isDone && !isGeneratingReport && (
         <div className="bg-gray-900 border-t border-gray-800 px-4 py-4">
           <div className="max-w-4xl mx-auto flex items-center gap-3">
-            {/* Mic Button */}
-            <button
-              onMouseDown={() => canInteract && startListening()}
-              onMouseUp={() => isListening && stopListening()}
-              onTouchStart={() => canInteract && startListening()}
-              onTouchEnd={() => isListening && stopListening()}
-              disabled={!canInteract}
-              className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
-                isListening
-                  ? "bg-red-500 shadow-lg shadow-red-500/40 scale-110"
-                  : canInteract
-                  ? "bg-purple-600 hover:bg-purple-500 shadow-lg shadow-purple-500/30"
-                  : "bg-gray-700 cursor-not-allowed opacity-50"
-              }`}
-            >
-              {isListening ? (
-                <svg className="w-6 h-6 text-white animate-pulse" fill="currentColor" viewBox="0 0 24 24">
-                  <rect x="6" y="6" width="12" height="12" rx="2" />
-                </svg>
-              ) : (
-                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+            {/* Start Recording Button */}
+            {!isListening && (
+              <button
+                onClick={() => canInteract && startListening()}
+                disabled={!canInteract}
+                className={`px-4 py-3 rounded-xl flex items-center gap-2 transition-all duration-200 flex-shrink-0 ${
+                  canInteract
+                    ? "bg-purple-600 hover:bg-purple-500 shadow-lg shadow-purple-500/30 text-white"
+                    : "bg-gray-700 cursor-not-allowed opacity-50 text-gray-400"
+                }`}
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
                   <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
                 </svg>
-              )}
-            </button>
+                <span className="text-sm font-medium">Start Rec</span>
+              </button>
+            )}
+
+            {/* Stop Recording Button */}
+            {isListening && (
+              <button
+                onClick={() => stopListening()}
+                className="px-4 py-3 rounded-xl flex items-center gap-2 transition-all duration-200 flex-shrink-0 bg-red-500 hover:bg-red-400 shadow-lg shadow-red-500/40 text-white animate-pulse"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <rect x="6" y="6" width="12" height="12" rx="2" />
+                </svg>
+                <span className="text-sm font-medium">Stop Rec</span>
+              </button>
+            )}
 
             {/* Text Input */}
             <input
@@ -233,9 +238,9 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
               onKeyDown={handleKeyDown}
               placeholder={
                 isListening
-                  ? "Listening..."
+                  ? "Listening... click Stop Rec when done"
                   : canInteract
-                  ? "Type your answer or hold the mic button..."
+                  ? "Type your answer or click Start Rec..."
                   : "Wait for ARIA to finish..."
               }
               disabled={!canInteract}

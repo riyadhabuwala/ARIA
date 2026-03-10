@@ -15,13 +15,16 @@ export function useSpeechRecognition() {
     }
 
     const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.continuous = true;
+    recognition.interimResults = true;
     recognition.lang = "en-US";
 
     recognition.onresult = (event) => {
-      const text = event.results[0][0].transcript;
-      setTranscript(text);
+      let finalText = "";
+      for (let i = 0; i < event.results.length; i++) {
+        finalText += event.results[i][0].transcript;
+      }
+      setTranscript(finalText);
     };
 
     recognition.onend = () => setIsListening(false);

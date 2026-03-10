@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { saveSession, getSession } from "./api/interviewApi";
 import AuthPage from "./components/AuthPage";
 import Dashboard from "./components/Dashboard";
 import DomainSelector from "./components/DomainSelector";
@@ -44,25 +45,20 @@ function AppContent() {
     setStep("interview");
   };
 
-  const handleInterviewComplete = async (report, confidenceData, durationSeconds) => {
+  const handleInterviewComplete = async (report, confidenceData, durationSeconds, messages) => {
     setInterviewData((prev) => ({ ...prev, report, confidenceData }));
     setStep("report");
 
     // Save session to Supabase
     try {
-      await fetch("http://localhost:8000/api/save-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: user.id,
-          domain: interviewData.domain,
-          overall_score: report.overall_score,
-          grade: report.grade,
-          hiring_recommendation: report.hiring_recommendation,
-          duration_seconds: durationSeconds || 0,
-          confidence_score: confidenceData?.confidence_score || null,
-          report_json: report,
-        }),
+      await saveSession({
+        userId: user.id,
+        domain: interviewData.domain,
+        candidateName: interviewData.name,
+        report,
+        confidenceData: confidenceData || {},
+        durationSeconds: durationSeconds || 0,
+        messages: messages || [],
       });
     } catch (err) {
       console.error("Failed to save session:", err);
@@ -82,6 +78,20 @@ function AppContent() {
     setStep("dashboard");
   };
 
+  const handleViewSession = async (session) => {
+    try {
+      const full = await getSession(session.id);
+      setInterviewData((prev) => ({
+        ...prev,
+        report: full.report_json,
+        confidenceData: full.confidence_json,
+      }));
+      setStep("report");
+    } catch (err) {
+      console.error("Failed to load session:", err);
+    }
+  };
+
   const handleDownloadRecording = () => {
     if (!interviewData.audioUrl) return;
     const a = document.createElement("a");
@@ -93,7 +103,7 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       {step === "dashboard" && (
-        <Dashboard user={user} onNewInterview={handleStartNew} />
+        <Dashboard user={user} onNewInterview={handleStartNew} onViewSession={handleViewSession} />
       )}
       {step === "setup" && <DomainSelector onStart={handleStart} />}
       {step === "resume" && <ResumeUpload onComplete={handleResumeComplete} />}

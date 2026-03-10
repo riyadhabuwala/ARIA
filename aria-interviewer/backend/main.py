@@ -44,6 +44,7 @@ class SaveSessionRequest(BaseModel):
     report: dict
     confidence_data: dict
     duration_seconds: int
+    messages: list = []
 
 
 class ConfidenceRequest(BaseModel):
@@ -136,7 +137,8 @@ async def save_session(req: SaveSessionRequest):
             candidate_name=req.candidate_name,
             report=req.report,
             confidence_data=req.confidence_data,
-            duration_seconds=req.duration_seconds
+            duration_seconds=req.duration_seconds,
+            messages=req.messages,
         )
         return {"success": True, "session_id": saved.get("id")}
     except Exception as e:
@@ -148,6 +150,20 @@ async def get_history(user_id: str):
     """Get interview history for a user."""
     sessions = get_user_sessions(user_id)
     return {"sessions": sessions}
+
+
+@app.get("/api/session/{session_id}")
+async def get_session(session_id: str):
+    """Get full session details by ID."""
+    try:
+        session = get_session_by_id(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        return session
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/session/{session_id}")

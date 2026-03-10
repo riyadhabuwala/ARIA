@@ -56,3 +56,42 @@ export async function generateReport(sessionId) {
   }
   return res.json();
 }
+
+export async function saveSession({ userId, domain, candidateName, report, confidenceData, durationSeconds, messages }) {
+  const res = await fetch(`${BASE_URL}/api/save-session`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      user_id: userId,
+      domain,
+      candidate_name: candidateName,
+      report,
+      confidence_data: confidenceData,
+      duration_seconds: durationSeconds,
+      messages,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.detail || "Failed to save session");
+  }
+  return res.json();
+}
+
+export async function getHistory(userId) {
+  const res = await fetch(`${BASE_URL}/api/history/${encodeURIComponent(userId)}`);
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.detail || "Failed to fetch history");
+  }
+  return res.json();
+}
+
+export async function getSession(sessionId) {
+  const res = await fetch(`${BASE_URL}/api/session/${encodeURIComponent(sessionId)}`);
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.detail || "Failed to fetch session");
+  }
+  return res.json();
+}

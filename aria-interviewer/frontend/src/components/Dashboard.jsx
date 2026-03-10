@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { signOut } from "../api/authApi";
+import { getHistory } from "../api/interviewApi";
 import HistoryCard from "./HistoryCard";
 
 export default function Dashboard({ user, onNewInterview, onViewSession }) {
@@ -10,9 +11,7 @@ export default function Dashboard({ user, onNewInterview, onViewSession }) {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/api/history/${user.id}`);
-        if (!res.ok) throw new Error("Failed to fetch history");
-        const data = await res.json();
+        const data = await getHistory(user.id);
         setSessions(data.sessions || []);
       } catch (err) {
         setError("Failed to load interview history.");
