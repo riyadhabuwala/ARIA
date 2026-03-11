@@ -1,4 +1,33 @@
+import { useEffect, useState } from "react";
+import confetti from "canvas-confetti";
+import ScoreRadarChart from "./ScoreRadarChart";
+
 export default function FeedbackReport({ report, confidenceData, onReset, audioUrl, onDownload }) {
+  const [animatedScore, setAnimatedScore] = useState(0);
+
+  // Animate score counter
+  useEffect(() => {
+    if (!report?.overall_score) return;
+    const target = report.overall_score;
+    let current = 0;
+    const step = Math.max(1, Math.floor(target / 40));
+    const interval = setInterval(() => {
+      current = Math.min(current + step, target);
+      setAnimatedScore(current);
+      if (current >= target) clearInterval(interval);
+    }, 30);
+    return () => clearInterval(interval);
+  }, [report?.overall_score]);
+
+  // Fire confetti for high scores
+  useEffect(() => {
+    if (report?.overall_score >= 70) {
+      setTimeout(() => {
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      }, 800);
+    }
+  }, [report?.overall_score]);
+
   if (!report) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -51,7 +80,7 @@ export default function FeedbackReport({ report, confidenceData, onReset, audioU
         {/* Overall Score */}
         <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 mb-8 text-center">
           <div className="text-7xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent mb-3">
-            {report.overall_score}
+            {animatedScore}
           </div>
           <div className="text-gray-400 text-sm mb-4">out of 100</div>
           <span
@@ -99,6 +128,9 @@ export default function FeedbackReport({ report, confidenceData, onReset, audioU
             />
           )}
         </div>
+
+        {/* Skills Radar Chart */}
+        <ScoreRadarChart sections={sections} />
 
         {/* Confidence Analysis */}
         {confidenceData && (

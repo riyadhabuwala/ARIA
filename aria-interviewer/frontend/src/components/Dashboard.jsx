@@ -2,11 +2,13 @@ import { useEffect, useState, useMemo } from "react";
 import { signOut } from "../api/authApi";
 import { getHistory } from "../api/interviewApi";
 import HistoryCard from "./HistoryCard";
+import AnalyticsCharts from "./AnalyticsCharts";
 
 export default function Dashboard({ user, onNewInterview, onViewSession }) {
   const [sessions, setSessions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState("history");
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -98,8 +100,37 @@ export default function Dashboard({ user, onNewInterview, onViewSession }) {
           </div>
         )}
 
+        {/* Tab Switcher */}
+        <div className="flex mb-6 bg-gray-800 rounded-xl p-1">
+          <button
+            onClick={() => setActiveTab("history")}
+            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition ${
+              activeTab === "history"
+                ? "bg-purple-600 text-white shadow"
+                : "text-gray-400 hover:text-gray-200"
+            }`}
+          >
+            History
+          </button>
+          <button
+            onClick={() => setActiveTab("analytics")}
+            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition ${
+              activeTab === "analytics"
+                ? "bg-purple-600 text-white shadow"
+                : "text-gray-400 hover:text-gray-200"
+            }`}
+          >
+            Analytics
+          </button>
+        </div>
+
+        {/* Analytics Tab */}
+        {activeTab === "analytics" && (
+          <AnalyticsCharts userId={user.id} />
+        )}
+
         {/* Loading */}
-        {isLoading && (
+        {activeTab === "history" && isLoading && (
           <div className="flex items-center justify-center py-20">
             <svg className="animate-spin h-8 w-8 text-purple-400" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
@@ -109,12 +140,12 @@ export default function Dashboard({ user, onNewInterview, onViewSession }) {
         )}
 
         {/* Error */}
-        {error && (
+        {activeTab === "history" && error && (
           <p className="text-red-400 text-sm text-center mb-4">{error}</p>
         )}
 
         {/* Sessions Grid */}
-        {!isLoading && sessions.length > 0 && (
+        {activeTab === "history" && !isLoading && sessions.length > 0 && (
           <>
             <h2 className="text-lg font-semibold text-white mb-4">Recent Interviews</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -130,7 +161,7 @@ export default function Dashboard({ user, onNewInterview, onViewSession }) {
         )}
 
         {/* Empty State */}
-        {!isLoading && sessions.length === 0 && !error && (
+        {activeTab === "history" && !isLoading && sessions.length === 0 && !error && (
           <div className="text-center py-20">
             <div className="text-5xl mb-4">🎯</div>
             <h3 className="text-xl font-semibold text-white mb-2">No interviews yet</h3>

@@ -5,7 +5,7 @@ import { useSpeechSynthesis } from "../hooks/useSpeechSynthesis";
 import { useRecording } from "../hooks/useRecording";
 import { useConfidenceTracker } from "../hooks/useConfidenceTracker";
 import Transcript from "./Transcript";
-import ARIAAvatar from "./ARIAAvatar";
+import ARIAWaveform from "./ARIAWaveform";
 import ConfidencePanel from "./ConfidencePanel";
 import RecordingControls from "./RecordingControls";
 
@@ -17,6 +17,9 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
   const [userInput, setUserInput] = useState("");
   const [error, setError] = useState("");
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [questionCount, setQuestionCount] = useState(0);
+  const [currentQuestion, setCurrentQuestion] = useState("");
 
   const { transcript, isListening, startListening, stopListening, setTranscript } =
     useSpeechRecognition();
@@ -27,6 +30,7 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
 
   const hasStarted = useRef(false);
   const startTimeRef = useRef(null);
+  const timerRef = useRef(null);
 
   // Fill text input when speech recognition returns a transcript
   useEffect(() => {
@@ -34,6 +38,18 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
       setUserInput(transcript);
     }
   }, [transcript]);
+
+  // Timer
+  useEffect(() => {
+    if (sessionId && !isDone) {
+      timerRef.current = setInterval(() => {
+        setElapsedTime(Math.round((Date.now() - startTimeRef.current) / 1000));
+      }, 1000);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [sessionId, isDone]);
 
   // Start interview on mount
   useEffect(() => {
@@ -47,7 +63,9 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
         setSessionId(data.session_id);
         startTimeRef.current = Date.now();
         const aiMsg = data.message;
-        setMessages([{ role: "ai", text: aiMsg }]);
+        setCurrentQuestion(aiMsg);
+        setQuestionCount(1);
+        setMessages([{ role: "ai", text: aiMsg, timestamp: new Date().toISOString() }]);
         speak(aiMsg);
       } catch (err) {
         setError("Failed to start interview. Is the backend running?");
@@ -87,7 +105,7 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
     const text = userInput.trim();
     if (!text || !sessionId || isLoading || isSpeaking) return;
 
-    setMessages((prev) => [...prev, { role: "user", text }]);
+    setMessages((prev) => [...prev, { role: "user", text, timestamp: new Date().toISOString() }]);
     addAnswer(text);
     setUserInput("");
     setTranscript("");
@@ -96,7 +114,9 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
 
     try {
       const data = await sendMessage(sessionId, text);
-      setMessages((prev) => [...prev, { role: "ai", text: data.message }]);
+      setMessages((prev) => [...prev, { role: "ai", text: data.message, timestamp: new Date().toISOString() }]);
+      setCurrentQuestion(data.message);
+      setQuestionCount((c) => c + 1);
       speak(data.message, () => {
         if (data.is_done) {
           setIsDone(true);
@@ -129,6 +149,16 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
           </span>
           <span className="text-gray-500 text-sm">|</span>
           <span className="text-gray-400 text-sm">{domain} Interview</span>
+          <span className="text-gray-500 text-sm">|</span>
+          <span className="text-gray-400 text-sm">
+            ⏱ {Math.floor(elapsedTime / 60)}:{String(elapsedTime % 60).padStart(2, "0")}
+          </span>
+          {questionCount > 0 && (
+            <>
+              <span className="text-gray-500 text-sm">|</span>
+              <span className="text-gray-400 text-sm">Q{questionCount}</span>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <RecordingControls
@@ -160,9 +190,17 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
 
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Panel — Avatar */}
-        <div className="hidden md:flex w-1/3 bg-gray-900/50 items-center justify-center border-r border-gray-800">
-          <ARIAAvatar isSpeaking={isSpeaking} isThinking={isLoading} />
+        {/* Left Panel — Waveform */}
+        <div className="hidden md:flex w-1/3 border-r border-gray-800">
+          <div className="flex flex-col h-full w-full">
+            <ARIAWaveform
+              isSpeaking={isSpeaking}
+              isThinking={isLoading}
+              currentQuestion={currentQuestion}
+              questionNumber={questionCount}
+              totalQuestions={7}
+            />
+          </div>
         </div>
 
         {/* Right Panel — Transcript */}

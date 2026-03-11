@@ -63,13 +63,69 @@ def get_session_by_id(session_id: str) -> dict:
     return result.data or {}
 
 
-def get_session_by_id(session_id: str) -> dict:
-    """Get full details of a single interview session."""
+def get_analytics_data(user_id: str) -> dict:
+    """Get aggregated analytics for a user's interview history."""
     result = (
         supabase.table("interview_sessions")
-        .select("*")
-        .eq("id", session_id)
-        .single()
+        .select("overall_score, confidence_score, domain, created_at, grade")
+        .eq("user_id", user_id)
+        .order("created_at", desc=False)
         .execute()
     )
-    return result.data or {}
+    sessions = result.data or []
+
+    if not sessions:
+        return {"has_data": False}
+
+    scores = [s["overall_score"] for s in sessions if s["overall_score"]]
+    confidence = [s["confidence_score"] for s in sessions if s["confidence_score"]]
+
+    score_trend = [
+        {
+            "date": s["created_at"][:10],
+            "score": s["overall_score"],
+            "confidence": s["confidence_score"]
+        }
+        for s in sessions
+    ]
+
+    domain_counts = {}
+    domain_avg_scores = {}
+    for s in sessions:
+        d = s["domain"]
+        domain_counts[d] = domain_counts.get(d, 0) + 1
+        if d not in domain_avg_scores:
+            domain_avg_scores[d] = []
+        if s["overall_score"]:
+            domain_avg_scores[d].append(s["overall_score"])
+
+    domain_stats = [
+        {
+            "domain": d,
+            "count": domain_counts[d],
+            "avg_score": round(
+                sum(domain_avg_scores.get(d, [0])) /
+                max(len(domain_avg_scores.get(d, [1])), 1)
+            )
+        }
+        for d in domain_counts
+    ]
+
+    grade_counts = {}
+    for s in sessions:
+        g = s.get("grade", "Unknown")
+        grade_counts[g] = grade_counts.get(g, 0) + 1
+
+    return {
+        "has_data": True,
+        "total_interviews": len(sessions),
+        "average_score": round(sum(scores) / max(len(scores), 1)),
+        "best_score": max(scores) if scores else 0,
+        "average_confidence": round(sum(confidence) / max(len(confidence), 1)),
+        "score_trend": score_trend,
+        "domain_stats": domain_stats,
+        "grade_distribution": [
+            {"grade": g, "count": c} for g, c in grade_counts.items()
+        ],
+        "improvement": scores[-1] - scores[0] if len(scores) > 1 else 0
+    }

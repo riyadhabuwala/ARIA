@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:8000";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 export async function parseResume(file) {
   const formData = new FormData();
@@ -92,6 +92,15 @@ export async function getSession(sessionId) {
   if (!res.ok) {
     const err = await res.json();
     throw new Error(err.detail || "Failed to fetch session");
+  }
+  return res.json();
+}
+
+export async function getAnalytics(userId) {
+  const res = await fetch(`${BASE_URL}/api/analytics/${encodeURIComponent(userId)}`);
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.detail || "Failed to fetch analytics");
   }
   return res.json();
 }

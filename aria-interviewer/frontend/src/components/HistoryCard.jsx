@@ -28,7 +28,7 @@ export default function HistoryCard({ session, onView }) {
     : "—";
 
   return (
-    <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-5 hover:border-gray-600 transition-all duration-200">
+    <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-5 hover:border-purple-500/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300">
       {/* Domain badge */}
       <div className="flex items-center justify-between mb-4">
         <span

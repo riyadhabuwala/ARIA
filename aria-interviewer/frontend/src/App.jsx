@@ -7,6 +7,7 @@ import DomainSelector from "./components/DomainSelector";
 import ResumeUpload from "./components/ResumeUpload";
 import InterviewRoom from "./components/InterviewRoom";
 import FeedbackReport from "./components/FeedbackReport";
+import LoadingScreen from "./components/LoadingScreen";
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -22,11 +23,7 @@ function AppContent() {
   });
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (!user) {

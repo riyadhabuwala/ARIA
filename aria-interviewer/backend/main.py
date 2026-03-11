@@ -6,14 +6,22 @@ from interview_agent import agent
 from resume_parser import extract_resume_text
 from elevenlabs_tts import text_to_speech
 from confidence_analyzer import analyze_full_interview
-from supabase_client import save_interview_session, get_user_sessions, get_session_by_id
+from supabase_client import save_interview_session, get_user_sessions, get_session_by_id, get_analytics_data
 import uuid
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI(title="ARIA Interview API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://aria-interviewer.vercel.app",
+        "https://*.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -166,13 +174,14 @@ async def get_session(session_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/session/{session_id}")
-async def get_session(session_id: str):
-    """Get full details of a single past interview."""
-    session = get_session_by_id(session_id)
-    if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
-    return session
+@app.get("/api/analytics/{user_id}")
+async def get_analytics(user_id: str):
+    """Get progress analytics for a user."""
+    try:
+        data = get_analytics_data(user_id)
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/health")
