@@ -1,42 +1,35 @@
 import { useState, useEffect } from "react";
 
 export default function LoadingScreen() {
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setProgress((p) => {
-        if (p >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        return p + Math.random() * 15;
-      });
-    }, 200);
-    return () => clearInterval(interval);
-  }, []);
-
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center gap-8">
-      {/* Logo */}
+    <div className="fixed inset-0 flex flex-col items-center justify-center gap-6"
+         style={{ background: "var(--bg-base)" }}>
       <div className="relative">
-        <div className="text-7xl font-black bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-pulse">
+        <div className="w-16 h-16 rounded-2xl flex items-center justify-center
+                        font-bold text-white text-xl heading-font"
+             style={{
+               background: "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))",
+               boxShadow: "var(--shadow-accent)",
+             }}>
+          AI
+        </div>
+        {/* Pulse ring */}
+        <div className="absolute inset-0 rounded-2xl animate-ping opacity-20"
+             style={{ background: "var(--accent-primary)" }} />
+      </div>
+      <div className="text-center">
+        <div className="text-2xl font-bold heading-font mb-1"
+             style={{ color: "var(--text-primary)" }}>
           ARIA
         </div>
-        <div className="absolute -inset-4 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 blur-xl rounded-full" />
+        <div className="text-sm" style={{ color: "var(--text-muted)" }}>
+          Loading your workspace...
+        </div>
       </div>
-
-      {/* Tagline */}
-      <p className="text-gray-400 text-sm tracking-widest uppercase">
-        AI Recruitment Interview Assistant
-      </p>
-
-      {/* Progress bar */}
-      <div className="w-64 bg-gray-800 rounded-full h-1 overflow-hidden">
-        <div
-          className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full transition-all duration-300"
-          style={{ width: `${Math.min(progress, 100)}%` }}
-        />
+      <div className="w-32 h-0.5 rounded-full overflow-hidden"
+           style={{ background: "var(--bg-elevated)" }}>
+        <div className="h-full w-1/2 rounded-full animate-pulse"
+             style={{ background: "var(--accent-primary)" }} />
       </div>
     </div>
   );

@@ -16,17 +16,31 @@ export function formatDate(dateStr) {
 
 export function getGradeColor(grade) {
   const colors = {
-    Excellent: "text-green-400",
-    Good: "text-blue-400",
-    Average: "text-yellow-400",
-    "Needs Improvement": "text-red-400",
+    Excellent: "var(--success)",
+    Good: "var(--accent-primary)",
+    Average: "var(--warning)",
+    "Needs Improvement": "var(--danger)",
   };
-  return colors[grade] || "text-gray-400";
+  return colors[grade] || "var(--text-muted)";
+}
+
+export function gradeColor(grade) {
+  return getGradeColor(grade);
+}
+
+export function gradeEmoji(grade) {
+  const emojis = {
+    Excellent: "🌟",
+    Good: "👍",
+    Average: "📈",
+    "Needs Improvement": "💪",
+  };
+  return emojis[grade] || "📊";
 }
 
 export function getScoreColor(score) {
-  if (score >= 80) return "text-green-400";
-  if (score >= 60) return "text-blue-400";
-  if (score >= 40) return "text-yellow-400";
-  return "text-red-400";
+  if (score >= 80) return "var(--success)";
+  if (score >= 60) return "var(--accent-primary)";
+  if (score >= 40) return "var(--warning)";
+  return "var(--danger)";
 }

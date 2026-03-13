@@ -37,7 +37,8 @@ class InterviewAgent:
 
         return {
             "message": clean_response,
-            "is_done": is_done
+            "is_done": is_done,
+            "has_feedback": len(clean_response) > 30
         }
 
     def generate_report(self, session_id: str) -> dict:

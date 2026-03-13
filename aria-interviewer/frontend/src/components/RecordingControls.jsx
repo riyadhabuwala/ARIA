@@ -3,7 +3,7 @@ export default function RecordingControls({
 }) {
   if (permissionDenied) {
     return (
-      <div className="text-xs text-yellow-500">
+      <div className="text-xs" style={{ color: "var(--warning)" }}>
         ⚠ Mic access denied — recording unavailable
       </div>
     );
@@ -13,8 +13,8 @@ export default function RecordingControls({
     <div className="flex items-center gap-3">
       {isRecording && (
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-          <span className="text-xs text-red-400">Recording</span>
+          <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: "var(--danger)" }} />
+          <span className="text-xs" style={{ color: "var(--danger)" }}>Recording</span>
         </div>
       )}
       {audioUrl && !isRecording && (
@@ -22,7 +22,8 @@ export default function RecordingControls({
           <audio controls src={audioUrl} className="h-8" />
           <button
             onClick={onDownload}
-            className="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+            className="px-3 py-1 text-xs rounded-lg transition-colors"
+            style={{ background: "var(--bg-surface)", color: "var(--text-secondary)", border: "1px solid var(--border-default)" }}
           >
             ⬇ Download
           </button>

@@ -16,24 +16,28 @@ export default function ScoreRadarChart({ sections }) {
   if (data.length < 3) return null;
 
   return (
-    <div className="bg-gray-900 rounded-xl border border-gray-800 p-5 mb-8">
-      <h3 className="text-sm font-semibold text-gray-300 mb-4">Skills Radar</h3>
+    <div
+      className="rounded-xl p-5 mb-8"
+      style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-subtle)" }}
+    >
+      <h3 className="text-sm font-semibold mb-4" style={{ color: "var(--text-secondary)" }}>Skills Radar</h3>
       <ResponsiveContainer width="100%" height={280}>
         <RadarChart data={data}>
-          <PolarGrid stroke="#374151" />
-          <PolarAngleAxis dataKey="subject" tick={{ fill: "#9ca3af", fontSize: 12 }} />
-          <PolarRadiusAxis domain={[0, 100]} tick={{ fill: "#6b7280", fontSize: 10 }} />
+          <PolarGrid stroke="var(--border-default)" />
+          <PolarAngleAxis dataKey="subject" tick={{ fill: "var(--text-muted)", fontSize: 12 }} />
+          <PolarRadiusAxis domain={[0, 100]} tick={{ fill: "var(--text-muted)", fontSize: 10 }} />
           <Tooltip
             contentStyle={{
-              backgroundColor: "#1f2937",
-              border: "1px solid #374151",
+              backgroundColor: "var(--bg-elevated)",
+              border: "1px solid var(--border-default)",
               borderRadius: "0.5rem",
+              color: "var(--text-primary)",
             }}
           />
           <Radar
             dataKey="value"
-            stroke="#8b5cf6"
-            fill="#8b5cf6"
+            stroke="var(--accent-primary)"
+            fill="var(--accent-primary)"
             fillOpacity={0.3}
           />
         </RadarChart>

@@ -1,300 +1,524 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { startInterview, sendMessage, generateReport } from "../api/interviewApi";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "../hooks/useSpeechSynthesis";
 import { useRecording } from "../hooks/useRecording";
 import { useConfidenceTracker } from "../hooks/useConfidenceTracker";
-import Transcript from "./Transcript";
-import ARIAWaveform from "./ARIAWaveform";
-import ConfidencePanel from "./ConfidencePanel";
-import RecordingControls from "./RecordingControls";
+import { useCamera } from "../hooks/useCamera";
+import ARIAWaveformStrip from "./ARIAWaveformStrip";
+import EndInterviewModal from "./EndInterviewModal";
+import CameraPermissionScreen from "./CameraPermissionScreen";
+import ThemeToggle from "./ThemeToggle";
 
 export default function InterviewRoom({ name, domain, resumeText, onComplete }) {
   const [sessionId, setSessionId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDone, setIsDone] = useState(false);
-  const [userInput, setUserInput] = useState("");
-  const [error, setError] = useState("");
-  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const [elapsedTime, setElapsedTime] = useState(0);
-  const [questionCount, setQuestionCount] = useState(0);
   const [currentQuestion, setCurrentQuestion] = useState("");
+  const [currentFeedback, setCurrentFeedback] = useState("");
+  const [questionCount, setQuestionCount] = useState(0);
+  const [interviewTimer, setInterviewTimer] = useState(0);
+  const [showEndModal, setShowEndModal] = useState(false);
+  const [micEnabled, setMicEnabled] = useState(false);
+  const [isPermissionScreen, setIsPermissionScreen] = useState(true);
 
   const { transcript, isListening, startListening, stopListening, setTranscript } =
     useSpeechRecognition();
   const { speak, stop: stopSpeaking, isSpeaking } = useSpeechSynthesis();
-  const { isRecording, audioUrl, permissionDenied, startRecording, stopRecording, downloadRecording } =
-    useRecording();
+  const { isRecording, startRecording, stopRecording } = useRecording();
   const { answers, addAnswer, analyzeAll } = useConfidenceTracker();
+  const { videoRef, cameraActive, cameraError, startCamera, stopCamera } = useCamera();
 
-  const hasStarted = useRef(false);
   const startTimeRef = useRef(null);
   const timerRef = useRef(null);
+  const messagesRef = useRef([]);
 
-  // Fill text input when speech recognition returns a transcript
-  useEffect(() => {
-    if (transcript) {
-      setUserInput(transcript);
-    }
-  }, [transcript]);
+  const setAllMessages = (next) => {
+    messagesRef.current = next;
+    setMessages(next);
+  };
 
-  // Timer
+  const appendMessage = (message) => {
+    setMessages((prev) => {
+      const next = [...prev, message];
+      messagesRef.current = next;
+      return next;
+    });
+  };
+
   useEffect(() => {
-    if (sessionId && !isDone) {
-      timerRef.current = setInterval(() => {
-        setElapsedTime(Math.round((Date.now() - startTimeRef.current) / 1000));
-      }, 1000);
+    if (sessionId && !isPermissionScreen && !isDone) {
+      timerRef.current = setInterval(() => setInterviewTimer((t) => t + 1), 1000);
+      startTimeRef.current = Date.now();
     }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [sessionId, isDone]);
+  }, [sessionId, isPermissionScreen, isDone]);
 
-  // Start interview on mount
-  useEffect(() => {
-    if (hasStarted.current) return;
-    hasStarted.current = true;
-
-    const init = async () => {
-      setIsLoading(true);
-      try {
-        const data = await startInterview(domain, name, resumeText);
-        setSessionId(data.session_id);
-        startTimeRef.current = Date.now();
-        const aiMsg = data.message;
-        setCurrentQuestion(aiMsg);
-        setQuestionCount(1);
-        setMessages([{ role: "ai", text: aiMsg, timestamp: new Date().toISOString() }]);
-        speak(aiMsg);
-      } catch (err) {
-        setError("Failed to start interview. Is the backend running?");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    init();
-  }, [domain, name, resumeText, speak]);
-
-  // Start recording once session is established
-  useEffect(() => {
-    if (sessionId) startRecording();
-  }, [sessionId, startRecording]);
-
-  // Handle generate report when interview is done
-  const handleGenerateReport = useCallback(
-    async (sid) => {
-      setIsGeneratingReport(true);
-      stopRecording();
-      try {
-        const [report, confidenceData] = await Promise.all([
-          generateReport(sid),
-          analyzeAll(),
-        ]);
-        const durationSeconds = Math.round((Date.now() - startTimeRef.current) / 1000);
-        onComplete(report, confidenceData, durationSeconds, messages);
-      } catch (err) {
-        setError("Failed to generate report. Please try again.");
-        setIsGeneratingReport(false);
-      }
-    },
-    [onComplete, analyzeAll, stopRecording]
-  );
-
-  const handleSend = async () => {
-    const text = userInput.trim();
-    if (!text || !sessionId || isLoading || isSpeaking) return;
-
-    setMessages((prev) => [...prev, { role: "user", text, timestamp: new Date().toISOString() }]);
-    addAnswer(text);
-    setUserInput("");
-    setTranscript("");
+  async function handleReady() {
+    setIsPermissionScreen(false);
     setIsLoading(true);
-    setError("");
+    setIsDone(false);
+    setInterviewTimer(0);
+    setQuestionCount(0);
+    setAllMessages([]);
+    startCamera();
+    startRecording();
 
     try {
-      const data = await sendMessage(sessionId, text);
-      setMessages((prev) => [...prev, { role: "ai", text: data.message, timestamp: new Date().toISOString() }]);
-      setCurrentQuestion(data.message);
-      setQuestionCount((c) => c + 1);
-      speak(data.message, () => {
-        if (data.is_done) {
-          setIsDone(true);
-          handleGenerateReport(sessionId);
-        }
-      });
+      const data = await startInterview(domain, name, resumeText);
+      setSessionId(data.session_id);
+      const aiMsg = data.message;
+      appendMessage({ role: "ai", text: aiMsg, timestamp: new Date().toISOString() });
+      processAIResponse(aiMsg);
     } catch (err) {
-      setError("Failed to get response. Please try again.");
-    } finally {
       setIsLoading(false);
     }
-  };
+  }
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
+  function processAIResponse(text) {
+    const normalized = (text || "").trim();
+    const nextTagMatch = normalized.match(/\[\s*NEXT\s*\]\s*:?\s*(.*)$/i);
+    const questionFromTag = nextTagMatch?.[1]?.trim();
+    const sentences = normalized.match(/[^.!?]+[.!?]+/g) || [normalized];
+    const lastSentence = sentences[sentences.length - 1]?.trim() || "";
+    const looksLikeQuestion = lastSentence.endsWith("?");
+    const fallbackQuestion = looksLikeQuestion ? lastSentence : normalized.replace(/^\[\s*FEEDBACK\s*\]\s*:?/i, "").trim();
+
+    setMicEnabled(false);
+    setCurrentFeedback("");
+    setCurrentQuestion(questionFromTag || fallbackQuestion);
+
+    setIsLoading(false);
+    setQuestionCount((prev) => prev + 1);
+    speak(text, () => setMicEnabled(true));
+  }
+
+  async function handleSendAnswer(answerText) {
+    if (!answerText.trim() || isLoading || isSpeaking || !sessionId) return;
+
+    setMicEnabled(false);
+    setCurrentFeedback("");
+    addAnswer(answerText);
+    appendMessage({ role: "user", text: answerText, timestamp: new Date().toISOString() });
+    setIsLoading(true);
+    setTranscript("");
+
+    try {
+      const data = await sendMessage(sessionId, answerText);
+      if (data?.message) {
+        appendMessage({ role: "ai", text: data.message, timestamp: new Date().toISOString() });
+      }
+      if (data?.is_done) {
+        await handleInterviewComplete();
+        return;
+      }
+      if (data?.message) {
+        processAIResponse(data.message);
+      } else {
+        setIsLoading(false);
+      }
+    } catch (err) {
+      setIsLoading(false);
     }
-  };
+  }
 
-  const canInteract = !isLoading && !isSpeaking && !isDone && sessionId;
+  function handleMicPress() {
+    if (!micEnabled || isSpeaking || isLoading || isDone) return;
+    startListening();
+  }
+
+  function handleMicRelease() {
+    stopListening();
+    setTimeout(() => {
+      if (transcript.trim()) {
+        handleSendAnswer(transcript.trim());
+      }
+    }, 500);
+  }
+
+  async function handleInterviewComplete() {
+    if (timerRef.current) clearInterval(timerRef.current);
+    stopListening();
+    stopRecording();
+    stopCamera();
+    setIsDone(true);
+    setIsLoading(true);
+
+    try {
+      const [report, confidenceData] = await Promise.all([
+        generateReport(sessionId),
+        analyzeAll(),
+      ]);
+      const durationSeconds = Math.round((Date.now() - startTimeRef.current) / 1000);
+      onComplete(report, confidenceData, durationSeconds, messagesRef.current);
+    } catch (err) {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleTerminate() {
+    setShowEndModal(false);
+    if (timerRef.current) clearInterval(timerRef.current);
+    stopListening();
+    stopRecording();
+    stopCamera();
+    stopSpeaking();
+    setIsDone(true);
+    setIsLoading(true);
+
+    try {
+      const [report, confidenceData] = await Promise.all([
+        generateReport(sessionId),
+        analyzeAll(),
+      ]);
+      const durationSeconds = Math.round((Date.now() - startTimeRef.current) / 1000);
+      onComplete(report, confidenceData, durationSeconds, messagesRef.current);
+    } catch (err) {
+      setIsLoading(false);
+    }
+  }
+
+  const timerDisplay =
+    `${String(Math.floor(interviewTimer / 60)).padStart(2, "0")}:` +
+    `${String(interviewTimer % 60).padStart(2, "0")}`;
+
+  if (isPermissionScreen) {
+    return (
+      <CameraPermissionScreen
+        onReady={handleReady}
+        candidateName={name}
+        domain={domain}
+      />
+    );
+  }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Top bar */}
-      <div className="bg-gray-900 border-b border-gray-800 px-6 py-3 flex items-center justify-between">
+    <div className="h-screen flex flex-col overflow-hidden" style={{ background: "var(--bg-base)" }}>
+      <div
+        className="flex items-center justify-between px-6 py-3 flex-shrink-0 z-10"
+        style={{
+          background: "var(--bg-surface)",
+          borderBottom: "1px solid var(--border-subtle)",
+        }}
+      >
         <div className="flex items-center gap-3">
-          <span className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-            ARIA
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white text-xs"
+            style={{ background: "var(--accent-primary)" }}
+          >
+            AI
+          </div>
+          <div className="h-4 w-px" style={{ background: "var(--border-default)" }} />
+          <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+            {domain} Interview
           </span>
-          <span className="text-gray-500 text-sm">|</span>
-          <span className="text-gray-400 text-sm">{domain} Interview</span>
-          <span className="text-gray-500 text-sm">|</span>
-          <span className="text-gray-400 text-sm">
-            ⏱ {Math.floor(elapsedTime / 60)}:{String(elapsedTime % 60).padStart(2, "0")}
+          <div className="h-4 w-px" style={{ background: "var(--border-default)" }} />
+          <span className="text-sm font-mono" style={{ color: "var(--text-muted)" }}>
+            ⏱ {timerDisplay}
           </span>
           {questionCount > 0 && (
+            <span
+              className="px-2 py-0.5 rounded-full text-xs font-semibold"
+              style={{
+                background: "var(--accent-subtle)",
+                color: "var(--accent-primary)",
+                border: "1px solid rgba(124,106,255,0.2)",
+              }}
+            >
+              Q{questionCount} / 7
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3">
+          {isRecording && (
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                Recording
+              </span>
+            </div>
+          )}
+          <ThemeToggle />
+          <button
+            onClick={() => setShowEndModal(true)}
+            disabled={questionCount < 1 || isLoading}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all hover:opacity-80 disabled:opacity-30 disabled:cursor-not-allowed"
+            style={{
+              background: "var(--danger-subtle)",
+              border: "1px solid rgba(239,68,68,0.2)",
+              color: "var(--danger)",
+            }}
+          >
+            ⏹ End Interview
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 flex flex-col items-center justify-center gap-6 px-8 py-6 overflow-hidden">
+        <div
+          className="relative rounded-2xl overflow-hidden flex-shrink-0 shadow-2xl"
+          style={{
+            width: "min(480px, 100%)",
+            aspectRatio: "16/10",
+            background: "var(--bg-elevated)",
+            border: isListening
+              ? "3px solid var(--danger)"
+              : isSpeaking
+              ? "3px solid var(--accent-primary)"
+              : "2px solid var(--border-default)",
+            boxShadow: isListening
+              ? "0 0 30px rgba(239,68,68,0.25)"
+              : isSpeaking
+              ? "0 0 30px rgba(124,106,255,0.2)"
+              : "var(--shadow-lg)",
+            transition: "border-color 0.3s, box-shadow 0.3s",
+          }}
+        >
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="w-full h-full object-cover"
+            style={{ transform: "scaleX(-1)" }}
+          />
+
+          {!cameraActive && (
+            <div
+              className="absolute inset-0 flex flex-col items-center justify-center gap-3"
+              style={{ background: "var(--bg-elevated)" }}
+            >
+              <div
+                className="w-20 h-20 rounded-full flex items-center justify-center text-4xl"
+                style={{ background: "var(--bg-overlay)" }}
+              >
+                👤
+              </div>
+              <p className="text-xs text-center max-w-[200px]" style={{ color: "var(--text-muted)" }}>
+                {cameraError || "Camera not available"}
+              </p>
+            </div>
+          )}
+
+          {isListening && (
+            <div
+              className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 rounded-full"
+              style={{
+                background: "rgba(239,68,68,0.9)",
+                backdropFilter: "blur(8px)",
+              }}
+            >
+              <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+              <span className="text-white text-xs font-semibold">Listening...</span>
+            </div>
+          )}
+
+          <div
+            className="absolute bottom-3 left-3 px-3 py-1 rounded-lg text-xs font-medium text-white"
+            style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
+          >
+            {name}
+          </div>
+        </div>
+
+        <div className="w-full flex flex-col items-center gap-4" style={{ maxWidth: "600px" }}>
+          <div
+            className="w-full rounded-2xl overflow-hidden"
+            style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}
+          >
+            <div
+              className="flex items-center justify-between px-5 py-3"
+              style={{ borderBottom: "1px solid var(--border-subtle)" }}
+            >
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+                  style={{ background: "var(--accent-primary)" }}
+                >
+                  AI
+                </div>
+                <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                  ARIA
+                </span>
+                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  Interview Assistant
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div
+                  className={`w-2 h-2 rounded-full transition-colors ${
+                    isSpeaking
+                      ? "bg-blue-400 animate-pulse"
+                      : isLoading
+                      ? "bg-yellow-400 animate-pulse"
+                      : "bg-green-400"
+                  }`}
+                />
+                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  {isSpeaking ? "Speaking" : isLoading ? "Thinking" : "Live"}
+                </span>
+              </div>
+            </div>
+
+            <ARIAWaveformStrip isSpeaking={isSpeaking} isThinking={isLoading} />
+          </div>
+
+          {(currentQuestion || isLoading) && (
+            <div
+              className="w-full rounded-2xl p-5"
+              style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}
+            >
+              {isLoading ? (
+                <div className="flex items-center gap-3">
+                  {[0, 1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className="w-2 h-2 rounded-full animate-bounce"
+                      style={{
+                        background: "var(--accent-primary)",
+                        animationDelay: `${i * 150}ms`,
+                      }}
+                    />
+                  ))}
+                  <span className="text-sm" style={{ color: "var(--text-muted)" }}>
+                    ARIA is thinking...
+                  </span>
+                </div>
+              ) : (
+                <div>
+                  {questionCount > 0 && (
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                        Question {questionCount} of 7
+                      </span>
+                      <div className="flex gap-1 flex-1">
+                        {Array.from({ length: 7 }).map((_, i) => (
+                          <div
+                            key={i}
+                            className="h-1 flex-1 rounded-full transition-all"
+                            style={{
+                              background: i < questionCount ? "var(--accent-primary)" : "var(--bg-elevated)",
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <p className="text-base font-medium leading-relaxed" style={{ color: "var(--text-primary)" }}>
+                    {currentQuestion}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div
+        className="flex-shrink-0 px-6 py-4 flex items-center justify-center gap-6"
+        style={{ background: "var(--bg-surface)", borderTop: "1px solid var(--border-subtle)" }}
+      >
+        {answers.length > 0 && (
+          <div
+            className="flex items-center gap-2 px-3 py-2 rounded-xl"
+            style={{ background: "var(--bg-overlay)", border: "1px solid var(--border-subtle)" }}
+          >
+            <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+              💪 Confidence
+            </span>
+            <span className="text-sm font-bold" style={{ color: "var(--success)" }}>
+              {Math.max(60, 100 - answers.length * 2)}%
+            </span>
+          </div>
+        )}
+
+        <button
+          onMouseDown={handleMicPress}
+          onMouseUp={handleMicRelease}
+          onTouchStart={handleMicPress}
+          onTouchEnd={handleMicRelease}
+          disabled={!micEnabled || isSpeaking || isLoading}
+          className="relative flex flex-col items-center justify-center rounded-full transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 select-none"
+          style={{
+            width: "80px",
+            height: "80px",
+            background: isListening
+              ? "linear-gradient(135deg, #ef4444, #dc2626)"
+              : micEnabled && !isSpeaking && !isLoading
+              ? "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))"
+              : "var(--bg-elevated)",
+            border: isListening ? "3px solid rgba(239,68,68,0.4)" : "2px solid var(--border-default)",
+            boxShadow: isListening
+              ? "0 0 30px rgba(239,68,68,0.4), 0 0 60px rgba(239,68,68,0.2)"
+              : micEnabled && !isSpeaking && !isLoading
+              ? "var(--shadow-accent)"
+              : "none",
+          }}
+        >
+          {isListening && (
             <>
-              <span className="text-gray-500 text-sm">|</span>
-              <span className="text-gray-400 text-sm">Q{questionCount}</span>
+              <div className="absolute inset-0 rounded-full animate-ping" style={{ background: "rgba(239,68,68,0.2)" }} />
+              <div
+                className="absolute inset-[-8px] rounded-full animate-ping"
+                style={{ background: "rgba(239,68,68,0.1)", animationDelay: "0.3s" }}
+              />
             </>
           )}
-        </div>
-        <div className="flex items-center gap-2">
-          <RecordingControls
-            isRecording={isRecording}
-            audioUrl={audioUrl}
-            onDownload={downloadRecording}
-            permissionDenied={permissionDenied}
-          />
-          {isSpeaking && (
-            <span className="flex items-center gap-2 text-purple-400 text-sm">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500" />
-              </span>
-              ARIA is speaking...
-            </span>
-          )}
-          {isLoading && (
-            <span className="flex items-center gap-2 text-blue-400 text-sm">
-              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-              </svg>
-              ARIA is thinking...
-            </span>
+
+          <span className="text-2xl relative z-10">{isListening ? "🔴" : "🎤"}</span>
+          <span
+            className="text-xs font-semibold relative z-10 mt-1"
+            style={{
+              color: isListening || (micEnabled && !isSpeaking) ? "white" : "var(--text-muted)",
+            }}
+          >
+            {isListening ? "Release" : isSpeaking ? "Wait..." : isLoading ? "..." : "Hold"}
+          </span>
+        </button>
+
+        <div className="text-center">
+          <p
+            className="text-xs font-medium"
+            style={{
+              color: isListening
+                ? "var(--danger)"
+                : isSpeaking
+                ? "var(--accent-primary)"
+                : isLoading
+                ? "var(--warning)"
+                : micEnabled
+                ? "var(--success)"
+                : "var(--text-muted)",
+            }}
+          >
+            {isListening
+              ? "Recording your answer..."
+              : isSpeaking
+              ? "ARIA is speaking..."
+              : isLoading
+              ? "ARIA is thinking..."
+              : micEnabled
+              ? "Hold mic to answer"
+              : "Waiting..."}
+          </p>
+          {transcript && !isListening && (
+            <p className="text-xs mt-1 italic max-w-xs truncate" style={{ color: "var(--text-muted)" }}>
+              Heard: "{transcript}"
+            </p>
           )}
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Panel — Waveform */}
-        <div className="hidden md:flex w-1/3 border-r border-gray-800">
-          <div className="flex flex-col h-full w-full">
-            <ARIAWaveform
-              isSpeaking={isSpeaking}
-              isThinking={isLoading}
-              currentQuestion={currentQuestion}
-              questionNumber={questionCount}
-              totalQuestions={7}
-            />
-          </div>
-        </div>
-
-        {/* Right Panel — Transcript */}
-        <div className="flex-1 flex flex-col bg-gray-950">
-          <div className="flex-1 overflow-hidden">
-            <Transcript messages={messages} />
-          </div>
-        </div>
-      </div>
-
-      {/* Confidence Panel */}
-      <ConfidencePanel answers={answers} isVisible={messages.length > 2} />
-
-      {/* Error bar */}
-      {error && (
-        <div className="bg-red-500/10 border-t border-red-500/30 px-6 py-2">
-          <p className="text-red-400 text-sm">{error}</p>
-        </div>
-      )}
-
-      {/* Report loading overlay */}
-      {isGeneratingReport && (
-        <div className="bg-gray-900 border-t border-gray-800 px-6 py-4 flex items-center justify-center gap-3">
-          <svg className="animate-spin h-5 w-5 text-purple-400" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-          </svg>
-          <span className="text-purple-300 font-medium">Generating your performance report...</span>
-        </div>
-      )}
-
-      {/* Bottom controls */}
-      {!isDone && !isGeneratingReport && (
-        <div className="bg-gray-900 border-t border-gray-800 px-4 py-4">
-          <div className="max-w-4xl mx-auto flex items-center gap-3">
-            {/* Start Recording Button */}
-            {!isListening && (
-              <button
-                onClick={() => canInteract && startListening()}
-                disabled={!canInteract}
-                className={`px-4 py-3 rounded-xl flex items-center gap-2 transition-all duration-200 flex-shrink-0 ${
-                  canInteract
-                    ? "bg-purple-600 hover:bg-purple-500 shadow-lg shadow-purple-500/30 text-white"
-                    : "bg-gray-700 cursor-not-allowed opacity-50 text-gray-400"
-                }`}
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
-                  <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
-                </svg>
-                <span className="text-sm font-medium">Start Rec</span>
-              </button>
-            )}
-
-            {/* Stop Recording Button */}
-            {isListening && (
-              <button
-                onClick={() => stopListening()}
-                className="px-4 py-3 rounded-xl flex items-center gap-2 transition-all duration-200 flex-shrink-0 bg-red-500 hover:bg-red-400 shadow-lg shadow-red-500/40 text-white animate-pulse"
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <rect x="6" y="6" width="12" height="12" rx="2" />
-                </svg>
-                <span className="text-sm font-medium">Stop Rec</span>
-              </button>
-            )}
-
-            {/* Text Input */}
-            <input
-              type="text"
-              value={userInput}
-              onChange={(e) => setUserInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={
-                isListening
-                  ? "Listening... click Stop Rec when done"
-                  : canInteract
-                  ? "Type your answer or click Start Rec..."
-                  : "Wait for ARIA to finish..."
-              }
-              disabled={!canInteract}
-              className="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition disabled:opacity-50"
-            />
-
-            {/* Send Button */}
-            <button
-              onClick={handleSend}
-              disabled={!canInteract || !userInput.trim()}
-              className="px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-500 transition disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
-            >
-              Send
-            </button>
-          </div>
-        </div>
+      {showEndModal && (
+        <EndInterviewModal
+          onConfirm={handleTerminate}
+          onCancel={() => setShowEndModal(false)}
+          questionNumber={questionCount}
+        />
       )}
     </div>
   );

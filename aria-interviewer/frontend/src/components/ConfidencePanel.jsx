@@ -50,53 +50,57 @@ export default function ConfidencePanel({ answers, isVisible }) {
   const randomTip = tips[answers.length % tips.length];
 
   return (
-    <div className="fixed bottom-20 right-4 w-64 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl overflow-hidden z-50">
-      <div className="px-4 py-2.5 bg-gray-800 border-b border-gray-700">
-        <span className="text-xs font-semibold text-gray-300">🎯 Confidence Tracker</span>
+    <div
+      className="fixed bottom-20 right-4 w-64 rounded-xl shadow-2xl overflow-hidden z-50"
+      style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}
+    >
+      <div className="px-4 py-2.5" style={{ background: "var(--bg-surface)", borderBottom: "1px solid var(--border-subtle)" }}>
+        <span className="text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>🎯 Confidence Tracker</span>
       </div>
       <div className="p-3 space-y-3">
-        {/* Score bar */}
         <div>
           <div className="flex items-center justify-between text-xs mb-1">
-            <span className="text-gray-400">Confidence</span>
-            <span className="font-bold text-white">{stats.score}%</span>
+            <span style={{ color: "var(--text-muted)" }}>Confidence</span>
+            <span className="font-bold" style={{ color: "var(--text-primary)" }}>{stats.score}%</span>
           </div>
-          <div className="w-full bg-gray-700 rounded-full h-1.5">
+          <div className="w-full rounded-full h-1.5" style={{ background: "var(--bg-surface)" }}>
             <div
-              className={`h-1.5 rounded-full transition-all duration-500 ${
-                stats.score >= 70 ? "bg-green-500" : stats.score >= 40 ? "bg-yellow-500" : "bg-red-500"
-              }`}
-              style={{ width: `${stats.score}%` }}
+              className="h-1.5 rounded-full transition-all duration-500"
+              style={{
+                width: `${stats.score}%`,
+                background: stats.score >= 70 ? "var(--success)" : stats.score >= 40 ? "var(--warning)" : "var(--danger)",
+              }}
             />
           </div>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-2 gap-2">
-          <div className="bg-gray-800 rounded-lg p-2 text-center">
-            <div className="text-lg font-bold text-white">{answers.length}</div>
-            <div className="text-[10px] text-gray-400">Answers</div>
+          <div className="rounded-lg p-2 text-center" style={{ background: "var(--bg-surface)" }}>
+            <div className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>{answers.length}</div>
+            <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>Answers</div>
           </div>
-          <div className="bg-gray-800 rounded-lg p-2 text-center">
-            <div className="text-lg font-bold text-red-400">{stats.totalFillers}</div>
-            <div className="text-[10px] text-gray-400">Fillers</div>
+          <div className="rounded-lg p-2 text-center" style={{ background: "var(--bg-surface)" }}>
+            <div className="text-lg font-bold" style={{ color: "var(--danger)" }}>{stats.totalFillers}</div>
+            <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>Fillers</div>
           </div>
         </div>
 
-        {/* Recent fillers */}
         {stats.fillerList.length > 0 && (
           <div className="flex gap-1 flex-wrap">
             {stats.fillerList.map((w) => (
-              <span key={w} className="px-1.5 py-0.5 bg-red-900/40 text-red-300 border border-red-700/50 rounded text-[10px]">
+              <span
+                key={w}
+                className="px-1.5 py-0.5 rounded text-[10px]"
+                style={{ color: "var(--danger)", background: "color-mix(in srgb, var(--danger) 15%, transparent)", border: "1px solid color-mix(in srgb, var(--danger) 25%, transparent)" }}
+              >
                 &ldquo;{w}&rdquo;
               </span>
             ))}
           </div>
         )}
 
-        {/* Tip */}
-        <div className="bg-blue-900/20 border border-blue-800/30 rounded-lg p-2">
-          <p className="text-[10px] text-blue-300">💡 {randomTip}</p>
+        <div className="rounded-lg p-2" style={{ background: "color-mix(in srgb, var(--info) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--info) 20%, transparent)" }}>
+          <p className="text-[10px]" style={{ color: "var(--info)" }}>💡 {randomTip}</p>
         </div>
       </div>
     </div>

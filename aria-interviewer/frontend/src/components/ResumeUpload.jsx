@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { parseResume } from "../api/interviewApi";
+import ThemeToggle from "./ThemeToggle";
 
 export default function ResumeUpload({ onComplete }) {
   const [file, setFile] = useState(null);
@@ -46,81 +47,149 @@ export default function ResumeUpload({ onComplete }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12">
-      <div className="max-w-lg w-full">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-white mb-2">Upload Your Resume</h2>
-          <p className="text-gray-400">Optional — helps ARIA tailor questions to your experience</p>
+    <div className="min-h-screen flex flex-col"
+         style={{ background: "var(--bg-base)" }}>
+
+      {/* Nav */}
+      <nav className="px-6 py-4 flex items-center justify-between"
+           style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center
+                          font-bold text-white text-xs"
+               style={{ background: "var(--accent-primary)" }}>
+            AI
+          </div>
+          <span className="font-semibold heading-font"
+                style={{ color: "var(--text-primary)" }}>
+            ARIA
+          </span>
         </div>
+        <ThemeToggle />
+      </nav>
 
-        {/* Drop Zone */}
-        <div
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onClick={() => inputRef.current?.click()}
-          className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all duration-200 mb-6 ${
-            isDragOver
-              ? "border-purple-400 bg-purple-500/10"
-              : file
-              ? "border-green-500 bg-green-500/5"
-              : "border-gray-600 bg-gray-800/30 hover:border-gray-500"
-          }`}
-        >
-          <input
-            ref={inputRef}
-            type="file"
-            accept=".pdf"
-            className="hidden"
-            onChange={(e) => handleFile(e.target.files[0])}
-          />
+      <div className="flex-1 flex items-center justify-center px-6 py-12">
+        <div className="w-full max-w-md animate-fadeUp">
 
-          {file ? (
-            <div>
-              <div className="text-4xl mb-3">📄</div>
-              <p className="text-green-400 font-medium">{file.name}</p>
-              <p className="text-gray-500 text-sm mt-1">Click to change file</p>
-            </div>
-          ) : (
-            <div>
-              <div className="text-4xl mb-3">📁</div>
-              <p className="text-gray-300 font-medium">
-                Drag & drop your PDF resume here
-              </p>
-              <p className="text-gray-500 text-sm mt-1">or click to browse</p>
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold heading-font mb-2"
+                style={{ color: "var(--text-primary)" }}>
+              Upload Your Resume
+            </h2>
+            <p className="text-sm"
+               style={{ color: "var(--text-secondary)" }}>
+              Optional — helps ARIA tailor questions to your experience
+            </p>
+          </div>
+
+          {/* Drop Zone */}
+          <div
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onClick={() => inputRef.current?.click()}
+            className="rounded-xl p-12 text-center cursor-pointer
+                       transition-all duration-200 mb-6"
+            style={{
+              border: isDragOver
+                ? "2px dashed var(--accent-primary)"
+                : file
+                ? "2px dashed var(--success)"
+                : "2px dashed var(--border-strong)",
+              background: isDragOver
+                ? "var(--accent-subtle)"
+                : file
+                ? "var(--success-subtle)"
+                : "var(--bg-surface)",
+            }}
+          >
+            <input
+              ref={inputRef}
+              type="file"
+              accept=".pdf"
+              className="hidden"
+              onChange={(e) => handleFile(e.target.files[0])}
+            />
+
+            {file ? (
+              <div>
+                <div className="text-5xl mb-3">📄</div>
+                <span className="inline-block px-3 py-1 rounded-full text-sm font-medium mb-2"
+                      style={{
+                        background: "var(--success-subtle)",
+                        color: "var(--success)",
+                        border: "1px solid rgba(34,197,94,0.2)"
+                      }}>
+                  {file.name}
+                </span>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  Click to change file
+                </p>
+              </div>
+            ) : (
+              <div>
+                <div className="text-5xl mb-3">📁</div>
+                <p className="text-sm font-medium mb-1"
+                   style={{ color: "var(--text-primary)" }}>
+                  Drag & drop your PDF resume here
+                </p>
+                <p className="text-xs"
+                   style={{ color: "var(--text-muted)" }}>
+                  or click to browse
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div className="mb-4 px-4 py-3 rounded-lg text-sm text-center"
+                 style={{
+                   background: "var(--danger-subtle)",
+                   border: "1px solid rgba(239,68,68,0.2)",
+                   color: "var(--danger)"
+                 }}>
+              {error}
             </div>
           )}
-        </div>
 
-        {/* Error */}
-        {error && (
-          <p className="text-red-400 text-sm text-center mb-4">{error}</p>
-        )}
-
-        {/* Actions */}
-        <div className="flex gap-4">
-          <button
-            onClick={() => onComplete("")}
-            className="flex-1 py-3 bg-gray-800 text-gray-300 rounded-xl font-medium hover:bg-gray-700 transition"
-          >
-            Skip
-          </button>
+          {/* Parse button */}
           <button
             onClick={handleParse}
             disabled={!file || isLoading}
-            className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-xl transition hover:from-purple-500 hover:to-blue-500 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-3.5 rounded-xl font-semibold text-sm
+                       text-white transition-all duration-200
+                       hover:opacity-90 active:scale-[0.98]
+                       disabled:opacity-30 disabled:cursor-not-allowed mb-4"
+            style={{
+              background: file
+                ? "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))"
+                : "var(--bg-elevated)",
+              boxShadow: file ? "var(--shadow-accent)" : "none",
+            }}
           >
             {isLoading ? (
-              <>
-                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+              <span className="flex items-center justify-center gap-2">
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10"
+                          stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
                 </svg>
                 Parsing...
-              </>
+              </span>
             ) : (
               "Parse Resume"
             )}
+          </button>
+
+          {/* Skip */}
+          <button
+            onClick={() => onComplete("")}
+            className="w-full text-center text-sm font-medium
+                       transition-all hover:opacity-80"
+            style={{ color: "var(--text-muted)" }}
+          >
+            Skip this step →
           </button>
         </div>
       </div>

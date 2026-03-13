@@ -98,7 +98,7 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen" style={{ background: "var(--bg-base)", color: "var(--text-primary)" }}>
       {step === "dashboard" && (
         <Dashboard user={user} onNewInterview={handleStartNew} onViewSession={handleViewSession} />
       )}
