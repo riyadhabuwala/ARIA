@@ -3,6 +3,7 @@ import ThemeToggle from "../components/ThemeToggle";
 import ScanProgress from "../components/ScanProgress";
 import JobCard from "../components/JobCard";
 import ProfileSummary from "../components/ProfileSummary";
+import ResumeQualityScore from "../components/ResumeQualityScore";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
@@ -279,6 +280,12 @@ export default function JobMatchPage({ user, onBack }) {
                 </button>
               </div>
             )}
+
+            {profile && (
+              <div className="mt-8">
+                <ResumeQualityScore userId={user.id} hasResume={true} />
+              </div>
+            )}
           </div>
         )}
 
@@ -291,6 +298,8 @@ export default function JobMatchPage({ user, onBack }) {
         {step === "results" && (
           <div className="animate-fadeUp">
             {profile && <ProfileSummary profile={profile} lastScanned={lastScanned} onRescan={runScan} />}
+
+            <ResumeQualityScore userId={user.id} hasResume={true} />
 
             <div className="flex items-center justify-between mb-5">
               <div>

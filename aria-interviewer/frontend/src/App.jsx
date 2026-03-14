@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import { saveSession, getSession } from "./api/interviewApi";
+import { saveSession, getHistory, getSession } from "./api/interviewApi";
 import AuthPage from "./components/AuthPage";
 import Dashboard from "./components/Dashboard";
 import DomainSelector from "./components/DomainSelector";
@@ -9,10 +9,14 @@ import InterviewRoom from "./components/InterviewRoom";
 import FeedbackReport from "./components/FeedbackReport";
 import LoadingScreen from "./components/LoadingScreen";
 import JobMatchPage from "./pages/JobMatchPage";
+import ChatWidget from "./components/ChatWidget";
 
 function AppContent() {
   const { user, loading } = useAuth();
   const [step, setStep] = useState("dashboard");
+  const chatWidgetRef = useRef(null);
+  const [chatForceOpen, setChatForceOpen] = useState(false);
+  const [previousScore, setPreviousScore] = useState(0);
   const [interviewData, setInterviewData] = useState({
     name: "",
     domain: "",
@@ -22,6 +26,27 @@ function AppContent() {
     audioUrl: null,
     audioBlob: null,
   });
+
+  const loadPreviousScore = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const data = await getHistory(user.id);
+      const sessions = data.sessions || [];
+      if (sessions.length > 0) {
+        setPreviousScore(sessions[0].overall_score || 0);
+      } else {
+        setPreviousScore(0);
+      }
+    } catch {
+      setPreviousScore(0);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id && step === "dashboard") {
+      loadPreviousScore();
+    }
+  }, [user?.id, step, loadPreviousScore]);
 
   if (loading) {
     return <LoadingScreen />;
@@ -62,6 +87,18 @@ function AppContent() {
     } catch (err) {
       console.error("Failed to save session:", err);
     }
+
+    setTimeout(async () => {
+      setChatForceOpen(true);
+
+      await new Promise((r) => setTimeout(r, 300));
+      if (chatWidgetRef.current?.triggerDebrief) {
+        chatWidgetRef.current.triggerDebrief(report, confidenceData, previousScore);
+      }
+
+      setTimeout(() => setChatForceOpen(false), 1000);
+      setPreviousScore(report?.overall_score || 0);
+    }, 800);
   };
 
   const handleReset = () => {
@@ -129,6 +166,16 @@ function AppContent() {
           audioUrl={interviewData.audioUrl}
           onDownload={interviewData.audioUrl ? handleDownloadRecording : null}
           onReset={handleReset}
+        />
+      )}
+      {user && (
+        <ChatWidget
+          ref={chatWidgetRef}
+          user={user}
+          forceOpen={chatForceOpen}
+          onOpenChange={(open) => {
+            if (!open) setChatForceOpen(false);
+          }}
         />
       )}
     </div>

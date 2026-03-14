@@ -1,11 +1,14 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
+from collections import Counter
 from interview_agent import agent
 from resume_parser import extract_resume_text
 from elevenlabs_tts import text_to_speech
 from confidence_analyzer import analyze_full_interview
+from chat_context_builder import build_context_string
+from resume_quality import analyse_resume_quality
 from supabase_client import (
     save_interview_session,
     get_user_sessions,
@@ -14,16 +17,53 @@ from supabase_client import (
     get_resume_profile,
     get_latest_job_results,
     save_resume_profile,
+    save_resume_quality,
+    get_cached_quality,
 )
 from job_agent import JobMatchAgent
 import uuid
 import os
+import json
 from dotenv import load_dotenv
+from groq import Groq
 
 load_dotenv()
 
 app = FastAPI(title="ARIA Interview API")
 job_agent = JobMatchAgent()
+chat_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
+CHATBOT_SYSTEM_PROMPT = """
+You are ARIA Career Coach - a personal AI career advisor embedded
+inside the ARIA interview practice platform.
+
+You have been given real data about this specific user below.
+Use it to give personalised, specific, and actionable advice.
+Always refer to their actual scores, skills, and job data.
+Never give generic advice when you have specific data to reference.
+
+PERSONALITY:
+- Encouraging but honest - do not sugarcoat weak performance
+- Concise - answer in 3-5 sentences unless a detailed plan is asked
+- Specific - cite actual numbers from the user data when available
+- Actionable - every answer should end with something they can do
+
+SCOPE:
+- Only answer: careers, interviews, job search, skills, user ARIA data,
+    study plans, resume advice
+- If unrelated topic, say:
+    "I'm your career coach - I can help with interviews, jobs,
+    and your ARIA performance. What would you like to work on?"
+
+FORMAT:
+- Use short paragraphs, not large bullet walls
+- Bold key numbers, for example **85/100**, **3 filler words**
+- For study plans: use numbered steps
+- Keep responses under 150 words unless user asks for more detail
+
+HERE IS THE USER'S DATA:
+{context}
+"""
 
 app.add_middleware(
     CORSMiddleware,
@@ -78,6 +118,24 @@ class SaveResumeRequest(BaseModel):
 
 class ScanRequest(BaseModel):
     user_id: str
+
+
+class ChatRequest(BaseModel):
+    user_id: str
+    message: str
+    conversation_history: list = []
+
+
+class DebriefRequest(BaseModel):
+    user_id: str
+    report: dict
+    confidence_data: dict = {}
+    previous_score: int = 0
+
+
+class ResumeQualityRequest(BaseModel):
+    user_id: str
+    force_refresh: bool = False
 
 
 # ── ROUTES ──────────────────────────────────────────────────────
@@ -269,6 +327,202 @@ async def get_job_results(user_id: str):
         "total_fetched": results.get("total_fetched", 0),
         "last_scanned_at": results.get("last_scanned_at"),
     }
+
+
+@app.post("/api/resume/quality")
+async def get_resume_quality(req: ResumeQualityRequest):
+    """
+    Analyse quality of the user's saved resume.
+    Connects job-match missing skills to resume gaps.
+    """
+    if not req.force_refresh:
+        cached = get_cached_quality(req.user_id)
+        if cached:
+            return {**cached, "from_cache": True}
+
+    profile_data = get_resume_profile(req.user_id)
+    if not profile_data or not profile_data.get("resume_text"):
+        raise HTTPException(
+            status_code=400,
+            detail="No resume found. Please upload your resume first.",
+        )
+
+    resume_text = profile_data["resume_text"]
+    job_missing_skills: list[str] = []
+
+    try:
+        job_results = get_latest_job_results(req.user_id)
+        jobs = (job_results or {}).get("jobs") or []
+        if jobs:
+            all_missing: list[str] = []
+            for job in jobs:
+                all_missing.extend(job.get("missing_skills") or [])
+
+            skill_counts = Counter(all_missing)
+            job_missing_skills = [skill for skill, _ in skill_counts.most_common(8)]
+    except Exception:
+        job_missing_skills = []
+
+    try:
+        result = await analyse_resume_quality(
+            resume_text=resume_text,
+            job_missing_skills=job_missing_skills,
+        )
+
+        try:
+            save_resume_quality(req.user_id, result)
+        except Exception:
+            pass
+
+        return {**result, "from_cache": False}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/chat")
+async def chat_with_coach(req: ChatRequest):
+    """Career coach chatbot with user-specific context, streamed via SSE."""
+    if not req.message.strip():
+        raise HTTPException(status_code=400, detail="Message required")
+
+    try:
+        context = build_context_string(req.user_id)
+    except Exception as e:
+        context = "User data temporarily unavailable."
+        print(f"Context build error: {e}")
+
+    system_prompt = CHATBOT_SYSTEM_PROMPT.format(context=context)
+    history = req.conversation_history[-6:] if req.conversation_history else []
+
+    messages = [{"role": "system", "content": system_prompt}]
+    for item in history:
+        if isinstance(item, dict) and item.get("role") and item.get("content"):
+            messages.append({"role": item["role"], "content": item["content"]})
+    messages.append({"role": "user", "content": req.message})
+
+    async def generate():
+        try:
+            stream = chat_client.chat.completions.create(
+                model="openai/gpt-oss-120b",
+                messages=messages,
+                temperature=0.7,
+                max_completion_tokens=400,
+                stream=True,
+            )
+            for chunk in stream:
+                delta = chunk.choices[0].delta
+                if delta and delta.content:
+                    yield f"data: {json.dumps({'content': delta.content})}\n\n"
+            yield "data: [DONE]\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@app.post("/api/chat/debrief")
+async def generate_debrief(req: DebriefRequest):
+    """Generate a proactive post-interview debrief message."""
+    report = req.report or {}
+    overall_score = report.get("overall_score", 0)
+    grade = report.get("grade", "")
+    domain = report.get("domain", "your interview")
+    hiring_rec = report.get("hiring_recommendation", "")
+    sections = report.get("sections") or {}
+    question_breakdown = report.get("question_breakdown") or []
+    strengths = report.get("strengths") or []
+    improvements = report.get("improvement_areas") or []
+
+    weakest_section = None
+    weakest_score = 100
+    for section_name, section_data in sections.items():
+        if isinstance(section_data, dict):
+            score = section_data.get("score", 100)
+            if score < weakest_score:
+                weakest_score = score
+                weakest_section = section_name.replace("_", " ").title()
+
+    weakest_question = None
+    if question_breakdown:
+        sorted_qb = sorted(question_breakdown, key=lambda x: x.get("score", 10))
+        if sorted_qb:
+            weakest_question = str(sorted_qb[0].get("question", ""))[:80]
+
+    score_change = overall_score - req.previous_score
+    score_change_text = ""
+    if req.previous_score > 0:
+        if score_change > 0:
+            score_change_text = f" - up **{score_change} points** from last time"
+        elif score_change < 0:
+            score_change_text = f" - down {abs(score_change)} points from last time"
+        else:
+            score_change_text = " - same as last time"
+
+    confidence_score = (
+        req.confidence_data.get("overallScore")
+        or req.confidence_data.get("overall_score")
+        or req.confidence_data.get("confidence_score")
+        or 0
+    )
+    total_fillers = (
+        req.confidence_data.get("totalFillers")
+        or req.confidence_data.get("total_fillers")
+        or req.confidence_data.get("total_filler_words")
+        or 0
+    )
+
+    debrief_prompt = f"""
+You are ARIA Career Coach. The user just completed a {domain} interview.
+Generate a SHORT, warm, personalised debrief message (max 4 sentences).
+
+Interview results:
+- Score: {overall_score}/100 ({grade}){score_change_text}
+- Hiring recommendation: {hiring_rec}
+- Weakest section: {weakest_section} ({weakest_score}/100)
+- Weakest question: {weakest_question}
+- Confidence score: {confidence_score}/100
+- Filler words used: {total_fillers}
+- Top strength: {strengths[0] if strengths else 'N/A'}
+- Top improvement area: {improvements[0] if improvements else 'N/A'}
+
+RULES:
+- Start with their score and an honest reaction (celebrate if good, encourage if low)
+- Mention ONE specific weakness with the actual score
+- End with exactly ONE question offering 2 options
+- Use **bold** for numbers e.g. **78/100**
+- Max 4 sentences total
+- Tone: warm coach, not a robot
+- Do NOT say "Great job" if score is below 60
+"""
+
+    try:
+        response = chat_client.chat.completions.create(
+            model="openai/gpt-oss-120b",
+            messages=[{"role": "user", "content": debrief_prompt}],
+            temperature=0.7,
+            max_completion_tokens=150,
+        )
+        debrief_message = (response.choices[0].message.content or "").strip()
+        return {"debrief": debrief_message}
+    except Exception:
+        fallback = (
+            f"You scored **{overall_score}/100** ({grade}) in your {domain} interview"
+            f"{score_change_text}. "
+        )
+        if weakest_section:
+            fallback += f"Your weakest area was **{weakest_section}** ({weakest_score}/100). "
+        fallback += (
+            "Want me to explain what a stronger answer looks like, "
+            "or create a focused study plan for you?"
+        )
+        return {"debrief": fallback}
 
 
 @app.get("/health")

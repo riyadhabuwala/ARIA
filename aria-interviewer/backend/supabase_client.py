@@ -1,4 +1,6 @@
 import os
+from datetime import datetime, timedelta, timezone
+
 from supabase import create_client, Client
 from dotenv import load_dotenv
 
@@ -194,3 +196,43 @@ def get_latest_job_results(user_id: str) -> dict | None:
         .execute()
     )
     return result.data[0] if result.data else None
+
+
+def save_resume_quality(user_id: str, quality_data: dict) -> None:
+    """Cache resume quality score to avoid re-running on every visit."""
+    supabase.table("user_resume_profiles").update(
+        {
+            "quality_score": quality_data,
+            "quality_analysed_at": datetime.now(timezone.utc).isoformat(),
+        }
+    ).eq("user_id", user_id).execute()
+
+
+def get_cached_quality(user_id: str) -> dict | None:
+    """
+    Get cached quality score if analysed within last 24 hours.
+    Returns None if stale or missing.
+    """
+    try:
+        result = (
+            supabase.table("user_resume_profiles")
+            .select("quality_score, quality_analysed_at")
+            .eq("user_id", user_id)
+            .single()
+            .execute()
+        )
+        if not result.data:
+            return None
+
+        quality = result.data.get("quality_score")
+        analysed_at = result.data.get("quality_analysed_at")
+        if not quality or not analysed_at:
+            return None
+
+        analysed_time = datetime.fromisoformat(analysed_at.replace("Z", "+00:00"))
+        if datetime.now(timezone.utc) - analysed_time > timedelta(hours=24):
+            return None
+
+        return quality
+    except Exception:
+        return None
