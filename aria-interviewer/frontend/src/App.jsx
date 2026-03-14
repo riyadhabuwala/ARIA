@@ -8,6 +8,7 @@ import ResumeUpload from "./components/ResumeUpload";
 import InterviewRoom from "./components/InterviewRoom";
 import FeedbackReport from "./components/FeedbackReport";
 import LoadingScreen from "./components/LoadingScreen";
+import JobMatchPage from "./pages/JobMatchPage";
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -54,6 +55,7 @@ function AppContent() {
         candidateName: interviewData.name,
         report,
         confidenceData: confidenceData || {},
+        confidenceBreakdown: confidenceData || {},
         durationSeconds: durationSeconds || 0,
         messages: messages || [],
       });
@@ -100,7 +102,15 @@ function AppContent() {
   return (
     <div className="min-h-screen" style={{ background: "var(--bg-base)", color: "var(--text-primary)" }}>
       {step === "dashboard" && (
-        <Dashboard user={user} onNewInterview={handleStartNew} onViewSession={handleViewSession} />
+        <Dashboard
+          user={user}
+          onNewInterview={handleStartNew}
+          onViewSession={handleViewSession}
+          onJobMatch={() => setStep("jobmatch")}
+        />
+      )}
+      {step === "jobmatch" && (
+        <JobMatchPage user={user} onBack={() => setStep("dashboard")} />
       )}
       {step === "setup" && <DomainSelector onStart={handleStart} />}
       {step === "resume" && <ResumeUpload onComplete={handleResumeComplete} />}

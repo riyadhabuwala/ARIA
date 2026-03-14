@@ -57,7 +57,16 @@ export async function generateReport(sessionId) {
   return res.json();
 }
 
-export async function saveSession({ userId, domain, candidateName, report, confidenceData, durationSeconds, messages }) {
+export async function saveSession({
+  userId,
+  domain,
+  candidateName,
+  report,
+  confidenceData,
+  confidenceBreakdown = {},
+  durationSeconds,
+  messages,
+}) {
   const res = await fetch(`${BASE_URL}/api/save-session`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -67,6 +76,7 @@ export async function saveSession({ userId, domain, candidateName, report, confi
       candidate_name: candidateName,
       report,
       confidence_data: confidenceData,
+      confidence_breakdown: confidenceBreakdown,
       duration_seconds: durationSeconds,
       messages,
     }),

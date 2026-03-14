@@ -17,9 +17,11 @@ def save_interview_session(
     report: dict,
     confidence_data: dict,
     duration_seconds: int,
+    confidence_breakdown: dict = None,
     messages: list = None,
 ) -> dict:
     """Save completed interview session to Supabase."""
+    breakdown = confidence_breakdown or confidence_data or {}
     data = {
         "user_id": user_id,
         "domain": domain,
@@ -28,9 +30,10 @@ def save_interview_session(
         "grade": report.get("grade"),
         "summary": report.get("summary"),
         "report_json": report,
-        "confidence_score": confidence_data.get("confidence_score", 0),
+        "confidence_score": breakdown.get("confidence_score", breakdown.get("overall_score", 0)),
         "confidence_json": confidence_data,
-        "filler_word_count": confidence_data.get("total_filler_words", 0),
+        "confidence_breakdown": breakdown,
+        "filler_word_count": breakdown.get("total_filler_words", breakdown.get("total_fillers", 0)),
         "duration_seconds": duration_seconds,
         "messages_json": messages or [],
     }
@@ -129,3 +132,65 @@ def get_analytics_data(user_id: str) -> dict:
         ],
         "improvement": scores[-1] - scores[0] if len(scores) > 1 else 0
     }
+
+
+async def save_resume_profile(
+    user_id: str,
+    resume_text: str,
+    profile: dict,
+    resume_filename: str = "",
+) -> None:
+    """Save or update a user's resume profile."""
+    payload = {
+        "user_id": user_id,
+        "resume_text": resume_text,
+        "extracted_profile": profile,
+    }
+    if resume_filename:
+        payload["resume_filename"] = resume_filename
+    supabase.table("user_resume_profiles").upsert(payload, on_conflict="user_id").execute()
+
+
+def get_resume_profile(user_id: str) -> dict | None:
+    """Get saved resume profile for a user."""
+    result = (
+        supabase.table("user_resume_profiles")
+        .select("*")
+        .eq("user_id", user_id)
+        .limit(1)
+        .execute()
+    )
+    data = result.data or []
+    return data[0] if data else None
+
+
+async def save_job_results(
+    user_id: str,
+    scan_id: str,
+    jobs: list,
+    queries: list,
+    total_fetched: int,
+) -> None:
+    """Save job matching scan results."""
+    supabase.table("job_match_results").insert(
+        {
+            "user_id": user_id,
+            "scan_id": scan_id,
+            "jobs": jobs,
+            "queries_used": queries,
+            "total_fetched": total_fetched,
+        }
+    ).execute()
+
+
+def get_latest_job_results(user_id: str) -> dict | None:
+    """Get the latest saved job match scan for a user."""
+    result = (
+        supabase.table("job_match_results")
+        .select("*")
+        .eq("user_id", user_id)
+        .order("last_scanned_at", desc=True)
+        .limit(1)
+        .execute()
+    )
+    return result.data[0] if result.data else None

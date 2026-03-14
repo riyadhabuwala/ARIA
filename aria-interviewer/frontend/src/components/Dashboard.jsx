@@ -5,7 +5,7 @@ import HistoryCard from "./HistoryCard";
 import AnalyticsCharts from "./AnalyticsCharts";
 import ThemeToggle from "./ThemeToggle";
 
-export default function Dashboard({ user, onNewInterview, onViewSession }) {
+export default function Dashboard({ user, onNewInterview, onViewSession, onJobMatch }) {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("history");
@@ -74,6 +74,17 @@ export default function Dashboard({ user, onNewInterview, onViewSession }) {
         {/* Right actions */}
         <div className="flex items-center gap-3">
           <ThemeToggle />
+          <button
+            onClick={onJobMatch}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-80"
+            style={{
+              background: "var(--bg-overlay)",
+              border: "1px solid var(--border-default)",
+              color: "var(--text-secondary)",
+            }}
+          >
+            Job Match
+          </button>
           <button
             onClick={onNewInterview}
             className="flex items-center gap-2 px-4 py-2 rounded-lg

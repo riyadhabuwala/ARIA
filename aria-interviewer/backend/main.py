@@ -6,7 +6,16 @@ from interview_agent import agent
 from resume_parser import extract_resume_text
 from elevenlabs_tts import text_to_speech
 from confidence_analyzer import analyze_full_interview
-from supabase_client import save_interview_session, get_user_sessions, get_session_by_id, get_analytics_data
+from supabase_client import (
+    save_interview_session,
+    get_user_sessions,
+    get_session_by_id,
+    get_analytics_data,
+    get_resume_profile,
+    get_latest_job_results,
+    save_resume_profile,
+)
+from job_agent import JobMatchAgent
 import uuid
 import os
 from dotenv import load_dotenv
@@ -14,6 +23,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = FastAPI(title="ARIA Interview API")
+job_agent = JobMatchAgent()
 
 app.add_middleware(
     CORSMiddleware,
@@ -51,12 +61,23 @@ class SaveSessionRequest(BaseModel):
     candidate_name: str
     report: dict
     confidence_data: dict
+    confidence_breakdown: dict = {}
     duration_seconds: int
     messages: list = []
 
 
 class ConfidenceRequest(BaseModel):
     answers: list[str]
+
+
+class SaveResumeRequest(BaseModel):
+    user_id: str
+    resume_text: str
+    filename: str = ""
+
+
+class ScanRequest(BaseModel):
+    user_id: str
 
 
 # ── ROUTES ──────────────────────────────────────────────────────
@@ -145,6 +166,7 @@ async def save_session(req: SaveSessionRequest):
             candidate_name=req.candidate_name,
             report=req.report,
             confidence_data=req.confidence_data,
+            confidence_breakdown=req.confidence_breakdown,
             duration_seconds=req.duration_seconds,
             messages=req.messages,
         )
@@ -182,6 +204,71 @@ async def get_analytics(user_id: str):
         return data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/profile/save-resume")
+async def save_resume_route(req: SaveResumeRequest):
+    """Save resume text to user profile for future scans."""
+    try:
+        await save_resume_profile(
+            user_id=req.user_id,
+            resume_text=req.resume_text,
+            profile={},
+            resume_filename=req.filename,
+        )
+        return {"success": True, "message": "Resume saved to profile"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/profile/{user_id}")
+async def get_profile_route(user_id: str):
+    """Get saved resume and extracted profile for user."""
+    profile = get_resume_profile(user_id)
+    if not profile:
+        return {"has_resume": False}
+    return {
+        "has_resume": True,
+        "filename": profile.get("resume_filename", ""),
+        "extracted_profile": profile.get("extracted_profile"),
+        "updated_at": profile.get("updated_at"),
+    }
+
+
+@app.post("/api/job-match/scan")
+async def run_job_scan(req: ScanRequest):
+    """Run the job match pipeline using the user's saved resume."""
+    profile_data = get_resume_profile(req.user_id)
+    if not profile_data or not profile_data.get("resume_text"):
+        raise HTTPException(
+            status_code=400,
+            detail="No resume found. Please upload your resume first.",
+        )
+
+    try:
+        result = await job_agent.run(
+            user_id=req.user_id,
+            resume_text=profile_data["resume_text"],
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/job-match/results/{user_id}")
+async def get_job_results(user_id: str):
+    """Get the most recent job match result set for a user."""
+    results = get_latest_job_results(user_id)
+    if not results:
+        return {"has_results": False}
+    return {
+        "has_results": True,
+        "scan_id": results.get("scan_id"),
+        "jobs": results.get("jobs", []),
+        "queries_used": results.get("queries_used", []),
+        "total_fetched": results.get("total_fetched", 0),
+        "last_scanned_at": results.get("last_scanned_at"),
+    }
 
 
 @app.get("/health")
