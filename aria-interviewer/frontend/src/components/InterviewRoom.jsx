@@ -200,14 +200,19 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
       <div
         className="flex items-center justify-between px-6 py-3 flex-shrink-0 z-10"
         style={{
-          background: "var(--bg-surface)",
+          background: "rgba(0,0,0,0.85)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
           borderBottom: "1px solid var(--border-subtle)",
         }}
       >
         <div className="flex items-center gap-3">
           <div
             className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white text-xs"
-            style={{ background: "var(--accent-primary)" }}
+            style={{
+              background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+              boxShadow: "0 0 12px rgba(37,99,235,0.3)"
+            }}
           >
             AI
           </div>
@@ -225,7 +230,7 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
               style={{
                 background: "var(--accent-subtle)",
                 color: "var(--accent-primary)",
-                border: "1px solid rgba(124,106,255,0.2)",
+                border: "1px solid rgba(37,99,235,0.2)",
               }}
             >
               Q{questionCount} / 7
@@ -273,7 +278,7 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
             boxShadow: isListening
               ? "0 0 30px rgba(239,68,68,0.25)"
               : isSpeaking
-              ? "0 0 30px rgba(124,106,255,0.2)"
+              ? "0 0 30px rgba(37,99,235,0.2)"
               : "var(--shadow-lg)",
             transition: "border-color 0.3s, box-shadow 0.3s",
           }}
@@ -420,7 +425,12 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
 
       <div
         className="flex-shrink-0 px-6 py-4 flex items-center justify-center gap-6"
-        style={{ background: "var(--bg-surface)", borderTop: "1px solid var(--border-subtle)" }}
+        style={{
+          background: "rgba(0,0,0,0.85)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          borderTop: "1px solid var(--border-subtle)"
+        }}
       >
         {answers.length > 0 && (
           <div

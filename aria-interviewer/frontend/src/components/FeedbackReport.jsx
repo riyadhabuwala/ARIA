@@ -51,24 +51,38 @@ export default function FeedbackReport({ report, confidenceData, onReset, audioU
   const gs = gradeStyles[report.grade] || { color: "var(--text-muted)", bg: "var(--bg-surface)", border: "var(--border-default)" };
   const hs = hiringStyles[report.hiring_recommendation] || { color: "var(--text-muted)", bg: "var(--bg-surface)" };
 
-  const ScoreCard = ({ title, score, feedback }) => (
-    <div
-      className="rounded-xl p-5"
-      style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}
-    >
-      <div className="flex items-center justify-between mb-3">
-        <h4 className="text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>{title}</h4>
-        <span className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>{score}</span>
+  const ScoreCard = ({ title, score, feedback }) => {
+    const color = score >= 80 ? "#22c55e" : score >= 60 ? "#2563eb" : "#f59e0b";
+    return (
+      <div
+        className="rounded-2xl p-5"
+        style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}
+      >
+        <div className="text-center mb-3">
+          <div
+            className="font-geist text-3xl font-bold mb-1"
+            style={{ color, letterSpacing: "-0.03em" }}
+          >
+            {score}
+          </div>
+          <h4 className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>
+            {title}
+          </h4>
+        </div>
+        <div className="h-1 rounded-full overflow-hidden mb-3" style={{ background: "var(--bg-elevated)" }}>
+          <div
+            className="h-full rounded-full transition-all duration-700"
+            style={{ width: `${score}%`, background: `linear-gradient(90deg, ${color}, ${color}88)` }}
+          />
+        </div>
+        {feedback && (
+          <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>
+            {feedback.length > 80 ? feedback.slice(0, 80) + "..." : feedback}
+          </p>
+        )}
       </div>
-      <div className="w-full rounded-full h-2 mb-3" style={{ background: "var(--bg-elevated)" }}>
-        <div
-          className="h-2 rounded-full transition-all duration-700"
-          style={{ width: `${score}%`, background: "linear-gradient(90deg, var(--accent-primary), var(--accent-secondary))" }}
-        />
-      </div>
-      <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>{feedback}</p>
-    </div>
-  );
+    );
+  };
 
   const sections = report.sections || {};
 
@@ -83,31 +97,73 @@ export default function FeedbackReport({ report, confidenceData, onReset, audioU
 
         {/* Hero Score */}
         <div
-          className="rounded-2xl p-8 mb-8 text-center animate-fade-in"
-          style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-subtle)" }}
+          className="rounded-2xl p-8 mb-8 text-center animate-fade-in relative overflow-hidden"
+          style={{
+            background: "linear-gradient(135deg, #020817, #0a1628)",
+            border: "1px solid rgba(37,99,235,0.15)",
+          }}
         >
+          {/* Background glow */}
           <div
-            className="text-8xl font-bold mb-3"
+            className="absolute inset-0 pointer-events-none"
             style={{
-              background: "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
+              background: "radial-gradient(ellipse at 50% 0%, rgba(37,99,235,0.15), transparent 60%)",
             }}
-          >
-            {animatedScore}
+          />
+          <div className="relative z-10">
+            {report.hiring_recommendation && (
+              <div
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold mb-6"
+                style={{
+                  background:
+                    report.hiring_recommendation === "Yes" || report.hiring_recommendation === "Strong Yes"
+                      ? "rgba(34,197,94,0.1)"
+                      : "rgba(245,158,11,0.1)",
+                  border: `1px solid ${
+                    report.hiring_recommendation === "Yes" || report.hiring_recommendation === "Strong Yes"
+                      ? "rgba(34,197,94,0.25)"
+                      : "rgba(245,158,11,0.25)"
+                  }`,
+                  color:
+                    report.hiring_recommendation === "Yes" || report.hiring_recommendation === "Strong Yes"
+                      ? "#22c55e"
+                      : "#f59e0b",
+                }}
+              >
+                {report.hiring_recommendation === "Yes" || report.hiring_recommendation === "Strong Yes"
+                  ? "✓ Recommended for Hire"
+                  : "◈ More Practice Recommended"}
+              </div>
+            )}
+            <div
+              className="font-geist text-8xl font-bold mb-2"
+              style={{
+                color:
+                  report.overall_score >= 80
+                    ? "#22c55e"
+                    : report.overall_score >= 60
+                      ? "#2563eb"
+                      : "#f59e0b",
+                letterSpacing: "-0.05em",
+              }}
+            >
+              {animatedScore}
+            </div>
+            <div
+              className="text-lg font-semibold mb-1"
+              style={{ color: "rgba(255,255,255,0.7)" }}
+            >
+              {report.grade}
+            </div>
+            {report.summary && (
+              <p
+                className="text-sm max-w-md mx-auto leading-relaxed"
+                style={{ color: "rgba(255,255,255,0.4)" }}
+              >
+                {report.summary}
+              </p>
+            )}
           </div>
-          <div className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>out of 100</div>
-          <span
-            className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold"
-            style={{ color: gs.color, background: gs.bg, border: `1px solid ${gs.border}` }}
-          >
-            {report.grade}
-          </span>
-          {report.summary && (
-            <p className="text-sm mt-5 max-w-xl mx-auto leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-              {report.summary}
-            </p>
-          )}
         </div>
 
         {/* Partial interview banner */}
@@ -453,16 +509,16 @@ export default function FeedbackReport({ report, confidenceData, onReset, audioU
         )}
 
         {/* Bottom CTA */}
-        <div className="text-center pb-8">
+        <div className="flex gap-3 justify-center pb-8">
           <button
             onClick={onReset}
-            className="px-8 py-3 font-semibold rounded-xl transition"
+            className="px-8 py-3.5 font-bold rounded-xl text-white transition-all hover:opacity-90 active:scale-[0.98]"
             style={{
-              background: "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))",
-              color: "#fff",
+              background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+              boxShadow: "0 0 24px rgba(37,99,235,0.3)",
             }}
           >
-            Start New Interview
+            Start New Interview →
           </button>
         </div>
       </div>

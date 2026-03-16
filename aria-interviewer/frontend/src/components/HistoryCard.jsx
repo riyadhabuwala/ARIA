@@ -1,29 +1,56 @@
 import { formatDate, formatDuration, gradeEmoji } from "../utils/formatters";
 
-const domainColors = {
-  "Software Engineering": { bg: "rgba(59,130,246,0.08)", border: "rgba(59,130,246,0.2)", text: "#3b82f6" },
-  "Web Development":      { bg: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.2)", text: "#10b981" },
-  "Data Science":         { bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.2)", text: "#f59e0b" },
-  "Artificial Intelligence": { bg: "rgba(139,92,246,0.08)", border: "rgba(139,92,246,0.2)", text: "#8b5cf6" },
-  "HR / Behavioral":      { bg: "rgba(236,72,153,0.08)", border: "rgba(236,72,153,0.2)", text: "#ec4899" },
+const DOMAIN_STYLES = {
+  "Software Engineering": {
+    color: "#2563eb",
+    bg: "rgba(37,99,235,0.08)",
+    border: "rgba(37,99,235,0.2)",
+  },
+  "Web Development": {
+    color: "#10b981",
+    bg: "rgba(16,185,129,0.08)",
+    border: "rgba(16,185,129,0.2)",
+  },
+  "Data Science": {
+    color: "#f59e0b",
+    bg: "rgba(245,158,11,0.08)",
+    border: "rgba(245,158,11,0.2)",
+  },
+  "Artificial Intelligence": {
+    color: "#8b5cf6",
+    bg: "rgba(139,92,246,0.08)",
+    border: "rgba(139,92,246,0.2)",
+  },
+  "HR / Behavioral": {
+    color: "#ec4899",
+    bg: "rgba(236,72,153,0.08)",
+    border: "rgba(236,72,153,0.2)",
+  },
+};
+
+const DEFAULT_DOMAIN = {
+  color: "#2563eb",
+  bg: "rgba(37,99,235,0.08)",
+  border: "rgba(37,99,235,0.2)",
 };
 
 export default function HistoryCard({ session, onView, index = 0 }) {
-  const dc = domainColors[session.domain] || {
-    bg: "var(--accent-subtle)", border: "var(--border-default)",
-    text: "var(--accent-primary)"
-  };
+  const ds = DOMAIN_STYLES[session.domain] || DEFAULT_DOMAIN;
   const score = session.overall_score || 0;
-  const scoreColor = score >= 80 ? "var(--success)"
-    : score >= 60 ? "var(--accent-primary)"
-    : score >= 40 ? "var(--warning)"
-    : "var(--danger)";
+
+  // Graduated colors — never alarming red for scores
+  const scoreColor =
+    score >= 80
+      ? "#22c55e"
+      : score >= 60
+        ? "#2563eb"
+        : score >= 40
+          ? "#f59e0b"
+          : "#94a3b8"; // muted gray for low scores
 
   return (
     <div
-      className={`group rounded-xl p-5 cursor-pointer
-                  transition-all duration-200 hover:-translate-y-1
-                  animate-fadeUp stagger-${(index % 5) + 1}`}
+      className={`group rounded-2xl p-5 cursor-pointer transition-all duration-200 hover:-translate-y-1 animate-fadeUp stagger-${(index % 5) + 1}`}
       style={{
         background: "var(--bg-surface)",
         border: "1px solid var(--border-subtle)",
@@ -40,11 +67,14 @@ export default function HistoryCard({ session, onView, index = 0 }) {
     >
       {/* Top row */}
       <div className="flex items-center justify-between mb-4">
-        <span className="px-2.5 py-1 rounded-md text-xs font-semibold"
-              style={{
-                background: dc.bg, border: `1px solid ${dc.border}`,
-                color: dc.text
-              }}>
+        <span
+          className="px-2.5 py-1 rounded-lg text-xs font-semibold"
+          style={{
+            background: ds.bg,
+            border: `1px solid ${ds.border}`,
+            color: ds.color,
+          }}
+        >
           {session.domain}
         </span>
         <span className="text-xs" style={{ color: "var(--text-muted)" }}>
@@ -53,57 +83,57 @@ export default function HistoryCard({ session, onView, index = 0 }) {
       </div>
 
       {/* Score */}
-      <div className="flex items-end gap-3 mb-4">
-        <span className="text-4xl font-bold heading-font"
-              style={{ color: scoreColor }}>
+      <div className="flex items-end gap-3 mb-1">
+        <span
+          className="font-geist text-4xl font-bold"
+          style={{ color: scoreColor, letterSpacing: "-0.03em" }}
+        >
           {score}
         </span>
         <div className="pb-1">
-          <span className="text-sm font-semibold"
-                style={{ color: scoreColor }}>
+          <span className="text-sm font-semibold" style={{ color: scoreColor }}>
             {gradeEmoji(session.grade)} {session.grade}
           </span>
         </div>
       </div>
 
       {/* Score bar */}
-      <div className="h-1.5 rounded-full mb-4 overflow-hidden"
-           style={{ background: "var(--bg-elevated)" }}>
+      <div
+        className="h-1 rounded-full mb-4 overflow-hidden"
+        style={{ background: "var(--bg-elevated)" }}
+      >
         <div
           className="h-full rounded-full transition-all duration-700"
           style={{
             width: `${score}%`,
-            background: `linear-gradient(90deg, ${scoreColor}, ${scoreColor}aa)`
+            background: `linear-gradient(90deg, ${scoreColor}, ${scoreColor}88)`,
           }}
         />
       </div>
 
       {/* Meta */}
       <div className="flex items-center gap-4 mb-4">
-        <span className="flex items-center gap-1.5 text-xs"
-              style={{ color: "var(--text-muted)" }}>
+        <span className="text-xs" style={{ color: "var(--text-muted)" }}>
           ⏱ {formatDuration(session.duration_seconds)}
         </span>
         {session.confidence_score && (
-          <span className="flex items-center gap-1.5 text-xs"
-                style={{ color: "var(--text-muted)" }}>
-            💪 {session.confidence_score}% confidence
+          <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+            💪 {session.confidence_score}% conf
           </span>
         )}
       </div>
 
-      {/* Button */}
+      {/* CTA button */}
       <button
         onClick={onView}
-        className="w-full py-2.5 rounded-lg text-sm font-semibold
-                   transition-all duration-200 hover:opacity-90
-                   active:scale-[0.98]"
+        className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:opacity-90 active:scale-[0.98]"
         style={{
-          background: "var(--accent-subtle)",
-          border: "1px solid rgba(124,106,255,0.2)",
-          color: "var(--accent-primary)",
-        }}>
-        View Full Report →
+          background: "rgba(37,99,235,0.08)",
+          border: "1px solid rgba(37,99,235,0.2)",
+          color: "#2563eb",
+        }}
+      >
+        View Report →
       </button>
     </div>
   );

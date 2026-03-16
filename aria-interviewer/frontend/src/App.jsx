@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { saveSession, getHistory, getSession } from "./api/interviewApi";
+
+import LandingPage from "./pages/LandingPage";
 import AuthPage from "./components/AuthPage";
 import Dashboard from "./components/Dashboard";
 import DomainSelector from "./components/DomainSelector";
@@ -11,9 +14,19 @@ import LoadingScreen from "./components/LoadingScreen";
 import JobMatchPage from "./pages/JobMatchPage";
 import ChatWidget from "./components/ChatWidget";
 
+// ── Auth guard ────────────────────────────────
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return <LoadingScreen />;
+  if (!user) return <Navigate to="/login" replace />;
+  return children;
+}
+
+// ── Main routed app content ───────────────────
 function AppContent() {
   const { user, loading } = useAuth();
-  const [step, setStep] = useState("dashboard");
+  const navigate = useNavigate();
+
   const chatWidgetRef = useRef(null);
   const [chatForceOpen, setChatForceOpen] = useState(false);
   const [previousScore, setPreviousScore] = useState(0);
@@ -27,6 +40,7 @@ function AppContent() {
     audioBlob: null,
   });
 
+  // ── Load previous score for debrief ─────────
   const loadPreviousScore = useCallback(async () => {
     if (!user?.id) return;
     try {
@@ -43,34 +57,15 @@ function AppContent() {
   }, [user?.id]);
 
   useEffect(() => {
-    if (user?.id && step === "dashboard") {
+    if (user?.id) {
       loadPreviousScore();
     }
-  }, [user?.id, step, loadPreviousScore]);
+  }, [user?.id, loadPreviousScore]);
 
-  if (loading) {
-    return <LoadingScreen />;
-  }
-
-  if (!user) {
-    return <AuthPage />;
-  }
-
-  const handleStartNew = () => setStep("setup");
-
-  const handleStart = (name, domain) => {
-    setInterviewData((prev) => ({ ...prev, name, domain }));
-    setStep("resume");
-  };
-
-  const handleResumeComplete = (resumeText) => {
-    setInterviewData((prev) => ({ ...prev, resumeText }));
-    setStep("interview");
-  };
-
+  // ── Interview completion handler ─────────────
   const handleInterviewComplete = async (report, confidenceData, durationSeconds, messages) => {
     setInterviewData((prev) => ({ ...prev, report, confidenceData }));
-    setStep("report");
+    navigate("/report");
 
     // Save session to Supabase
     try {
@@ -88,19 +83,43 @@ function AppContent() {
       console.error("Failed to save session:", err);
     }
 
+    // Trigger debrief chat
     setTimeout(async () => {
       setChatForceOpen(true);
-
       await new Promise((r) => setTimeout(r, 300));
       if (chatWidgetRef.current?.triggerDebrief) {
         chatWidgetRef.current.triggerDebrief(report, confidenceData, previousScore);
       }
-
       setTimeout(() => setChatForceOpen(false), 1000);
       setPreviousScore(report?.overall_score || 0);
     }, 800);
   };
 
+  // ── View past session report ─────────────────
+  const handleViewSession = async (session) => {
+    try {
+      const full = await getSession(session.id);
+      setInterviewData((prev) => ({
+        ...prev,
+        report: full.report_json,
+        confidenceData: full.confidence_json,
+      }));
+      navigate("/report");
+    } catch (err) {
+      console.error("Failed to load session:", err);
+    }
+  };
+
+  // ── Download recording ───────────────────────
+  const handleDownloadRecording = () => {
+    if (!interviewData.audioUrl) return;
+    const a = document.createElement("a");
+    a.href = interviewData.audioUrl;
+    a.download = `aria-interview-${Date.now()}.webm`;
+    a.click();
+  };
+
+  // ── Reset / navigation helpers ───────────────
   const handleReset = () => {
     setInterviewData({
       name: "",
@@ -111,63 +130,111 @@ function AppContent() {
       audioUrl: null,
       audioBlob: null,
     });
-    setStep("dashboard");
+    navigate("/dashboard");
   };
 
-  const handleViewSession = async (session) => {
-    try {
-      const full = await getSession(session.id);
-      setInterviewData((prev) => ({
-        ...prev,
-        report: full.report_json,
-        confidenceData: full.confidence_json,
-      }));
-      setStep("report");
-    } catch (err) {
-      console.error("Failed to load session:", err);
-    }
-  };
-
-  const handleDownloadRecording = () => {
-    if (!interviewData.audioUrl) return;
-    const a = document.createElement("a");
-    a.href = interviewData.audioUrl;
-    a.download = `aria-interview-${Date.now()}.webm`;
-    a.click();
-  };
+  if (loading) return <LoadingScreen />;
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--bg-base)", color: "var(--text-primary)" }}>
-      {step === "dashboard" && (
-        <Dashboard
-          user={user}
-          onNewInterview={handleStartNew}
-          onViewSession={handleViewSession}
-          onJobMatch={() => setStep("jobmatch")}
+    <>
+      <Routes>
+        {/* Public routes */}
+        <Route path="/" element={<LandingPage />} />
+        <Route
+          path="/login"
+          element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />}
         />
-      )}
-      {step === "jobmatch" && (
-        <JobMatchPage user={user} onBack={() => setStep("dashboard")} />
-      )}
-      {step === "setup" && <DomainSelector onStart={handleStart} />}
-      {step === "resume" && <ResumeUpload onComplete={handleResumeComplete} />}
-      {step === "interview" && (
-        <InterviewRoom
-          name={interviewData.name}
-          domain={interviewData.domain}
-          resumeText={interviewData.resumeText}
-          onComplete={handleInterviewComplete}
+
+        {/* Protected routes */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard
+                user={user}
+                onNewInterview={() => navigate("/interview/setup")}
+                onViewSession={handleViewSession}
+                onJobMatch={() => navigate("/job-match")}
+              />
+            </ProtectedRoute>
+          }
         />
-      )}
-      {step === "report" && (
-        <FeedbackReport
-          report={interviewData.report}
-          confidenceData={interviewData.confidenceData}
-          audioUrl={interviewData.audioUrl}
-          onDownload={interviewData.audioUrl ? handleDownloadRecording : null}
-          onReset={handleReset}
+
+        <Route
+          path="/interview/setup"
+          element={
+            <ProtectedRoute>
+              <DomainSelector
+                onStart={(name, domain) => {
+                  setInterviewData((prev) => ({ ...prev, name, domain }));
+                  navigate("/interview/resume");
+                }}
+              />
+            </ProtectedRoute>
+          }
         />
-      )}
+
+        <Route
+          path="/interview/resume"
+          element={
+            <ProtectedRoute>
+              <ResumeUpload
+                onComplete={(resumeText) => {
+                  setInterviewData((prev) => ({ ...prev, resumeText }));
+                  navigate("/interview/room");
+                }}
+              />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/interview/room"
+          element={
+            <ProtectedRoute>
+              <InterviewRoom
+                name={interviewData.name}
+                domain={interviewData.domain}
+                resumeText={interviewData.resumeText}
+                onComplete={handleInterviewComplete}
+              />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/report"
+          element={
+            <ProtectedRoute>
+              {interviewData.report ? (
+                <FeedbackReport
+                  report={interviewData.report}
+                  confidenceData={interviewData.confidenceData}
+                  audioUrl={interviewData.audioUrl}
+                  onDownload={interviewData.audioUrl ? handleDownloadRecording : null}
+                  onReset={handleReset}
+                />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )}
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/job-match"
+          element={
+            <ProtectedRoute>
+              <JobMatchPage user={user} onBack={() => navigate("/dashboard")} />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Catch all */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+
+      {/* Global chatbot — visible on all protected pages */}
       {user && (
         <ChatWidget
           ref={chatWidgetRef}
@@ -178,7 +245,7 @@ function AppContent() {
           }}
         />
       )}
-    </div>
+    </>
   );
 }
 
