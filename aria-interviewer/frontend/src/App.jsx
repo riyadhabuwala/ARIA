@@ -36,6 +36,8 @@ function AppContent() {
     resumeText: "",
     report: null,
     confidenceData: null,
+    sessionId: null,
+    durationSeconds: 0,
     audioUrl: null,
     audioBlob: null,
   });
@@ -64,12 +66,12 @@ function AppContent() {
 
   // ── Interview completion handler ─────────────
   const handleInterviewComplete = async (report, confidenceData, durationSeconds, messages) => {
-    setInterviewData((prev) => ({ ...prev, report, confidenceData }));
+    setInterviewData((prev) => ({ ...prev, report, confidenceData, durationSeconds: durationSeconds || 0 }));
     navigate("/report");
 
     // Save session to Supabase
     try {
-      await saveSession({
+      const saved = await saveSession({
         userId: user.id,
         domain: interviewData.domain,
         candidateName: interviewData.name,
@@ -79,6 +81,9 @@ function AppContent() {
         durationSeconds: durationSeconds || 0,
         messages: messages || [],
       });
+      if (saved?.session_id) {
+        setInterviewData((prev) => ({ ...prev, sessionId: saved.session_id }));
+      }
     } catch (err) {
       console.error("Failed to save session:", err);
     }
@@ -103,6 +108,8 @@ function AppContent() {
         ...prev,
         report: full.report_json,
         confidenceData: full.confidence_json,
+        sessionId: full.id,
+        durationSeconds: full.duration_seconds || 0,
       }));
       navigate("/report");
     } catch (err) {
@@ -127,6 +134,8 @@ function AppContent() {
       resumeText: "",
       report: null,
       confidenceData: null,
+      sessionId: null,
+      durationSeconds: 0,
       audioUrl: null,
       audioBlob: null,
     });
@@ -210,6 +219,8 @@ function AppContent() {
                 <FeedbackReport
                   report={interviewData.report}
                   confidenceData={interviewData.confidenceData}
+                  sessionId={interviewData.sessionId}
+                  durationSeconds={interviewData.durationSeconds}
                   audioUrl={interviewData.audioUrl}
                   onDownload={interviewData.audioUrl ? handleDownloadRecording : null}
                   onReset={handleReset}

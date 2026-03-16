@@ -41,7 +41,13 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
     : null;
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--bg-base)" }}>
+    <div className="min-h-screen dashboard-shell">
+      <div className="dashboard-bg" aria-hidden="true">
+        <div className="dash-orb orb-a" />
+        <div className="dash-orb orb-b" />
+        <div className="dash-orb orb-c" />
+        <div className="dash-grid" />
+      </div>
       {/* ── NAVBAR ── */}
       <nav
         className="sticky top-0 z-50"
@@ -102,22 +108,26 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
         </div>
       </nav>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-6xl mx-auto px-6 py-8 dashboard-content">
         {/* ── GREETING ── */}
-        <div className="mb-8 animate-fadeUp">
-          <h1
-            className="font-geist text-3xl font-bold mb-1"
-            style={{ color: "var(--text-primary)" }}
-          >
-            Welcome back 👋
-          </h1>
-          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-            {user.email}
-          </p>
+        <div className="mb-10 dash-hero">
+          <div className="dash-hero-left">
+            <h1 className="font-geist text-4xl font-bold mb-2 dash-title" style={{ color: "var(--text-primary)" }}>
+              Welcome back
+              <span className="dash-wave" aria-hidden="true"> 👋</span>
+            </h1>
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+              {user.email}
+            </p>
+          </div>
+          <div className="dash-hero-right">
+            <div className="dash-chip">Performance Hub</div>
+            <div className="dash-subtitle">Your interview progress at a glance</div>
+          </div>
         </div>
 
         {/* ── STATS STRIP ── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
           {[
             {
               label: "Total Sessions",
@@ -147,18 +157,7 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
           ].map((stat, i) => (
             <div
               key={i}
-              className={`rounded-2xl p-5 transition-all duration-200 animate-fadeUp stagger-${i + 1}`}
-              style={{
-                background: "var(--bg-surface)",
-                border: "1px solid var(--border-subtle)",
-                boxShadow: "var(--shadow-sm)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "var(--border-default)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "var(--border-subtle)";
-              }}
+              className={`dash-stat-card animate-fadeUp stagger-${i + 1}`}
             >
               <div
                 className={`font-geist font-bold mb-1 ${stat.small ? "text-lg" : "text-3xl"}`}
@@ -170,7 +169,7 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
                 {stat.label}
               </div>
               {stat.sub && (
-                <div className="text-xs mt-1" style={{ color: "var(--success)" }}>
+                <div className="text-xs mt-1 dash-stat-sub">
                   {stat.sub}
                 </div>
               )}
@@ -179,23 +178,12 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
         </div>
 
         {/* ── TAB BAR ── */}
-        <div
-          className="flex gap-1 p-1 rounded-xl w-fit mb-6"
-          style={{
-            background: "var(--bg-overlay)",
-            border: "1px solid var(--border-subtle)",
-          }}
-        >
+        <div className="dash-tabs mb-6">
           {["history", "analytics"].map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className="px-6 py-2.5 rounded-lg text-sm font-semibold capitalize transition-all duration-200"
-              style={{
-                background: tab === t ? "var(--bg-surface)" : "transparent",
-                color: tab === t ? "var(--text-primary)" : "var(--text-muted)",
-                boxShadow: tab === t ? "var(--shadow-sm)" : "none",
-              }}
+              className={`dash-tab ${tab === t ? "is-active" : ""}`}
             >
               {t}
             </button>
@@ -239,9 +227,11 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {sessions.map((s, i) => (
-                  <HistoryCard key={s.id} session={s} onView={() => onViewSession(s)} index={i} />
+                  <div key={s.id} className="dash-history-card">
+                    <HistoryCard session={s} onView={() => onViewSession(s)} index={i} />
+                  </div>
                 ))}
               </div>
             )}

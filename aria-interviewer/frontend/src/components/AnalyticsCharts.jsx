@@ -59,17 +59,29 @@ export default function AnalyticsCharts({ userId }) {
     date: new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
   }));
 
-  const domainStats = Object.entries(data.domain_stats || {}).map(([name, stats]) => ({
-    name: name.length > 12 ? name.slice(0, 12) + "…" : name,
-    fullName: name,
-    count: stats.count,
-    avgScore: Math.round(stats.avg_score),
-  }));
+  const domainStats = Array.isArray(data.domain_stats)
+    ? data.domain_stats.map((item) => ({
+        name: item.domain?.length > 12 ? item.domain.slice(0, 12) + "…" : item.domain,
+        fullName: item.domain,
+        count: item.count ?? 0,
+        avgScore: Math.round(item.avg_score ?? 0),
+      }))
+    : Object.entries(data.domain_stats || {}).map(([name, stats]) => ({
+        name: name.length > 12 ? name.slice(0, 12) + "…" : name,
+        fullName: name,
+        count: stats.count,
+        avgScore: Math.round(stats.avg_score),
+      }));
 
-  const gradeData = Object.entries(data.grade_distribution || {}).map(([name, value]) => ({
-    name,
-    value,
-  }));
+  const gradeData = Array.isArray(data.grade_distribution)
+    ? data.grade_distribution.map((item) => ({
+        name: item.grade,
+        value: item.count,
+      }))
+    : Object.entries(data.grade_distribution || {}).map(([name, value]) => ({
+        name,
+        value,
+      }));
 
   const gradeStyles = {
     Excellent: "var(--success)",

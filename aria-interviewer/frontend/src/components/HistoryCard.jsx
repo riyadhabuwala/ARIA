@@ -50,20 +50,7 @@ export default function HistoryCard({ session, onView, index = 0 }) {
 
   return (
     <div
-      className={`group rounded-2xl p-5 cursor-pointer transition-all duration-200 hover:-translate-y-1 animate-fadeUp stagger-${(index % 5) + 1}`}
-      style={{
-        background: "var(--bg-surface)",
-        border: "1px solid var(--border-subtle)",
-        boxShadow: "var(--shadow-sm)",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = "var(--shadow-md)";
-        e.currentTarget.style.borderColor = "var(--border-default)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = "var(--shadow-sm)";
-        e.currentTarget.style.borderColor = "var(--border-subtle)";
-      }}
+      className={`group dash-history-shell animate-fadeUp stagger-${(index % 5) + 1}`}
     >
       {/* Top row */}
       <div className="flex items-center justify-between mb-4">
@@ -124,15 +111,7 @@ export default function HistoryCard({ session, onView, index = 0 }) {
       </div>
 
       {/* CTA button */}
-      <button
-        onClick={onView}
-        className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:opacity-90 active:scale-[0.98]"
-        style={{
-          background: "rgba(37,99,235,0.08)",
-          border: "1px solid rgba(37,99,235,0.2)",
-          color: "#2563eb",
-        }}
-      >
+      <button onClick={onView} className="dash-cta">
         View Report →
       </button>
     </div>
