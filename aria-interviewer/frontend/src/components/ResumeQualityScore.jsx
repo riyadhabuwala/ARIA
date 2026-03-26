@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+import { getResumeQuality } from "../api/profileApi";
 
 const SECTION_CONFIG = {
   contact_info: { label: "Contact Information", icon: "📇" },
@@ -109,18 +108,7 @@ export default function ResumeQualityScore({ userId, hasResume }) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${BASE_URL}/api/resume/quality`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: userId, force_refresh: forceRefresh }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || "Analysis failed");
-      }
-
-      const data = await res.json();
+      const data = await getResumeQuality(userId, forceRefresh);
       setQuality(data);
       setExpanded(true);
     } catch (err) {

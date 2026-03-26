@@ -199,24 +199,25 @@ def get_latest_job_results(user_id: str) -> dict | None:
 
 
 def save_resume_quality(user_id: str, quality_data: dict) -> None:
-    """Cache resume quality score to avoid re-running on every visit."""
+    """Cache resume quality analysis to avoid re-running on every visit."""
     supabase.table("user_resume_profiles").update(
         {
-            "quality_score": quality_data,
-            "quality_analysed_at": datetime.now(timezone.utc).isoformat(),
+            "quality_score": quality_data.get("overall_score", 0),
+            "quality_analysis": quality_data,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
         }
     ).eq("user_id", user_id).execute()
 
 
 def get_cached_quality(user_id: str) -> dict | None:
     """
-    Get cached quality score if analysed within last 24 hours.
+    Get cached quality analysis if analysed within last 7 days.
     Returns None if stale or missing.
     """
     try:
         result = (
             supabase.table("user_resume_profiles")
-            .select("quality_score, quality_analysed_at")
+            .select("quality_score, quality_analysis, updated_at")
             .eq("user_id", user_id)
             .single()
             .execute()
@@ -224,15 +225,117 @@ def get_cached_quality(user_id: str) -> dict | None:
         if not result.data:
             return None
 
-        quality = result.data.get("quality_score")
-        analysed_at = result.data.get("quality_analysed_at")
-        if not quality or not analysed_at:
+        quality_score = result.data.get("quality_score")
+        quality_analysis = result.data.get("quality_analysis")
+        updated_at = result.data.get("updated_at")
+
+        # Check that both quality_score and quality_analysis are not null
+        if not quality_score or not quality_analysis or not updated_at:
             return None
 
-        analysed_time = datetime.fromisoformat(analysed_at.replace("Z", "+00:00"))
-        if datetime.now(timezone.utc) - analysed_time > timedelta(hours=24):
+        # Check if cache is within 7 days
+        updated_time = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
+        if datetime.now(timezone.utc) - updated_time > timedelta(days=7):
             return None
 
-        return quality
+        # Return the complete quality analysis
+        return quality_analysis
     except Exception:
         return None
+
+
+def get_user_streak_data(user_id: str) -> dict:
+    """Calculate interview streak data for a user."""
+    try:
+        # Get all interview sessions for the user, ordered by created_at DESC
+        result = (
+            supabase.table("interview_sessions")
+            .select("created_at")
+            .eq("user_id", user_id)
+            .order("created_at", desc=True)
+            .execute()
+        )
+
+        sessions = result.data or []
+
+        if not sessions:
+            return {
+                "current_streak": 0,
+                "longest_streak": 0,
+                "streak_dates": [],
+                "today_done": False
+            }
+
+        # Extract unique dates (YYYY-MM-DD) from sessions
+        session_dates = set()
+        for session in sessions:
+            created_at = session["created_at"]
+            # Parse the datetime and extract just the date part
+            if created_at:
+                # Handle different datetime formats
+                try:
+                    if created_at.endswith('Z'):
+                        dt = datetime.fromisoformat(created_at[:-1] + '+00:00')
+                    else:
+                        dt = datetime.fromisoformat(created_at)
+                    session_dates.add(dt.date().isoformat())
+                except ValueError:
+                    # Fallback for other formats
+                    dt = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+                    session_dates.add(dt.date().isoformat())
+
+        # Convert to sorted list (most recent first)
+        streak_dates = sorted(list(session_dates), reverse=True)
+
+        # Check if user interviewed today
+        today = datetime.now(timezone.utc).date().isoformat()
+        today_done = today in session_dates
+
+        # Calculate current streak (consecutive days from today backwards)
+        current_streak = 0
+        check_date = datetime.now(timezone.utc).date()
+
+        while True:
+            date_str = check_date.isoformat()
+            if date_str in session_dates:
+                current_streak += 1
+                check_date -= timedelta(days=1)
+            else:
+                break
+
+        # Calculate longest streak ever
+        longest_streak = 0
+        if streak_dates:
+            # Sort dates chronologically for longest streak calculation
+            sorted_dates = sorted(streak_dates)
+            current_longest = 1
+
+            for i in range(1, len(sorted_dates)):
+                prev_date = datetime.fromisoformat(sorted_dates[i-1]).date()
+                curr_date = datetime.fromisoformat(sorted_dates[i]).date()
+
+                # Check if dates are consecutive
+                if (curr_date - prev_date).days == 1:
+                    current_longest += 1
+                else:
+                    longest_streak = max(longest_streak, current_longest)
+                    current_longest = 1
+
+            # Don't forget the last streak
+            longest_streak = max(longest_streak, current_longest)
+
+        return {
+            "current_streak": current_streak,
+            "longest_streak": longest_streak,
+            "streak_dates": streak_dates,  # Most recent first
+            "today_done": today_done
+        }
+
+    except Exception as e:
+        # Return empty data on error rather than raising
+        return {
+            "current_streak": 0,
+            "longest_streak": 0,
+            "streak_dates": [],
+            "today_done": False
+        }

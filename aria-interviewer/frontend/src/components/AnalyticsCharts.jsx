@@ -3,6 +3,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell, Legend,
 } from "recharts";
+import { getAnalytics } from "../api/analyticsApi";
 
 const COLORS = ["#8b5cf6", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#ec4899"];
 
@@ -17,16 +18,11 @@ export default function AnalyticsCharts({ userId }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const res = await fetch(`${BASE_URL}/api/analytics/${encodeURIComponent(userId)}`);
-        if (res.ok) {
-          const json = await res.json();
-          setData(json);
-        }
+        const json = await getAnalytics(userId);
+        setData(json);
       } catch (err) {
         console.error("Failed to fetch analytics:", err);
       } finally {
@@ -34,7 +30,7 @@ export default function AnalyticsCharts({ userId }) {
       }
     };
     fetchAnalytics();
-  }, [userId, BASE_URL]);
+  }, [userId]);
 
   if (loading) {
     return (

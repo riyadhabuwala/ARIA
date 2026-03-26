@@ -1,6 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+import { textToSpeech } from "../api/interviewApi";
 
 export function useSpeechSynthesis() {
   const audioRef = useRef(null);
@@ -16,15 +15,7 @@ export function useSpeechSynthesis() {
     setIsSpeaking(true);
 
     try {
-      const response = await fetch(`${BASE_URL}/api/text-to-speech`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
-
-      if (!response.ok) throw new Error("TTS request failed");
-
-      const audioBlob = await response.blob();
+      const audioBlob = await textToSpeech(text);
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
