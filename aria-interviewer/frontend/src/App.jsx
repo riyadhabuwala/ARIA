@@ -12,7 +12,16 @@ import InterviewRoom from "./components/InterviewRoom";
 import FeedbackReport from "./components/FeedbackReport";
 import LoadingScreen from "./components/LoadingScreen";
 import JobMatchPage from "./pages/JobMatchPage";
+import CareerCoachPage from "./pages/CareerCoachPage";
 import ChatWidget from "./components/ChatWidget";
+import Layout from "./components/Layout";
+import Analytics from "./components/Analytics";
+import History from "./components/History";
+import Resume from "./components/Resume";
+import JobMatches from "./components/JobMatches";
+import AICoach from "./components/AICoach";
+import Profile from "./components/Profile";
+import Settings from "./components/Settings";
 
 // ── Auth guard ────────────────────────────────
 function ProtectedRoute({ children }) {
@@ -148,37 +157,120 @@ function AppContent() {
     <>
       <Routes>
         {/* Public routes */}
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/landing" element={<LandingPage />} />
         <Route
           path="/login"
           element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />}
         />
+
+        {/* Root route - Landing Page (always) */}
+        <Route path="/" element={<LandingPage />} />
 
         {/* Protected routes */}
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <Dashboard
-                user={user}
-                onNewInterview={() => navigate("/interview/setup")}
-                onViewSession={handleViewSession}
-                onJobMatch={() => navigate("/job-match")}
-              />
+              <Layout>
+                <Dashboard
+                  user={user}
+                  onNewInterview={() => navigate("/interview")}
+                  onViewSession={handleViewSession}
+                  onJobMatch={() => navigate("/job-match")}
+                />
+              </Layout>
             </ProtectedRoute>
           }
         />
 
         <Route
-          path="/interview/setup"
+          path="/analytics"
           element={
             <ProtectedRoute>
-              <DomainSelector
-                onStart={(name, domain) => {
-                  setInterviewData((prev) => ({ ...prev, name, domain }));
-                  navigate("/interview/resume");
-                }}
-              />
+              <Layout>
+                <Analytics />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/history"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <History />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/resume"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Resume />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/jobs"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <JobMatches />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/coach"
+          element={
+            <ProtectedRoute>
+              <CareerCoachPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Profile />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Settings />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Interview flow routes */}
+        <Route
+          path="/interview"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <DomainSelector
+                  onStart={(name, domain) => {
+                    setInterviewData((prev) => ({ ...prev, name, domain }));
+                    navigate("/interview/resume");
+                  }}
+                />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -236,13 +328,17 @@ function AppContent() {
           path="/job-match"
           element={
             <ProtectedRoute>
-              <JobMatchPage user={user} onBack={() => navigate("/dashboard")} />
+              <Layout>
+                <JobMatchPage user={user} onBack={() => navigate("/dashboard")} />
+              </Layout>
             </ProtectedRoute>
           }
         />
 
         {/* Catch all */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={
+          user ? <Navigate to="/dashboard" replace /> : <Navigate to="/landing" replace />
+        } />
       </Routes>
 
       {/* Global chatbot — visible on all protected pages */}

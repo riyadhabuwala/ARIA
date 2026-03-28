@@ -14,6 +14,7 @@ from supabase_client import (
     get_user_sessions,
     get_session_by_id,
     get_analytics_data,
+    get_user_streak_data,
     get_resume_profile,
     get_latest_job_results,
     save_resume_profile,
@@ -27,7 +28,8 @@ import json
 from dotenv import load_dotenv
 from groq import Groq
 
-load_dotenv()
+ENV_PATH = os.path.join(os.path.dirname(__file__), ".env")
+load_dotenv(ENV_PATH)
 
 app = FastAPI(title="ARIA Interview API")
 job_agent = JobMatchAgent()
@@ -65,10 +67,14 @@ HERE IS THE USER'S DATA:
 {context}
 """
 
+# ── CORS ─────────────────────────────────────────────────────────
+# Allows any localhost port (5173, 5174, 5175, 5176, etc.)
+# so Vite's port auto-increment never causes CORS errors
+
 app.add_middleware(
     CORSMiddleware,
+    allow_origin_regex=r"http://localhost:\d+",
     allow_origins=[
-        "http://localhost:5173",
         "https://aria-interviewer.vercel.app",
         "https://*.vercel.app",
     ],
@@ -264,6 +270,21 @@ async def get_analytics(user_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/streak/{user_id}")
+async def get_user_streak(user_id: str):
+    """Get interview streak data for a user."""
+    try:
+        sessions = get_user_sessions(user_id)
+        if sessions is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        streak_data = get_user_streak_data(user_id)
+        return streak_data
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
 @app.post("/api/profile/save-resume")
 async def save_resume_route(req: SaveResumeRequest):
     """Save resume text to user profile for future scans."""
@@ -302,7 +323,6 @@ async def run_job_scan(req: ScanRequest):
             status_code=400,
             detail="No resume found. Please upload your resume first.",
         )
-
     try:
         result = await job_agent.run(
             user_id=req.user_id,
@@ -338,7 +358,7 @@ async def get_resume_quality(req: ResumeQualityRequest):
     if not req.force_refresh:
         cached = get_cached_quality(req.user_id)
         if cached:
-            return {**cached, "from_cache": True}
+            return {**cached, "cached": True}
 
     profile_data = get_resume_profile(req.user_id)
     if not profile_data or not profile_data.get("resume_text"):
@@ -357,7 +377,6 @@ async def get_resume_quality(req: ResumeQualityRequest):
             all_missing: list[str] = []
             for job in jobs:
                 all_missing.extend(job.get("missing_skills") or [])
-
             skill_counts = Counter(all_missing)
             job_missing_skills = [skill for skill, _ in skill_counts.most_common(8)]
     except Exception:
@@ -368,13 +387,11 @@ async def get_resume_quality(req: ResumeQualityRequest):
             resume_text=resume_text,
             job_missing_skills=job_missing_skills,
         )
-
         try:
             save_resume_quality(req.user_id, result)
         except Exception:
             pass
-
-        return {**result, "from_cache": False}
+        return {**result, "cached": False}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -406,7 +423,7 @@ async def chat_with_coach(req: ChatRequest):
                 model="openai/gpt-oss-120b",
                 messages=messages,
                 temperature=0.7,
-                max_completion_tokens=400,
+                max_tokens=400,
                 stream=True,
             )
             for chunk in stream:
@@ -507,7 +524,7 @@ RULES:
             model="openai/gpt-oss-120b",
             messages=[{"role": "user", "content": debrief_prompt}],
             temperature=0.7,
-            max_completion_tokens=150,
+            max_tokens=150,
         )
         debrief_message = (response.choices[0].message.content or "").strip()
         return {"debrief": debrief_message}

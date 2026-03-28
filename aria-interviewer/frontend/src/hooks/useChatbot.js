@@ -1,6 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+import { sendChatMessage, triggerDebrief } from "../api/coachApi";
 
 const WELCOME_MESSAGE = {
   role: "assistant",
@@ -37,18 +36,14 @@ export function useChatbot(userId) {
         const controller = new AbortController();
         abortRef.current = controller;
 
-        const response = await fetch(`${BASE_URL}/api/chat`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_id: userId,
-            message: text,
-            conversation_history: historyForBackend.slice(-6),
-          }),
-          signal: controller.signal,
-        });
+        const response = await sendChatMessage(
+          userId,
+          text,
+          historyForBackend.slice(-6),
+          controller.signal
+        );
 
-        if (!response.ok || !response.body) {
+        if (!response.body) {
           throw new Error("Chat request failed");
         }
 
@@ -125,7 +120,7 @@ export function useChatbot(userId) {
     setIsLoading(false);
   }, []);
 
-  const triggerDebrief = useCallback(
+  const triggerDebriefCallback = useCallback(
     async (report, confidenceData, previousScore = 0) => {
       if (!report || !userId) return;
 
@@ -134,22 +129,7 @@ export function useChatbot(userId) {
         setIsLoading(true);
         setError(null);
 
-        const response = await fetch(`${BASE_URL}/api/chat/debrief`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_id: userId,
-            report,
-            confidence_data: confidenceData || {},
-            previous_score: previousScore,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Debrief failed");
-        }
-
-        const data = await response.json();
+        const data = await triggerDebrief(userId, report, confidenceData, previousScore);
         const debriefMessage = data.debrief || "Great interview! How can I help?";
 
         const words = debriefMessage.split(" ");
@@ -183,5 +163,12 @@ export function useChatbot(userId) {
     [userId]
   );
 
-  return { messages, isLoading, error, sendMessage, clearChat, triggerDebrief };
+  return {
+    messages,
+    isLoading,
+    error,
+    sendMessage,
+    clearChat,
+    triggerDebrief: triggerDebriefCallback
+  };
 }

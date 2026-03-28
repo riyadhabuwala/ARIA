@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import confetti from "canvas-confetti";
 import ScoreRadarChart from "./ScoreRadarChart";
+import ScoreGauge from "./ScoreGauge";
 import { getSession } from "../api/interviewApi";
 
 export default function FeedbackReport({ report, confidenceData, sessionId, durationSeconds, onReset, audioUrl, onDownload }) {
@@ -230,34 +231,13 @@ export default function FeedbackReport({ report, confidenceData, sessionId, dura
               )}
             </div>
 
-            <div
-              className="font-geist font-bold mb-3"
-              style={{
-                fontSize: "clamp(80px, 15vw, 120px)",
-                lineHeight: 1,
-                color:
-                  activeReport.overall_score >= 80
-                    ? "#22c55e"
-                    : activeReport.overall_score >= 60
-                      ? "#2563eb"
-                      : activeReport.overall_score >= 40
-                        ? "#f59e0b"
-                        : "#94a3b8",
-                letterSpacing: "-0.05em",
-                textShadow: `0 0 60px ${activeReport.overall_score >= 80
-                  ? "#22c55e"
-                  : activeReport.overall_score >= 60
-                    ? "#2563eb"
-                    : activeReport.overall_score >= 40
-                      ? "#f59e0b"
-                      : "#94a3b8"}40`,
-              }}
-            >
-              {animatedScore}
-            </div>
-
-            <div className="font-geist text-2xl font-bold mb-2" style={{ color: "rgba(255,255,255,0.85)" }}>
-              {activeReport.grade}
+            <div className="flex justify-center mb-6">
+              <ScoreGauge
+                score={activeReport.overall_score || 0}
+                label="Overall Performance"
+                size="lg"
+                showGrade={true}
+              />
             </div>
 
             {activeReport.hiring_recommendation && (
@@ -297,7 +277,6 @@ export default function FeedbackReport({ report, confidenceData, sessionId, dura
             {sectionOrder.map((key) => {
               const data = sections?.[key] || {};
               const s = typeof data.score === "number" ? data.score : 0;
-              const c = s >= 80 ? "#22c55e" : s >= 60 ? "#2563eb" : s >= 40 ? "#f59e0b" : "#94a3b8";
               const label = {
                 technical_knowledge: "Technical Knowledge",
                 communication: "Communication",
@@ -317,29 +296,22 @@ export default function FeedbackReport({ report, confidenceData, sessionId, dura
                   className="rounded-2xl p-5"
                   style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span>{icon}</span>
-                      <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-                        {label}
-                      </span>
-                    </div>
-                    <div className="flex items-baseline gap-0.5">
-                      <span className="font-geist text-2xl font-bold" style={{ color: c }}>
-                        {s}
-                      </span>
-                      <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                        /100
-                      </span>
-                    </div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <span>{icon}</span>
+                    <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                      {label}
+                    </span>
                   </div>
-                  <div className="h-1.5 rounded-full overflow-hidden mb-3" style={{ background: "var(--bg-elevated)" }}>
-                    <div
-                      className="h-full rounded-full transition-all duration-700"
-                      style={{ width: `${s}%`, background: `linear-gradient(90deg, ${c}, ${c}88)` }}
+
+                  <div className="flex justify-center mb-3">
+                    <ScoreGauge
+                      score={s}
+                      size="sm"
+                      showGrade={false}
                     />
                   </div>
-                  <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+
+                  <p className="text-xs leading-relaxed text-center" style={{ color: "var(--text-secondary)" }}>
                     {data.feedback || "No feedback available yet."}
                   </p>
                 </div>
@@ -612,30 +584,13 @@ export default function FeedbackReport({ report, confidenceData, sessionId, dura
               style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}
             >
               <div className="flex items-center justify-between mb-4">
-                <div>
-                  <div className="flex items-baseline gap-1 mb-0.5">
-                    <span
-                      className="font-geist text-4xl font-bold"
-                      style={{
-                        color:
-                          (activeConfidence.overallScore ?? activeConfidence.overall_score ?? activeConfidence.confidence_score ?? 0) >= 80
-                            ? "#22c55e"
-                            : (activeConfidence.overallScore ?? activeConfidence.overall_score ?? activeConfidence.confidence_score ?? 0) >= 60
-                              ? "#2563eb"
-                              : (activeConfidence.overallScore ?? activeConfidence.overall_score ?? activeConfidence.confidence_score ?? 0) >= 40
-                                ? "#f59e0b"
-                                : "#94a3b8",
-                      }}
-                    >
-                      {activeConfidence.overallScore ?? activeConfidence.overall_score ?? activeConfidence.confidence_score ?? 0}
-                    </span>
-                    <span className="text-sm" style={{ color: "var(--text-muted)" }}>
-                      /100
-                    </span>
-                  </div>
-                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                    Confidence Score
-                  </p>
+                <div className="flex justify-center">
+                  <ScoreGauge
+                    score={activeConfidence.overallScore ?? activeConfidence.overall_score ?? activeConfidence.confidence_score ?? 0}
+                    label="Confidence Score"
+                    size="md"
+                    showGrade={true}
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-center">
                   <div className="px-4 py-3 rounded-xl" style={{ background: "var(--bg-overlay)", border: "1px solid var(--border-subtle)" }}>

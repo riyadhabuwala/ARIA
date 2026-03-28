@@ -5,7 +5,8 @@ from typing import Any
 from dotenv import load_dotenv
 from groq import Groq
 
-load_dotenv()
+ENV_PATH = os.path.join(os.path.dirname(__file__), ".env")
+load_dotenv(ENV_PATH)
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 QUALITY_ANALYSIS_PROMPT = """
@@ -180,7 +181,7 @@ async def analyse_resume_quality(resume_text: str, job_missing_skills: list[str]
                 {"role": "user", "content": f"Resume to analyse:\n\n{resume_text[:5000]}"},
             ],
             temperature=0.1,
-            max_completion_tokens=2000,
+            max_tokens=2000,
         )
 
         raw = (response.choices[0].message.content or "").strip()

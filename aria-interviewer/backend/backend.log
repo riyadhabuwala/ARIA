@@ -1,0 +1,353 @@
+INFO:     Will watch for changes in these directories: ['C:\\Users\\KAVYA\\Desktop\\ARIA-project\\aria-interviewer\\backend']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [28448] using WatchFiles
+INFO:     Started server process [38852]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:57379 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50417 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50419 - "GET /api/history/test-user HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 409, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py", line 1139, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 120, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 106, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 430, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 316, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\KAVYA\Desktop\ARIA-project\aria-interviewer\backend\main.py", line 244, in get_history
+    sessions = get_user_sessions(user_id)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\KAVYA\Desktop\ARIA-project\aria-interviewer\backend\supabase_client.py", line 54, in get_user_sessions
+    .execute()
+     ^^^^^^^^^
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\postgrest\_sync\request_builder.py", line 53, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': 'invalid input syntax for type uuid: "test-user"', 'code': '22P02', 'hint': None, 'details': None}
+INFO:     127.0.0.1:54860 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64347 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64349 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64353 - "GET /api/history/test-user-123 HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 409, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py", line 1139, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 120, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 106, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 430, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\routing.py", line 316, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\KAVYA\Desktop\ARIA-project\aria-interviewer\backend\main.py", line 244, in get_history
+    sessions = get_user_sessions(user_id)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\KAVYA\Desktop\ARIA-project\aria-interviewer\backend\supabase_client.py", line 54, in get_user_sessions
+    .execute()
+     ^^^^^^^^^
+  File "C:\Users\KAVYA\AppData\Local\Programs\Python\Python312\Lib\site-packages\postgrest\_sync\request_builder.py", line 53, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': 'invalid input syntax for type uuid: "test-user-123"', 'code': '22P02', 'hint': None, 'details': None}
+INFO:     127.0.0.1:52993 - "OPTIONS /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64312 - "OPTIONS /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49194 - "OPTIONS /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58433 - "OPTIONS /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49194 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49194 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58433 - "OPTIONS /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49194 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58433 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49194 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64312 - "OPTIONS /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58433 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49194 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58433 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49194 - "OPTIONS /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64312 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58433 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61388 - "POST /api/parse-resume HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61388 - "OPTIONS /api/profile/save-resume HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61388 - "POST /api/profile/save-resume HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61388 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62242 - "GET / HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:62242 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:65119 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65119 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51293 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51293 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50907 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51293 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50907 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51293 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50907 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51293 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50907 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50907 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50907 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50907 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51293 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51293 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50907 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50907 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51293 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50907 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50907 - "POST /api/parse-resume HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50907 - "POST /api/profile/save-resume HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50907 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59689 - "OPTIONS /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59689 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55289 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55289 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55590 - "OPTIONS /api/profile/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55590 - "OPTIONS /api/profile/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55590 - "GET /api/profile/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55590 - "GET /api/profile/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55590 - "OPTIONS /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55590 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55590 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63312 - "OPTIONS /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55590 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63312 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63312 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63312 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53143 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53143 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63312 - "OPTIONS /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63312 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53143 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63312 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53143 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54011 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54011 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51075 - "GET / HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54527 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54527 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55912 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55912 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55912 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63502 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63502 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54380 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54380 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55665 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55665 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54380 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55665 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54380 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55665 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52690 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58052 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52690 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58052 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54594 - "OPTIONS /api/job-match/scan HTTP/1.1" 200 OK
+Adzuna API error: Client error '429 Too Many Requests' for url 'https://api.adzuna.com/v1/api/jobs/in/search/1?app_id=8a3bfda9&app_key=f4b8ec8c2e8af8cfd44642ca709aca3c&what=Full+Stack+Developer+%28Student%29+India&where=india&results_per_page=10&content-type=application%2Fjson'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429
+INFO:     127.0.0.1:54594 - "POST /api/job-match/scan HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54594 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57296 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57296 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57296 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57296 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63264 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63264 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57296 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63264 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57296 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57296 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63264 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63264 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57296 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63264 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57296 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63264 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63264 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63264 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65497 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65497 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63264 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65497 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63264 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65497 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58658 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58658 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52298 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55780 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59565 - "OPTIONS /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61321 - "OPTIONS /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61321 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61321 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59565 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59565 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61321 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61321 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59565 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61321 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64943 - "POST /api/parse-resume HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64943 - "OPTIONS /api/profile/save-resume HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64943 - "POST /api/profile/save-resume HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64943 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64943 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64943 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+Adzuna API error: Client error '429 Too Many Requests' for url 'https://api.adzuna.com/v1/api/jobs/in/search/1?app_id=8a3bfda9&app_key=f4b8ec8c2e8af8cfd44642ca709aca3c&what=Full+Stack+Developer+India&where=india&results_per_page=10&content-type=application%2Fjson'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429
+INFO:     127.0.0.1:57701 - "POST /api/job-match/scan HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57701 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50517 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50517 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50517 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50517 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57094 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57094 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50517 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57094 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50517 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57094 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61009 - "OPTIONS /api/profile/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56883 - "OPTIONS /api/profile/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56883 - "GET /api/profile/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56883 - "GET /api/profile/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61009 - "OPTIONS /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61009 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61009 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56883 - "OPTIONS /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61009 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56883 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56883 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56883 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50963 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50963 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56883 - "OPTIONS /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56883 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50963 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56883 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50963 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62921 - "OPTIONS /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64761 - "OPTIONS /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52176 - "OPTIONS /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53468 - "OPTIONS /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62668 - "OPTIONS /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64761 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60455 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62613 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60455 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62613 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64406 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62613 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60455 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62613 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64406 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51989 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64406 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51989 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62613 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62613 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51989 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62613 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60981 - "OPTIONS /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60981 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62931 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62931 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63918 - "OPTIONS /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62931 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63918 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63918 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62931 - "OPTIONS /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63918 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62931 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63918 - "OPTIONS /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63918 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62931 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60152 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60152 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60152 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60152 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60152 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59101 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60152 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61840 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60152 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59101 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59101 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57946 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59101 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57946 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57880 - "GET /api/analytics/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59101 - "GET /api/history/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57880 - "GET /api/job-match/results/69047006-7ed3-44fc-84c8-8f0bab67afcc HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57946 - "POST /api/resume/quality HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57880 - "POST /api/resume/quality HTTP/1.1" 200 OK

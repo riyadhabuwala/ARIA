@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { getCurrentUser, onAuthStateChange } from "../api/authApi";
+import { getCurrentUser, onAuthStateChange, signOut } from "../api/authApi";
 
 const AuthContext = createContext(null);
 
@@ -17,8 +17,17 @@ export function AuthProvider({ children }) {
     return () => listener?.subscription?.unsubscribe();
   }, []);
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      setUser(null);
+    } catch (error) {
+      console.error("Sign out failed:", error);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, loading, signOut: handleSignOut }}>
       {!loading && children}
     </AuthContext.Provider>
   );
