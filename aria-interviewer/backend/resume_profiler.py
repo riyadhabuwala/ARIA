@@ -4,7 +4,8 @@ import os
 from dotenv import load_dotenv
 from groq import Groq
 
-load_dotenv()
+ENV_PATH = os.path.join(os.path.dirname(__file__), ".env")
+load_dotenv(ENV_PATH)
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
@@ -52,7 +53,7 @@ async def extract_profile(resume_text: str) -> dict:
                 {"role": "user", "content": f"Resume:\n{(resume_text or '')[:4000]}"},
             ],
             temperature=0.1,
-            max_completion_tokens=1000,
+            max_tokens=1000,
         )
         raw = (response.choices[0].message.content or "").strip()
 
@@ -120,7 +121,7 @@ Job titles to search: {', '.join(profile.get('job_titles_to_search', []))}
                 {"role": "user", "content": profile_summary},
             ],
             temperature=0.3,
-            max_completion_tokens=200,
+            max_tokens=200,
         )
         raw = (response.choices[0].message.content or "").strip()
 
