@@ -28,7 +28,8 @@ import json
 from dotenv import load_dotenv
 from groq import Groq
 
-load_dotenv()
+ENV_PATH = os.path.join(os.path.dirname(__file__), ".env")
+load_dotenv(ENV_PATH)
 
 app = FastAPI(title="ARIA Interview API")
 job_agent = JobMatchAgent()
@@ -422,7 +423,7 @@ async def chat_with_coach(req: ChatRequest):
                 model="openai/gpt-oss-120b",
                 messages=messages,
                 temperature=0.7,
-                max_completion_tokens=400,
+                max_tokens=400,
                 stream=True,
             )
             for chunk in stream:
@@ -523,7 +524,7 @@ RULES:
             model="openai/gpt-oss-120b",
             messages=[{"role": "user", "content": debrief_prompt}],
             temperature=0.7,
-            max_completion_tokens=150,
+            max_tokens=150,
         )
         debrief_message = (response.choices[0].message.content or "").strip()
         return {"debrief": debrief_message}

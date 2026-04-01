@@ -4,7 +4,8 @@ from groq import Groq
 from dotenv import load_dotenv
 from prompts import build_system_prompt
 
-load_dotenv()
+ENV_PATH = os.path.join(os.path.dirname(__file__), ".env")
+load_dotenv(ENV_PATH)
 
 
 class InterviewAgent:
@@ -68,9 +69,8 @@ class InterviewAgent:
             model="openai/gpt-oss-120b",
             messages=self.sessions[session_id],
             temperature=1,
-            max_completion_tokens=8192,
+            max_tokens=8192,
             top_p=1,
-            reasoning_effort="medium",
             stream=False,
             stop=None
         )

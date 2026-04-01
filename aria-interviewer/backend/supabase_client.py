@@ -4,7 +4,8 @@ from datetime import datetime, timedelta, timezone
 from supabase import create_client, Client
 from dotenv import load_dotenv
 
-load_dotenv()
+ENV_PATH = os.path.join(os.path.dirname(__file__), ".env")
+load_dotenv(ENV_PATH)
 
 supabase: Client = create_client(
     os.getenv("SUPABASE_URL"),
