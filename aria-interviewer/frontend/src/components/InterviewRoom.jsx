@@ -248,6 +248,17 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
             </div>
           )}
           <ThemeToggle />
+          <a
+            href="/"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all hover:opacity-80"
+            style={{
+              background: "var(--bg-overlay)",
+              border: "1px solid var(--border-subtle)",
+              color: "var(--text-secondary)",
+            }}
+          >
+            ← Dashboard
+          </a>
           <button
             onClick={() => setShowEndModal(true)}
             disabled={questionCount < 1 || isLoading}

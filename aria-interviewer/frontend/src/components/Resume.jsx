@@ -91,8 +91,8 @@ export default function Resume() {
       <div className="p-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Loading resume...</p>
+            <div className="w-12 h-12 rounded-full border-2 border-transparent border-t-blue-500 border-r-blue-500 animate-spin mx-auto mb-4"></div>
+            <p style={{ color: "var(--text-muted)" }}>Loading resume...</p>
           </div>
         </div>
       </div>
@@ -103,32 +103,32 @@ export default function Resume() {
     <div className="p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        <h1 className="text-3xl font-bold heading-font mb-2" style={{ color: "var(--text-primary)" }}>
           Resume Manager
         </h1>
-        <p className="text-gray-600 dark:text-gray-400 mb-8">
+        <p style={{ color: "var(--text-secondary)" }} className="mb-8">
           Upload, manage, and get AI-powered feedback on your resume.
         </p>
 
         {/* Success Alert */}
         {success && (
-          <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-            <p className="text-green-800 dark:text-green-200 text-sm font-medium">✓ {success}</p>
+          <div className="mb-6 p-4 rounded-lg border" style={{ background: "var(--success-subtle)", borderColor: "rgba(34,197,94,0.2)" }}>
+            <p style={{ color: "var(--success)" }} className="text-sm font-medium">✓ {success}</p>
           </div>
         )}
 
         {/* Error Alert */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <p className="text-red-800 dark:text-red-200 text-sm font-medium">✗ {error}</p>
+          <div className="mb-6 p-4 rounded-lg border" style={{ background: "var(--danger-subtle)", borderColor: "rgba(239,68,68,0.2)" }}>
+            <p style={{ color: "var(--danger)" }} className="text-sm font-medium">✗ {error}</p>
           </div>
         )}
 
         <div className="grid gap-6">
           {!hasResume ? (
             /* ══ UPLOAD STATE ══ */
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            <div className="rounded-lg shadow-sm border p-6" style={{ background: "var(--bg-surface)", borderColor: "var(--border-subtle)" }}>
+              <h2 className="text-lg font-semibold mb-4" style={{ color: "var(--text-primary)" }}>
                 Upload Your Resume
               </h2>
 
@@ -140,17 +140,17 @@ export default function Resume() {
                   setIsDragOver(true);
                 }}
                 onDragLeave={() => setIsDragOver(false)}
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                  isDragOver
-                    ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                    : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
-                }`}
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors`}
+                style={{
+                  borderColor: isDragOver ? "var(--accent-primary)" : "var(--border-default)",
+                  background: isDragOver ? "var(--accent-subtle)" : "transparent"
+                }}
               >
                 <div className="text-4xl mb-3">📄</div>
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                <h3 className="font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
                   Drag and drop your resume here
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                <p className="text-sm mb-4" style={{ color: "var(--text-secondary)" }}>
                   or click the button below to select a file
                 </p>
 
@@ -164,14 +164,17 @@ export default function Resume() {
 
                 <button
                   onClick={() => inputRef.current?.click()}
-                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
+                  className="px-4 py-2 text-white rounded-lg font-medium transition-all hover:opacity-90"
+                  style={{
+                    background: "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))",
+                  }}
                 >
                   Select PDF File
                 </button>
 
                 {file && (
-                  <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                    <p className="text-sm text-blue-900 dark:text-blue-200">
+                  <div className="mt-4 p-3 rounded-lg" style={{ background: "var(--accent-subtle)" }}>
+                    <p className="text-sm" style={{ color: "var(--accent-primary)" }}>
                       📎 {file.name}
                     </p>
                   </div>
@@ -184,14 +187,22 @@ export default function Resume() {
                   <button
                     onClick={handleUpload}
                     disabled={isUploading}
-                    className="flex-1 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors"
+                    className="flex-1 px-4 py-2.5 text-white rounded-lg font-medium transition-all hover:opacity-90 disabled:opacity-60"
+                    style={{
+                      background: "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))",
+                    }}
                   >
                     {isUploading ? "Uploading..." : "Upload Resume"}
                   </button>
                   <button
                     onClick={() => setFile(null)}
                     disabled={isUploading}
-                    className="px-4 py-2.5 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors"
+                    className="px-4 py-2.5 rounded-lg font-medium transition-all hover:opacity-80"
+                    style={{
+                      color: "var(--text-secondary)",
+                      border: "1px solid var(--border-subtle)",
+                      background: "var(--bg-overlay)"
+                    }}
                   >
                     Cancel
                   </button>
@@ -202,9 +213,9 @@ export default function Resume() {
             /* ══ RESUME UPLOADED STATE ══ */
             <>
               {/* Profile Information */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <div className="rounded-lg shadow-sm border p-6" style={{ background: "var(--bg-surface)", borderColor: "var(--border-subtle)" }}>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
                     Profile Information
                   </h2>
                   <button
@@ -212,32 +223,41 @@ export default function Resume() {
                       setFile(null);
                       setHasResume(false);
                     }}
-                    className="px-3 py-1.5 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                    className="px-3 py-1.5 text-sm rounded-lg transition-all hover:opacity-80"
+                    style={{
+                      color: "var(--accent-primary)",
+                      background: "var(--accent-subtle)"
+                    }}
                   >
                     Update Resume
                   </button>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-6">
-                  {/* Basic Info */}
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Contact Information
+                  {/* Contact Information */}
+                  <div className="p-4 rounded-lg border" style={{ background: "var(--bg-overlay)", borderColor: "var(--border-subtle)" }}>
+                    <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--text-primary)" }}>
+                      📋 Contact Information
                     </h3>
                     <div className="space-y-2">
                       {profile.email && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          📧 <span className="font-medium">{profile.email}</span>
+                        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                          📧 <span className="font-medium" style={{ color: "var(--text-primary)" }}>{profile.email}</span>
                         </p>
                       )}
                       {profile.phone && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          📱 <span className="font-medium">{profile.phone}</span>
+                        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                          📱 <span className="font-medium" style={{ color: "var(--text-primary)" }}>{profile.phone}</span>
                         </p>
                       )}
                       {profile.location && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          📍 <span className="font-medium">{profile.location}</span>
+                        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                          📍 <span className="font-medium" style={{ color: "var(--text-primary)" }}>{profile.location}</span>
+                        </p>
+                      )}
+                      {!profile.email && !profile.phone && !profile.location && (
+                        <p className="text-xs italic" style={{ color: "var(--text-muted)" }}>
+                          No contact information extracted
                         </p>
                       )}
                     </div>
@@ -245,21 +265,25 @@ export default function Resume() {
 
                   {/* Skills */}
                   {profile.skills && profile.skills.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Key Skills
+                    <div className="p-4 rounded-lg border" style={{ background: "var(--accent-subtle)", borderColor: "rgba(37,99,235,0.2)" }}>
+                      <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--accent-primary)" }}>
+                        🎯 Key Skills
                       </h3>
                       <div className="flex flex-wrap gap-2">
                         {profile.skills.slice(0, 8).map((skill, i) => (
                           <span
                             key={i}
-                            className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-xs rounded-full font-medium"
+                            className="px-3 py-1 text-xs rounded-full font-medium"
+                            style={{
+                              background: "var(--accent-primary)",
+                              color: "white"
+                            }}
                           >
                             {skill}
                           </span>
                         ))}
                         {profile.skills.length > 8 && (
-                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs rounded-full font-medium">
+                          <span className="px-3 py-1 text-xs rounded-full font-medium" style={{ background: "var(--bg-overlay)", color: "var(--text-secondary)" }}>
                             +{profile.skills.length - 8} more
                           </span>
                         )}
@@ -270,17 +294,17 @@ export default function Resume() {
 
                 {/* Experience Summary */}
                 {profile.experience && profile.experience.length > 0 && (
-                  <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                      Experience Summary
+                  <div className="mt-6 pt-6 border-t" style={{ borderColor: "var(--border-subtle)" }}>
+                    <h3 className="text-sm font-medium mb-3" style={{ color: "var(--text-primary)" }}>
+                      💼 Experience Summary
                     </h3>
                     <div className="space-y-3">
                       {profile.experience.slice(0, 3).map((exp, i) => (
                         <div key={i} className="text-sm">
-                          <p className="font-medium text-gray-900 dark:text-white">
+                          <p className="font-medium" style={{ color: "var(--text-primary)" }}>
                             {exp.title || "Position"} at {exp.company || "Company"}
                           </p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
                             {exp.duration || "Duration not specified"}
                           </p>
                         </div>

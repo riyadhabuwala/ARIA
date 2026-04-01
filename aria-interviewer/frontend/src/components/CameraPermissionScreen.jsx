@@ -33,25 +33,47 @@ export default function CameraPermissionScreen({ onReady, candidateName, domain 
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6" style={{ background: "var(--bg-base)" }}>
-      <div className="w-full max-w-md animate-fadeUp">
-        <div className="text-center mb-8">
-          <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center font-bold text-white text-xl mx-auto mb-4"
-            style={{
-              background: "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))",
-              boxShadow: "var(--shadow-accent)",
-            }}
-          >
-            AI
-          </div>
-          <h1 className="text-2xl font-bold heading-font mb-2" style={{ color: "var(--text-primary)" }}>
-            Ready to start, {candidateName}?
-          </h1>
-          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-            {domain} Interview · ~10–15 minutes
-          </p>
+    <div className="min-h-screen flex flex-col" style={{ background: "var(--bg-base)" }}>
+      {/* Header with Back Button */}
+      <div
+        className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0"
+        style={{ borderColor: "var(--border-subtle)" }}
+      >
+        <div className="text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>
+          Software Engineering Interview
         </div>
+        <a
+          href="/"
+          className="text-xs px-3 py-2 rounded-lg transition-all hover:opacity-75"
+          style={{
+            color: "var(--text-secondary)",
+            background: "var(--bg-overlay)"
+          }}
+        >
+          ← Dashboard
+        </a>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="w-full max-w-md animate-fadeUp">
+          <div className="text-center mb-8">
+            <div
+              className="w-20 h-20 rounded-2xl flex items-center justify-center font-bold text-white text-2xl mx-auto mb-6"
+              style={{
+                background: "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))",
+                boxShadow: "var(--shadow-accent)",
+              }}
+            >
+              AI
+            </div>
+            <h1 className="text-3xl font-bold heading-font mb-2" style={{ color: "var(--text-primary)" }}>
+              Ready to start, {candidateName}?
+            </h1>
+            <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+              {domain} Interview · ~10–15 minutes
+            </p>
+          </div>
 
         <div className="space-y-3 mb-6">
           {[
@@ -163,6 +185,7 @@ export default function CameraPermissionScreen({ onReady, candidateName, domain 
         <p className="text-center text-xs mt-4" style={{ color: "var(--text-muted)" }}>
           Camera is optional. You can proceed with microphone only.
         </p>
+        </div>
       </div>
     </div>
   );
