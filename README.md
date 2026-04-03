@@ -31,7 +31,7 @@ An AI-powered mock interview platform that conducts realistic voice-based interv
 - Node.js 18+
 - API keys: Groq, ElevenLabs, Supabase
 
-### Backend Setup
+### Backend Setup (Terminal 1)
 ```bash
 cd aria-interviewer/backend
 pip install -r requirements.txt
@@ -42,7 +42,9 @@ pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
 
-### Frontend Setup
+**Backend will be running at:** `http://localhost:8000`
+
+### Frontend Setup (Terminal 2)
 ```bash
 cd aria-interviewer/frontend
 npm install
@@ -53,7 +55,9 @@ npm install
 npm run dev
 ```
 
-Visit `http://localhost:5173` (frontend runs here)
+**Frontend will be running at:** `http://localhost:5173`
+
+> **Note:** Open localhost:5173 in your browser **after running the frontend server above**. The link only works on your local machine with the dev server running.
 
 ## 📖 Full Documentation
 
@@ -61,7 +65,9 @@ For detailed setup instructions, API endpoints, database schema, project structu
 
 ## 🎮 Usage
 
-1. Open the application at `http://localhost:5173`
+**Make sure both backend and frontend servers are running (see Quick Start above)**
+
+1. Open your browser and go to `http://localhost:5173`
 2. Sign up or log in with your email
 3. Start a new interview and select a domain
 4. Optionally upload your resume for personalized questions
@@ -105,6 +111,9 @@ ARIA-project/
 
 ## 🐛 Troubleshooting
 
+- **Localhost not working?** Make sure both backend and frontend servers are running (see Quick Start)
+- **Frontend won't load?** Run `npm run dev` in the frontend folder and wait for "ready in X ms"
+- **Backend won't start?** Check that port 8000 is available and all dependencies are installed
 - **Speech not working?** Use Chrome/Edge browser
 - **No audio output?** Check ElevenLabs API key or ensure browser allows audio
 - **Can't upload resume?** Ensure it's a valid PDF file
