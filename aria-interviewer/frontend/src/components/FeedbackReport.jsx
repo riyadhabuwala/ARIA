@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import confetti from "canvas-confetti";
-import ScoreRadarChart from "./ScoreRadarChart";
 import ScoreGauge from "./ScoreGauge";
 import { getSession } from "../api/interviewApi";
 
@@ -31,15 +30,11 @@ export default function FeedbackReport({ report, confidenceData, sessionId, dura
         setDbConfidence(data.confidence_json || data.confidence_data || null);
         setDbDuration(data.duration_seconds || null);
       })
-      .catch(() => {
-        // silent
-      })
+      .catch(() => {})
       .finally(() => {
         if (isMounted) setLoading(false);
       });
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [sessionId]);
 
   useEffect(() => {
@@ -65,69 +60,52 @@ export default function FeedbackReport({ report, confidenceData, sessionId, dura
 
   if (!activeReport && loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg-base)" }}>
-        <p style={{ color: "var(--text-muted)" }}>Loading report...</p>
+      <div style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#000000",
+        fontFamily: "'Inter', sans-serif",
+      }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{
+            width: "48px", height: "48px", borderRadius: "14px",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontWeight: "800", color: "white", fontSize: "14px",
+            background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+            margin: "0 auto 16px",
+            animation: "pulse-blue 2s ease-in-out infinite",
+          }}>AI</div>
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Loading your report...</p>
+        </div>
       </div>
     );
   }
 
   if (!activeReport) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg-base)" }}>
-        <p style={{ color: "var(--text-muted)" }}>No report data available.</p>
+      <div style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#000000",
+        fontFamily: "'Inter', sans-serif",
+      }}>
+        <p style={{ color: "rgba(255,255,255,0.35)" }}>No report data available.</p>
       </div>
     );
   }
 
-  const gradeStyles = {
-    Excellent: { color: "var(--success)", bg: "color-mix(in srgb, var(--success) 10%, transparent)", border: "color-mix(in srgb, var(--success) 30%, transparent)" },
-    Good: { color: "var(--info)", bg: "color-mix(in srgb, var(--info) 10%, transparent)", border: "color-mix(in srgb, var(--info) 30%, transparent)" },
-    Average: { color: "var(--warning)", bg: "color-mix(in srgb, var(--warning) 10%, transparent)", border: "color-mix(in srgb, var(--warning) 30%, transparent)" },
-    "Needs Improvement": { color: "var(--danger)", bg: "color-mix(in srgb, var(--danger) 10%, transparent)", border: "color-mix(in srgb, var(--danger) 30%, transparent)" },
-  };
-
   const hiringStyles = {
-    "Strong Yes": { color: "var(--success)", bg: "color-mix(in srgb, var(--success) 10%, transparent)" },
-    Yes: { color: "var(--info)", bg: "color-mix(in srgb, var(--info) 10%, transparent)" },
-    Maybe: { color: "var(--warning)", bg: "color-mix(in srgb, var(--warning) 10%, transparent)" },
-    No: { color: "var(--danger)", bg: "color-mix(in srgb, var(--danger) 10%, transparent)" },
+    "Strong Yes": { color: "#22c55e", bg: "rgba(34,197,94,0.06)", border: "rgba(34,197,94,0.15)" },
+    Yes: { color: "#22c55e", bg: "rgba(34,197,94,0.06)", border: "rgba(34,197,94,0.15)" },
+    Maybe: { color: "#f59e0b", bg: "rgba(245,158,11,0.06)", border: "rgba(245,158,11,0.15)" },
+    No: { color: "#ef4444", bg: "rgba(239,68,68,0.06)", border: "rgba(239,68,68,0.15)" },
   };
 
-  const gs = gradeStyles[activeReport.grade] || { color: "var(--text-muted)", bg: "var(--bg-surface)", border: "var(--border-default)" };
-  const hs = hiringStyles[activeReport.hiring_recommendation] || { color: "var(--text-muted)", bg: "var(--bg-surface)" };
-
-  const ScoreCard = ({ title, score, feedback }) => {
-    const color = score >= 80 ? "#22c55e" : score >= 60 ? "#2563eb" : "#f59e0b";
-    return (
-      <div
-        className="rounded-2xl p-5"
-        style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}
-      >
-        <div className="text-center mb-3">
-          <div
-            className="font-geist text-3xl font-bold mb-1"
-            style={{ color, letterSpacing: "-0.03em" }}
-          >
-            {score}
-          </div>
-          <h4 className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>
-            {title}
-          </h4>
-        </div>
-        <div className="h-1 rounded-full overflow-hidden mb-3" style={{ background: "var(--bg-elevated)" }}>
-          <div
-            className="h-full rounded-full transition-all duration-700"
-            style={{ width: `${score}%`, background: `linear-gradient(90deg, ${color}, ${color}88)` }}
-          />
-        </div>
-        {feedback && (
-          <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>
-            {feedback.length > 80 ? feedback.slice(0, 80) + "..." : feedback}
-          </p>
-        )}
-      </div>
-    );
-  };
+  const hs = hiringStyles[activeReport.hiring_recommendation] || { color: "rgba(255,255,255,0.4)", bg: "rgba(255,255,255,0.03)", border: "rgba(255,255,255,0.08)" };
 
   const sections = activeReport.sections || activeReport.section_scores || activeReport.sectionScores || {};
   const strengths = activeReport.strengths || activeReport.top_strengths || activeReport.topStrengths || [];
@@ -136,39 +114,111 @@ export default function FeedbackReport({ report, confidenceData, sessionId, dura
   const confidenceAnswers = activeConfidence?.answers || activeConfidence?.per_answer_breakdown || activeConfidence?.perAnswerBreakdown || [];
   const sectionOrder = ["technical_knowledge", "communication", "problem_solving", "confidence"];
 
-  return (
-    <div className="min-h-screen" style={{ background: "var(--bg-base)" }}>
-      {/* Navbar */}
-      <nav
-        className="sticky top-0 z-50"
-        style={{
-          background: "rgba(0,0,0,0.85)",
-          backdropFilter: "blur(20px)",
-          borderBottom: "1px solid var(--border-subtle)",
-        }}
+  const getScoreColor = (s) => {
+    if (s >= 80) return "#22c55e";
+    if (s >= 60) return "#2563eb";
+    if (s >= 40) return "#f59e0b";
+    return "#ef4444";
+  };
+
+  // Section card component
+  const SectionCard = ({ icon, label, score, feedback }) => {
+    const color = getScoreColor(score);
+    return (
+      <div style={{
+        borderRadius: "16px",
+        padding: "24px",
+        background: "rgba(255,255,255,0.02)",
+        border: "1px solid rgba(255,255,255,0.06)",
+        transition: "border-color 0.2s ease, transform 0.2s ease",
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; e.currentTarget.style.transform = "translateY(0)"; }}
       >
-        <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-white text-xs"
-              style={{ background: "linear-gradient(135deg, #2563eb, #1d4ed8)" }}
-            >
-              AI
-            </div>
-            <span className="font-bold font-geist" style={{ color: "var(--text-primary)" }}>
-              ARIA
-            </span>
-            <span className="text-sm" style={{ color: "var(--text-muted)" }}>
-              / Performance Report
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+          <div style={{
+            width: "36px", height: "36px", borderRadius: "10px",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: "16px",
+            background: `${color}10`,
+            border: `1px solid ${color}20`,
+          }}>{icon}</div>
+          <span style={{ fontSize: "14px", fontWeight: "600", color: "#ffffff" }}>{label}</span>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "12px" }}>
+          <ScoreGauge score={score} size="sm" showGrade={false} />
+        </div>
+
+        <p style={{
+          fontSize: "12px",
+          lineHeight: "1.7",
+          color: "rgba(255,255,255,0.5)",
+          textAlign: "center",
+        }}>
+          {feedback || "No feedback available yet."}
+        </p>
+      </div>
+    );
+  };
+
+  return (
+    <div style={{
+      minHeight: "100vh",
+      background: "#000000",
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+    }}>
+      {/* ═══ NAVBAR ═══ */}
+      <nav style={{
+        position: "sticky",
+        top: 0,
+        zIndex: 50,
+        background: "rgba(0,0,0,0.9)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+      }}>
+        <div style={{
+          maxWidth: "900px",
+          margin: "0 auto",
+          padding: "0 24px",
+          height: "56px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div style={{
+              width: "30px", height: "30px", borderRadius: "9px",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontWeight: "800", color: "white", fontSize: "10px",
+              background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+              boxShadow: "0 0 14px rgba(37,99,235,0.3)",
+            }}>AI</div>
+            <span style={{
+              fontWeight: "700",
+              color: "#ffffff",
+              fontFamily: "'Geist', 'Inter', sans-serif",
+              letterSpacing: "-0.03em",
+              fontSize: "15px",
+            }}>ARIA</span>
+            <div style={{ width: "1px", height: "16px", background: "rgba(255,255,255,0.1)" }} />
+            <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)" }}>
+              Performance Report
             </span>
           </div>
           <button
             onClick={() => (window.location.href = "/dashboard")}
-            className="px-4 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-80"
             style={{
-              background: "var(--bg-elevated)",
-              border: "1px solid var(--border-default)",
-              color: "var(--text-secondary)",
+              padding: "7px 16px",
+              borderRadius: "10px",
+              fontSize: "13px",
+              fontWeight: "600",
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              color: "rgba(255,255,255,0.5)",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
             }}
           >
             ← Dashboard
@@ -176,62 +226,106 @@ export default function FeedbackReport({ report, confidenceData, sessionId, dura
         </div>
       </nav>
 
-      <div className="max-w-4xl mx-auto px-6 py-10 space-y-6">
-        {/* Score Hero */}
-        <div
-          className="rounded-3xl overflow-hidden relative"
-          style={{
-            background: "linear-gradient(145deg, #020817, #0a1628, #0f1f3d)",
-            border: "1px solid rgba(37,99,235,0.2)",
-          }}
-        >
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: "radial-gradient(ellipse at 50% 0%, rgba(37,99,235,0.2), transparent 65%)",
-            }}
-          />
-          <div className="relative z-10 py-12 px-8 text-center">
+      <div style={{ maxWidth: "900px", margin: "0 auto", padding: "32px 24px 48px" }}>
+        {/* ═══ SCORE HERO ═══ */}
+        <div style={{
+          borderRadius: "24px",
+          overflow: "hidden",
+          position: "relative",
+          marginBottom: "24px",
+          background: "linear-gradient(160deg, #020817 0%, #0a1628 40%, #0f1f3d 100%)",
+          border: "1px solid rgba(37,99,235,0.15)",
+        }}>
+          {/* Background radial glow */}
+          <div style={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "none",
+            background: "radial-gradient(ellipse 60% 50% at 50% 0%, rgba(37,99,235,0.18), transparent 65%)",
+          }} />
+
+          {/* Grid pattern */}
+          <div style={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "none",
+            backgroundImage: "linear-gradient(rgba(37,99,235,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,0.03) 1px, transparent 1px)",
+            backgroundSize: "40px 40px",
+            maskImage: "radial-gradient(circle at 50% 30%, black 0%, transparent 70%)",
+          }} />
+
+          <div style={{
+            position: "relative",
+            zIndex: 1,
+            padding: "48px 32px 40px",
+            textAlign: "center",
+          }}>
+            {/* Partial Interview Warning */}
             {activeReport.partial_interview && (
-              <div
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold mb-6"
-                style={{
-                  background: "rgba(245,158,11,0.1)",
-                  border: "1px solid rgba(245,158,11,0.2)",
-                  color: "#f59e0b",
-                }}
-              >
+              <div style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "8px 18px",
+                borderRadius: "999px",
+                fontSize: "12px",
+                fontWeight: "600",
+                background: "rgba(245,158,11,0.08)",
+                border: "1px solid rgba(245,158,11,0.2)",
+                color: "#f59e0b",
+                marginBottom: "24px",
+              }}>
                 ⚠️ Partial interview — ended early
               </div>
             )}
 
-            <div className="flex items-center justify-center gap-3 mb-6">
+            {/* Domain + Duration */}
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "10px",
+              marginBottom: "28px",
+            }}>
               {activeReport.domain && (
-                <span
-                  className="px-3 py-1 rounded-full text-xs font-medium"
-                  style={{
-                    background: "rgba(37,99,235,0.15)",
-                    border: "1px solid rgba(37,99,235,0.3)",
-                    color: "#60a5fa",
-                  }}
-                >
+                <span style={{
+                  padding: "6px 14px",
+                  borderRadius: "999px",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  background: "rgba(37,99,235,0.1)",
+                  border: "1px solid rgba(37,99,235,0.25)",
+                  color: "#60a5fa",
+                }}>
                   {activeReport.domain}
                 </span>
               )}
               {resolvedDuration > 0 && (
-                <span
-                  className="px-3 py-1 rounded-full text-xs"
-                  style={{
-                    background: "rgba(255,255,255,0.05)",
-                    color: "rgba(255,255,255,0.35)",
-                  }}
-                >
+                <span style={{
+                  padding: "6px 14px",
+                  borderRadius: "999px",
+                  fontSize: "12px",
+                  background: "rgba(255,255,255,0.04)",
+                  color: "rgba(255,255,255,0.35)",
+                }}>
                   ⏱ {Math.floor(resolvedDuration / 60)}m {Math.floor(resolvedDuration % 60)}s
+                </span>
+              )}
+              {questionBreakdown.length > 0 && (
+                <span style={{
+                  padding: "6px 14px",
+                  borderRadius: "999px",
+                  fontSize: "12px",
+                  background: "rgba(255,255,255,0.04)",
+                  color: "rgba(255,255,255,0.35)",
+                }}>
+                  {questionBreakdown.length} questions
                 </span>
               )}
             </div>
 
-            <div className="flex justify-center mb-6">
+            {/* Score Gauge */}
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: "24px" }}>
               <ScoreGauge
                 score={activeReport.overall_score || 0}
                 label="Overall Performance"
@@ -240,16 +334,22 @@ export default function FeedbackReport({ report, confidenceData, sessionId, dura
               />
             </div>
 
+            {/* Hiring Recommendation */}
             {activeReport.hiring_recommendation && (
-              <div
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold mb-4"
-                style={{
-                  background: hs.bg,
-                  border: `1px solid ${hs.border || "rgba(245,158,11,0.2)"}`,
-                  color: hs.color,
-                }}
-              >
-                <span>
+              <div style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "10px 22px",
+                borderRadius: "999px",
+                fontSize: "13px",
+                fontWeight: "700",
+                background: hs.bg,
+                border: `1px solid ${hs.border}`,
+                color: hs.color,
+                marginBottom: "20px",
+              }}>
+                <span style={{ fontSize: "14px" }}>
                   {activeReport.hiring_recommendation === "Yes" || activeReport.hiring_recommendation === "Strong Yes" ? "✓" : activeReport.hiring_recommendation === "No" ? "✗" : "◈"}
                 </span>
                 {activeReport.hiring_recommendation === "Yes" || activeReport.hiring_recommendation === "Strong Yes"
@@ -260,20 +360,63 @@ export default function FeedbackReport({ report, confidenceData, sessionId, dura
               </div>
             )}
 
+            {/* Summary */}
             {activeReport.summary && (
-              <p className="max-w-xl mx-auto text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.45)" }}>
+              <p style={{
+                maxWidth: "520px",
+                margin: "0 auto",
+                fontSize: "13px",
+                lineHeight: "1.7",
+                color: "rgba(255,255,255,0.4)",
+              }}>
                 {activeReport.summary}
+              </p>
+            )}
+
+            {/* Note for partial */}
+            {activeReport.partial_interview && (
+              <p style={{
+                marginTop: "16px",
+                fontSize: "12px",
+                color: "rgba(255,255,255,0.25)",
+                fontStyle: "italic",
+              }}>
+                Note: This is based on {questionBreakdown.length || 0} questions answered before the interview was ended early.
               </p>
             )}
           </div>
         </div>
 
-        {/* Skill Breakdown */}
-        <div>
-          <h2 className="font-geist text-lg font-bold mb-4" style={{ color: "var(--text-primary)" }}>
-            Skill Breakdown
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* ═══ SKILL BREAKDOWN ═══ */}
+        <div style={{ marginBottom: "24px" }}>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            marginBottom: "16px",
+          }}>
+            <div style={{
+              width: "28px", height: "28px", borderRadius: "8px",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "13px",
+              background: "rgba(37,99,235,0.08)",
+              border: "1px solid rgba(37,99,235,0.15)",
+            }}>📊</div>
+            <h2 style={{
+              fontSize: "17px",
+              fontWeight: "700",
+              color: "#ffffff",
+              fontFamily: "'Geist', 'Inter', sans-serif",
+              letterSpacing: "-0.02em",
+              margin: 0,
+            }}>Skill Breakdown</h2>
+          </div>
+
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "12px",
+          }}>
             {sectionOrder.map((key) => {
               const data = sections?.[key] || {};
               const s = typeof data.score === "number" ? data.score : 0;
@@ -291,85 +434,123 @@ export default function FeedbackReport({ report, confidenceData, sessionId, dura
               }[key];
 
               return (
-                <div
+                <SectionCard
                   key={key}
-                  className="rounded-2xl p-5"
-                  style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}
-                >
-                  <div className="flex items-center gap-2 mb-4">
-                    <span>{icon}</span>
-                    <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-                      {label}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-center mb-3">
-                    <ScoreGauge
-                      score={s}
-                      size="sm"
-                      showGrade={false}
-                    />
-                  </div>
-
-                  <p className="text-xs leading-relaxed text-center" style={{ color: "var(--text-secondary)" }}>
-                    {data.feedback || "No feedback available yet."}
-                  </p>
-                </div>
+                  icon={icon}
+                  label={label}
+                  score={s}
+                  feedback={data.feedback}
+                />
               );
             })}
           </div>
         </div>
 
-        {/* Strengths & Improvements */}
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="rounded-2xl p-5" style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}>
-            <h3 className="font-semibold text-sm mb-4 flex items-center gap-2" style={{ color: "#22c55e" }}>
-              <span>✦</span> Strengths
-            </h3>
-            <div className="space-y-2.5">
+        {/* ═══ STRENGTHS & IMPROVEMENTS ═══ */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "12px",
+          marginBottom: "24px",
+        }}>
+          {/* Strengths */}
+          <div style={{
+            borderRadius: "16px",
+            padding: "24px",
+            background: "rgba(255,255,255,0.02)",
+            border: "1px solid rgba(255,255,255,0.06)",
+          }}>
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              marginBottom: "16px",
+            }}>
+              <div style={{
+                width: "28px", height: "28px", borderRadius: "8px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "12px",
+                background: "rgba(34,197,94,0.08)",
+                border: "1px solid rgba(34,197,94,0.15)",
+              }}>✦</div>
+              <h3 style={{
+                fontSize: "14px",
+                fontWeight: "700",
+                color: "#22c55e",
+                margin: 0,
+              }}>Strengths</h3>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {strengths.length > 0 ? (
                 strengths.map((s, i) => (
-                  <div key={i} className="flex items-start gap-2.5">
-                    <div
-                      className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                      style={{ background: "rgba(34,197,94,0.1)" }}
-                    >
-                      <span style={{ fontSize: "9px", color: "#22c55e" }}>✓</span>
-                    </div>
-                    <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                    <div style={{
+                      width: "20px", height: "20px", borderRadius: "50%",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      flexShrink: 0, marginTop: "1px",
+                      background: "rgba(34,197,94,0.08)",
+                      fontSize: "10px", color: "#22c55e",
+                    }}>✓</div>
+                    <p style={{ fontSize: "13px", lineHeight: "1.6", color: "rgba(255,255,255,0.6)", margin: 0 }}>
                       {s}
                     </p>
                   </div>
                 ))
               ) : (
-                <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.25)" }}>
                   No strengths captured yet.
                 </p>
               )}
             </div>
           </div>
 
-          <div className="rounded-2xl p-5" style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}>
-            <h3 className="font-semibold text-sm mb-4 flex items-center gap-2" style={{ color: "#f59e0b" }}>
-              <span>△</span> Areas to Improve
-            </h3>
-            <div className="space-y-2.5">
+          {/* Improvements */}
+          <div style={{
+            borderRadius: "16px",
+            padding: "24px",
+            background: "rgba(255,255,255,0.02)",
+            border: "1px solid rgba(255,255,255,0.06)",
+          }}>
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              marginBottom: "16px",
+            }}>
+              <div style={{
+                width: "28px", height: "28px", borderRadius: "8px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "12px",
+                background: "rgba(245,158,11,0.08)",
+                border: "1px solid rgba(245,158,11,0.15)",
+              }}>△</div>
+              <h3 style={{
+                fontSize: "14px",
+                fontWeight: "700",
+                color: "#f59e0b",
+                margin: 0,
+              }}>Areas to Improve</h3>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {improvements.length > 0 ? (
                 improvements.map((imp, i) => (
-                  <div key={i} className="flex items-start gap-2.5">
-                    <div
-                      className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                      style={{ background: "rgba(245,158,11,0.1)" }}
-                    >
-                      <span style={{ fontSize: "9px", color: "#f59e0b" }}>→</span>
-                    </div>
-                    <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                    <div style={{
+                      width: "20px", height: "20px", borderRadius: "50%",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      flexShrink: 0, marginTop: "1px",
+                      background: "rgba(245,158,11,0.08)",
+                      fontSize: "10px", color: "#f59e0b",
+                    }}>→</div>
+                    <p style={{ fontSize: "13px", lineHeight: "1.6", color: "rgba(255,255,255,0.6)", margin: 0 }}>
                       {imp}
                     </p>
                   </div>
                 ))
               ) : (
-                <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.25)" }}>
                   No improvement areas captured yet.
                 </p>
               )}
@@ -377,104 +558,190 @@ export default function FeedbackReport({ report, confidenceData, sessionId, dura
           </div>
         </div>
 
-        {/* Question by Question */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-geist text-lg font-bold" style={{ color: "var(--text-primary)" }}>
-              Question by Question
-            </h2>
-            <span
-              className="text-xs px-2.5 py-1 rounded-full"
-              style={{ background: "var(--bg-elevated)", color: "var(--text-muted)" }}
-            >
-              {questionBreakdown.length} questions · click to expand
-            </span>
+        {/* ═══ QUESTION BY QUESTION ═══ */}
+        <div style={{ marginBottom: "24px" }}>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "16px",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{
+                width: "28px", height: "28px", borderRadius: "8px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "13px",
+                background: "rgba(37,99,235,0.08)",
+                border: "1px solid rgba(37,99,235,0.15)",
+              }}>📋</div>
+              <h2 style={{
+                fontSize: "17px",
+                fontWeight: "700",
+                color: "#ffffff",
+                fontFamily: "'Geist', 'Inter', sans-serif",
+                letterSpacing: "-0.02em",
+                margin: 0,
+              }}>Question by Question</h2>
+            </div>
+            {questionBreakdown.length > 0 && (
+              <span style={{
+                fontSize: "11px",
+                padding: "5px 12px",
+                borderRadius: "999px",
+                background: "rgba(255,255,255,0.03)",
+                color: "rgba(255,255,255,0.3)",
+                border: "1px solid rgba(255,255,255,0.06)",
+              }}>
+                {questionBreakdown.length} questions · click to expand
+              </span>
+            )}
           </div>
 
           {questionBreakdown.length === 0 ? (
-            <div className="rounded-2xl p-5" style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}>
-              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+            <div style={{
+              borderRadius: "16px",
+              padding: "32px",
+              textAlign: "center",
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(255,255,255,0.06)",
+            }}>
+              <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.25)" }}>
                 No question breakdown available yet.
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               {questionBreakdown.map((item, i) => {
                 const score = item?.score || 0;
                 const scaled = score * 10;
-                const sc = scaled >= 80 ? "#22c55e" : scaled >= 60 ? "#2563eb" : scaled >= 40 ? "#f59e0b" : "#94a3b8";
+                const sc = getScoreColor(scaled);
                 const confidenceAnswer = confidenceAnswers[i];
 
                 return (
                   <details
                     key={i}
-                    className="rounded-2xl overflow-hidden transition-all duration-200"
-                    style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}
+                    style={{
+                      borderRadius: "14px",
+                      overflow: "hidden",
+                      background: "rgba(255,255,255,0.02)",
+                      border: "1px solid rgba(255,255,255,0.06)",
+                      transition: "border-color 0.2s ease",
+                    }}
                   >
                     <summary
-                      className="w-full flex items-start justify-between gap-4 p-5 text-left transition-all hover:opacity-90 list-none"
-                      style={{ cursor: "pointer" }}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "16px",
+                        padding: "18px 20px",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        listStyle: "none",
+                      }}
                     >
-                      <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <div
-                          className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 mt-0.5"
-                          style={{ background: "linear-gradient(135deg, #2563eb, #1d4ed8)" }}
-                        >
-                          {i + 1}
-                        </div>
-                        <p className="text-sm font-medium leading-relaxed" style={{ color: "var(--text-primary)" }}>
-                          {item.question}
-                        </p>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1, minWidth: 0 }}>
+                        <div style={{
+                          width: "28px", height: "28px", borderRadius: "50%",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: "11px", fontWeight: "800", color: "white",
+                          background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+                          flexShrink: 0,
+                        }}>{i + 1}</div>
+                        <p style={{
+                          fontSize: "13px",
+                          fontWeight: "500",
+                          lineHeight: "1.5",
+                          color: "rgba(255,255,255,0.8)",
+                          margin: 0,
+                        }}>{item.question}</p>
                       </div>
 
-                      <div className="flex items-center gap-3 flex-shrink-0">
-                        <div className="flex items-baseline gap-0.5">
-                          <span className="font-geist text-xl font-bold" style={{ color: sc }}>
-                            {score}
-                          </span>
-                          <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                            /10
-                          </span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 }}>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: "2px" }}>
+                          <span style={{
+                            fontFamily: "'Geist', 'Inter', sans-serif",
+                            fontSize: "20px",
+                            fontWeight: "800",
+                            color: sc,
+                            letterSpacing: "-0.02em",
+                          }}>{score}</span>
+                          <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)" }}>/10</span>
                         </div>
-                        <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--bg-elevated)" }}>
-                          <div className="h-full rounded-full" style={{ width: `${score * 10}%`, background: sc }} />
+                        <div style={{
+                          width: "56px", height: "5px", borderRadius: "999px",
+                          overflow: "hidden",
+                          background: "rgba(255,255,255,0.06)",
+                        }}>
+                          <div style={{
+                            height: "100%",
+                            borderRadius: "999px",
+                            background: sc,
+                            width: `${score * 10}%`,
+                            transition: "width 0.5s ease",
+                          }} />
                         </div>
-                        <span className="text-xs" style={{ color: "var(--text-muted)" }}>▼</span>
+                        <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)" }}>▼</span>
                       </div>
                     </summary>
 
-                    <div className="px-5 pb-5 space-y-4" style={{ borderTop: "1px solid var(--border-subtle)" }}>
+                    <div style={{
+                      padding: "0 20px 20px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "12px",
+                      borderTop: "1px solid rgba(255,255,255,0.04)",
+                    }}>
+                      {/* Answer Summary */}
                       {item.answer_summary && (
-                        <div className="pt-4">
-                          <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>
-                            Your Answer
-                          </p>
-                          <div
-                            className="px-4 py-3 rounded-xl text-sm italic leading-relaxed"
-                            style={{
-                              background: "var(--bg-overlay)",
-                              border: "1px solid var(--border-subtle)",
-                              color: "var(--text-secondary)",
-                              borderLeft: "3px solid var(--border-strong)",
-                            }}
-                          >
+                        <div style={{ paddingTop: "16px" }}>
+                          <p style={{
+                            fontSize: "10px",
+                            fontWeight: "700",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.5px",
+                            color: "rgba(255,255,255,0.25)",
+                            marginBottom: "8px",
+                          }}>Your Answer</p>
+                          <div style={{
+                            padding: "12px 16px",
+                            borderRadius: "10px",
+                            fontSize: "13px",
+                            fontStyle: "italic",
+                            lineHeight: "1.7",
+                            background: "rgba(255,255,255,0.02)",
+                            border: "1px solid rgba(255,255,255,0.04)",
+                            borderLeft: "3px solid rgba(255,255,255,0.1)",
+                            color: "rgba(255,255,255,0.5)",
+                          }}>
                             "{item.answer_summary}"
                           </div>
                         </div>
                       )}
 
-                      <div className="grid md:grid-cols-2 gap-3">
+                      {/* Good / Missing */}
+                      <div style={{
+                        display: "grid",
+                        gridTemplateColumns: item.what_was_good && item.what_was_missing ? "1fr 1fr" : "1fr",
+                        gap: "10px",
+                      }}>
                         {item.what_was_good && (
-                          <div
-                            className="flex items-start gap-2.5 p-3 rounded-xl"
-                            style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.15)" }}
-                          >
-                            <span className="text-green-500 flex-shrink-0 mt-0.5">✓</span>
+                          <div style={{
+                            display: "flex",
+                            alignItems: "flex-start",
+                            gap: "10px",
+                            padding: "12px 14px",
+                            borderRadius: "10px",
+                            background: "rgba(34,197,94,0.04)",
+                            border: "1px solid rgba(34,197,94,0.1)",
+                          }}>
+                            <span style={{ color: "#22c55e", flexShrink: 0, marginTop: "2px", fontSize: "12px" }}>✓</span>
                             <div>
-                              <p className="text-xs font-semibold mb-1" style={{ color: "#22c55e" }}>
+                              <p style={{ fontSize: "11px", fontWeight: "700", color: "#22c55e", marginBottom: "4px" }}>
                                 What was good
                               </p>
-                              <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                              <p style={{ fontSize: "12px", lineHeight: "1.6", color: "rgba(255,255,255,0.55)", margin: 0 }}>
                                 {item.what_was_good}
                               </p>
                             </div>
@@ -482,16 +749,21 @@ export default function FeedbackReport({ report, confidenceData, sessionId, dura
                         )}
 
                         {item.what_was_missing && (
-                          <div
-                            className="flex items-start gap-2.5 p-3 rounded-xl"
-                            style={{ background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.15)" }}
-                          >
-                            <span className="text-yellow-500 flex-shrink-0 mt-0.5">△</span>
+                          <div style={{
+                            display: "flex",
+                            alignItems: "flex-start",
+                            gap: "10px",
+                            padding: "12px 14px",
+                            borderRadius: "10px",
+                            background: "rgba(245,158,11,0.04)",
+                            border: "1px solid rgba(245,158,11,0.1)",
+                          }}>
+                            <span style={{ color: "#f59e0b", flexShrink: 0, marginTop: "2px", fontSize: "12px" }}>△</span>
                             <div>
-                              <p className="text-xs font-semibold mb-1" style={{ color: "#f59e0b" }}>
+                              <p style={{ fontSize: "11px", fontWeight: "700", color: "#f59e0b", marginBottom: "4px" }}>
                                 What was missing
                               </p>
-                              <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                              <p style={{ fontSize: "12px", lineHeight: "1.6", color: "rgba(255,255,255,0.55)", margin: 0 }}>
                                 {item.what_was_missing}
                               </p>
                             </div>
@@ -499,67 +771,84 @@ export default function FeedbackReport({ report, confidenceData, sessionId, dura
                         )}
                       </div>
 
+                      {/* Ideal answer */}
                       {item.ideal_answer_hint && (
-                        <div
-                          className="flex items-start gap-2.5 p-3 rounded-xl"
-                          style={{ background: "rgba(37,99,235,0.05)", border: "1px solid rgba(37,99,235,0.15)" }}
-                        >
-                          <span className="flex-shrink-0 mt-0.5">💡</span>
+                        <div style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: "10px",
+                          padding: "12px 14px",
+                          borderRadius: "10px",
+                          background: "rgba(37,99,235,0.04)",
+                          border: "1px solid rgba(37,99,235,0.1)",
+                        }}>
+                          <span style={{ flexShrink: 0, marginTop: "2px", fontSize: "14px" }}>💡</span>
                           <div>
-                            <p className="text-xs font-semibold mb-1" style={{ color: "#60a5fa" }}>
+                            <p style={{ fontSize: "11px", fontWeight: "700", color: "#60a5fa", marginBottom: "4px" }}>
                               Ideal answer includes
                             </p>
-                            <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                            <p style={{ fontSize: "12px", lineHeight: "1.6", color: "rgba(255,255,255,0.55)", margin: 0 }}>
                               {item.ideal_answer_hint}
                             </p>
                           </div>
                         </div>
                       )}
 
+                      {/* Feedback */}
                       {item.feedback && (
-                        <div className="p-3 rounded-xl" style={{ background: "var(--bg-overlay)", border: "1px solid var(--border-subtle)" }}>
-                          <p className="text-xs font-semibold mb-1" style={{ color: "var(--text-muted)" }}>
-                            ARIA's Feedback
-                          </p>
-                          <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                            {item.feedback}
-                          </p>
+                        <div style={{
+                          padding: "12px 14px",
+                          borderRadius: "10px",
+                          background: "rgba(255,255,255,0.02)",
+                          border: "1px solid rgba(255,255,255,0.04)",
+                        }}>
+                          <p style={{
+                            fontSize: "11px", fontWeight: "700",
+                            color: "rgba(255,255,255,0.25)",
+                            marginBottom: "6px",
+                          }}>ARIA's Feedback</p>
+                          <p style={{
+                            fontSize: "13px", lineHeight: "1.7",
+                            color: "rgba(255,255,255,0.6)", margin: 0,
+                          }}>{item.feedback}</p>
                         </div>
                       )}
 
+                      {/* Confidence metrics */}
                       {confidenceAnswer && (
-                        <div className="flex items-center gap-4 pt-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                              Confidence:
-                            </span>
-                            <span
-                              className="text-xs font-semibold"
-                              style={{ color: (confidenceAnswer.score || confidenceAnswer.confidence_score || 0) >= 80 ? "#22c55e" : (confidenceAnswer.score || confidenceAnswer.confidence_score || 0) >= 60 ? "#2563eb" : (confidenceAnswer.score || confidenceAnswer.confidence_score || 0) >= 40 ? "#f59e0b" : "#94a3b8" }}
-                            >
+                        <div style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "16px",
+                          paddingTop: "4px",
+                        }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)" }}>Confidence:</span>
+                            <span style={{
+                              fontSize: "12px", fontWeight: "700",
+                              color: getScoreColor(confidenceAnswer.score || confidenceAnswer.confidence_score || 0),
+                            }}>
                               {(confidenceAnswer.score || confidenceAnswer.confidence_score || 0)}/100
                             </span>
                           </div>
                           {(confidenceAnswer.filler_words_found || confidenceAnswer.filler_words || []).length > 0 && (
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                                Fillers:
-                              </span>
-                              <div className="flex gap-1">
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)" }}>Fillers:</span>
+                              <div style={{ display: "flex", gap: "4px" }}>
                                 {(confidenceAnswer.filler_words_found || confidenceAnswer.filler_words || []).slice(0, 3).map((fw) => (
-                                  <span
-                                    key={fw}
-                                    className="text-xs px-1.5 py-0.5 rounded"
-                                    style={{ background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}
-                                  >
-                                    {fw}
-                                  </span>
+                                  <span key={fw} style={{
+                                    fontSize: "10px",
+                                    padding: "2px 6px",
+                                    borderRadius: "4px",
+                                    background: "rgba(245,158,11,0.08)",
+                                    color: "#f59e0b",
+                                  }}>{fw}</span>
                                 ))}
                               </div>
                             </div>
                           )}
                           {(confidenceAnswer.word_count || 0) > 0 && (
-                            <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                            <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)" }}>
                               {confidenceAnswer.word_count} words
                             </span>
                           )}
@@ -573,18 +862,47 @@ export default function FeedbackReport({ report, confidenceData, sessionId, dura
           )}
         </div>
 
-        {/* Confidence Analysis */}
+        {/* ═══ CONFIDENCE ANALYSIS ═══ */}
         {activeConfidence && (
-          <div>
-            <h2 className="font-geist text-lg font-bold mb-4" style={{ color: "var(--text-primary)" }}>
-              Confidence Analysis
-            </h2>
-            <div
-              className="rounded-2xl p-6"
-              style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex justify-center">
+          <div style={{ marginBottom: "24px" }}>
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              marginBottom: "16px",
+            }}>
+              <div style={{
+                width: "28px", height: "28px", borderRadius: "8px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "13px",
+                background: "rgba(37,99,235,0.08)",
+                border: "1px solid rgba(37,99,235,0.15)",
+              }}>🎯</div>
+              <h2 style={{
+                fontSize: "17px",
+                fontWeight: "700",
+                color: "#ffffff",
+                fontFamily: "'Geist', 'Inter', sans-serif",
+                letterSpacing: "-0.02em",
+                margin: 0,
+              }}>Confidence Analysis</h2>
+            </div>
+
+            <div style={{
+              borderRadius: "16px",
+              padding: "28px",
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(255,255,255,0.06)",
+            }}>
+              {/* Top row: Gauge + Stats */}
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "20px",
+                gap: "24px",
+              }}>
+                <div style={{ display: "flex", justifyContent: "center" }}>
                   <ScoreGauge
                     score={activeConfidence.overallScore ?? activeConfidence.overall_score ?? activeConfidence.confidence_score ?? 0}
                     label="Confidence Score"
@@ -592,110 +910,166 @@ export default function FeedbackReport({ report, confidenceData, sessionId, dura
                     showGrade={true}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-3 text-center">
-                  <div className="px-4 py-3 rounded-xl" style={{ background: "var(--bg-overlay)", border: "1px solid var(--border-subtle)" }}>
-                    <div className="font-geist text-xl font-bold" style={{ color: "var(--text-primary)" }}>
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "10px",
+                }}>
+                  <div style={{
+                    padding: "16px 20px",
+                    borderRadius: "12px",
+                    textAlign: "center",
+                    background: "rgba(255,255,255,0.02)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                  }}>
+                    <div style={{
+                      fontFamily: "'Geist', 'Inter', sans-serif",
+                      fontSize: "22px", fontWeight: "800", color: "#ffffff",
+                      letterSpacing: "-0.02em",
+                    }}>
                       {activeConfidence.totalFillers ?? activeConfidence.total_fillers ?? activeConfidence.total_filler_words ?? 0}
                     </div>
-                    <div className="text-xs" style={{ color: "var(--text-muted)" }}>
+                    <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginTop: "2px" }}>
                       Total Fillers
                     </div>
                   </div>
-                  <div className="px-4 py-3 rounded-xl" style={{ background: "var(--bg-overlay)", border: "1px solid var(--border-subtle)" }}>
-                    <div className="font-geist text-xl font-bold" style={{ color: "var(--text-primary)" }}>
+                  <div style={{
+                    padding: "16px 20px",
+                    borderRadius: "12px",
+                    textAlign: "center",
+                    background: "rgba(255,255,255,0.02)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                  }}>
+                    <div style={{
+                      fontFamily: "'Geist', 'Inter', sans-serif",
+                      fontSize: "22px", fontWeight: "800", color: "#ffffff",
+                      letterSpacing: "-0.02em",
+                    }}>
                       {confidenceAnswers.length || questionBreakdown.length || 0}
                     </div>
-                    <div className="text-xs" style={{ color: "var(--text-muted)" }}>
+                    <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginTop: "2px" }}>
                       Answers
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="h-2 rounded-full overflow-hidden mb-4" style={{ background: "var(--bg-elevated)" }}>
-                <div
-                  className="h-full rounded-full transition-all duration-700"
-                  style={{
-                    width: `${activeConfidence.overallScore ?? activeConfidence.overall_score ?? activeConfidence.confidence_score ?? 0}%`,
-                    background: `linear-gradient(90deg, ${
-                      (activeConfidence.overallScore ?? activeConfidence.overall_score ?? activeConfidence.confidence_score ?? 0) >= 80
-                        ? "#22c55e"
-                        : (activeConfidence.overallScore ?? activeConfidence.overall_score ?? activeConfidence.confidence_score ?? 0) >= 60
-                          ? "#2563eb"
-                          : (activeConfidence.overallScore ?? activeConfidence.overall_score ?? activeConfidence.confidence_score ?? 0) >= 40
-                            ? "#f59e0b"
-                            : "#94a3b8"}, ${
-                      (activeConfidence.overallScore ?? activeConfidence.overall_score ?? activeConfidence.confidence_score ?? 0) >= 80
-                        ? "#22c55e"
-                        : (activeConfidence.overallScore ?? activeConfidence.overall_score ?? activeConfidence.confidence_score ?? 0) >= 60
-                          ? "#2563eb"
-                          : (activeConfidence.overallScore ?? activeConfidence.overall_score ?? activeConfidence.confidence_score ?? 0) >= 40
-                            ? "#f59e0b"
-                            : "#94a3b8"}88)`
-                  }}
-                />
-              </div>
+              {/* Confidence progress bar */}
+              {(() => {
+                const confScore = activeConfidence.overallScore ?? activeConfidence.overall_score ?? activeConfidence.confidence_score ?? 0;
+                const confColor = getScoreColor(confScore);
+                return (
+                  <div style={{
+                    height: "6px",
+                    borderRadius: "999px",
+                    overflow: "hidden",
+                    marginBottom: "20px",
+                    background: "rgba(255,255,255,0.04)",
+                  }}>
+                    <div style={{
+                      height: "100%",
+                      borderRadius: "999px",
+                      width: `${confScore}%`,
+                      background: `linear-gradient(90deg, ${confColor}, ${confColor}88)`,
+                      transition: "width 0.7s ease",
+                    }} />
+                  </div>
+                );
+              })()}
 
+              {/* Filler Words */}
               {(Object.keys(activeConfidence.filler_frequency || activeConfidence.most_used_fillers || {}).length > 0) && (
-                <div className="mb-4">
-                  <p className="text-xs font-medium mb-2" style={{ color: "var(--text-muted)" }}>
-                    Filler Words Used
-                  </p>
-                  <div className="flex flex-wrap gap-2">
+                <div style={{ marginBottom: "20px" }}>
+                  <p style={{
+                    fontSize: "11px", fontWeight: "700",
+                    textTransform: "uppercase", letterSpacing: "0.5px",
+                    color: "rgba(255,255,255,0.25)",
+                    marginBottom: "10px",
+                  }}>Filler Words Used</p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
                     {Object.entries(activeConfidence.filler_frequency || activeConfidence.most_used_fillers || {})
                       .sort((a, b) => b[1] - a[1])
                       .map(([word, count]) => (
-                        <div
-                          key={word}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg"
-                          style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)" }}
-                        >
-                          <span className="text-xs font-semibold" style={{ color: "#f59e0b" }}>
-                            "{word}"
-                          </span>
-                          <span
-                            className="text-xs px-1.5 py-0.5 rounded font-bold"
-                            style={{ background: "rgba(245,158,11,0.15)", color: "#f59e0b" }}
-                          >
-                            ×{count}
-                          </span>
+                        <div key={word} style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          padding: "6px 12px",
+                          borderRadius: "8px",
+                          background: "rgba(245,158,11,0.06)",
+                          border: "1px solid rgba(245,158,11,0.1)",
+                        }}>
+                          <span style={{ fontSize: "12px", fontWeight: "600", color: "#f59e0b" }}>"{word}"</span>
+                          <span style={{
+                            fontSize: "10px",
+                            fontWeight: "800",
+                            padding: "1px 6px",
+                            borderRadius: "4px",
+                            background: "rgba(245,158,11,0.1)",
+                            color: "#f59e0b",
+                          }}>×{count}</span>
                         </div>
                       ))}
                   </div>
                 </div>
               )}
 
+              {/* Per-answer confidence bars */}
               {confidenceAnswers.length > 0 && (
-                <div>
-                  <p className="text-xs font-medium mb-3" style={{ color: "var(--text-muted)" }}>
-                    Confidence per Answer
-                  </p>
-                  <div className="space-y-2">
+                <div style={{ marginBottom: "16px" }}>
+                  <p style={{
+                    fontSize: "11px", fontWeight: "700",
+                    textTransform: "uppercase", letterSpacing: "0.5px",
+                    color: "rgba(255,255,255,0.25)",
+                    marginBottom: "12px",
+                  }}>Confidence per Answer</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                     {confidenceAnswers.map((ans, i) => {
                       const s = ans.score || ans.confidence_score || 0;
-                      const c = s >= 80 ? "#22c55e" : s >= 60 ? "#2563eb" : s >= 40 ? "#f59e0b" : "#94a3b8";
+                      const c = getScoreColor(s);
                       const fillers = ans.filler_words_found || ans.filler_words || [];
                       return (
-                        <div key={i} className="flex items-center gap-3">
-                          <span className="text-xs font-mono w-6 flex-shrink-0" style={{ color: "var(--text-muted)" }}>
-                            Q{i + 1}
-                          </span>
-                          <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "var(--bg-elevated)" }}>
-                            <div className="h-full rounded-full" style={{ width: `${s}%`, background: c }} />
+                        <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <span style={{
+                            fontSize: "11px",
+                            fontFamily: "'Geist', monospace",
+                            width: "24px",
+                            flexShrink: 0,
+                            color: "rgba(255,255,255,0.25)",
+                          }}>Q{i + 1}</span>
+                          <div style={{
+                            flex: 1,
+                            height: "6px",
+                            borderRadius: "999px",
+                            overflow: "hidden",
+                            background: "rgba(255,255,255,0.04)",
+                          }}>
+                            <div style={{
+                              height: "100%",
+                              borderRadius: "999px",
+                              background: c,
+                              width: `${s}%`,
+                              transition: "width 0.5s ease",
+                            }} />
                           </div>
-                          <span className="text-xs font-semibold w-8 text-right flex-shrink-0" style={{ color: c }}>
-                            {s}
-                          </span>
+                          <span style={{
+                            fontSize: "12px",
+                            fontWeight: "700",
+                            width: "32px",
+                            textAlign: "right",
+                            flexShrink: 0,
+                            color: c,
+                          }}>{s}</span>
                           {fillers.length > 0 && (
-                            <div className="flex gap-1 flex-shrink-0">
+                            <div style={{ display: "flex", gap: "3px", flexShrink: 0 }}>
                               {fillers.slice(0, 2).map((fw) => (
-                                <span
-                                  key={fw}
-                                  className="text-xs px-1 py-0.5 rounded"
-                                  style={{ background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}
-                                >
-                                  {fw}
-                                </span>
+                                <span key={fw} style={{
+                                  fontSize: "10px",
+                                  padding: "1px 5px",
+                                  borderRadius: "3px",
+                                  background: "rgba(245,158,11,0.06)",
+                                  color: "#f59e0b",
+                                }}>{fw}</span>
                               ))}
                             </div>
                           )}
@@ -706,15 +1080,29 @@ export default function FeedbackReport({ report, confidenceData, sessionId, dura
                 </div>
               )}
 
+              {/* Communication tips */}
               {(activeConfidence.tips || activeConfidence.improvement_tips || []).length > 0 && (
-                <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--border-subtle)" }}>
-                  <p className="text-xs font-medium mb-2" style={{ color: "var(--text-muted)" }}>
-                    Communication Tips
-                  </p>
-                  <div className="space-y-2">
+                <div style={{
+                  paddingTop: "16px",
+                  borderTop: "1px solid rgba(255,255,255,0.04)",
+                }}>
+                  <p style={{
+                    fontSize: "11px", fontWeight: "700",
+                    textTransform: "uppercase", letterSpacing: "0.5px",
+                    color: "rgba(255,255,255,0.25)",
+                    marginBottom: "10px",
+                  }}>Communication Tips</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                     {(activeConfidence.tips || activeConfidence.improvement_tips || []).map((tip, i) => (
-                      <div key={i} className="flex items-start gap-2 text-xs" style={{ color: "var(--text-secondary)" }}>
-                        <span style={{ color: "#2563eb" }}>→</span>
+                      <div key={i} style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: "8px",
+                        fontSize: "12px",
+                        lineHeight: "1.6",
+                        color: "rgba(255,255,255,0.55)",
+                      }}>
+                        <span style={{ color: "#2563eb", flexShrink: 0 }}>→</span>
                         {tip}
                       </div>
                     ))}
@@ -725,21 +1113,35 @@ export default function FeedbackReport({ report, confidenceData, sessionId, dura
           </div>
         )}
 
-        {/* Interview Recording */}
+        {/* ═══ RECORDING ═══ */}
         {audioUrl && (
-          <div
-            className="rounded-2xl p-6"
-            style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}
-          >
-            <h4 className="text-sm font-semibold mb-3" style={{ color: "var(--text-secondary)" }}>
-              Interview Recording
-            </h4>
-            <audio controls src={audioUrl} className="w-full mb-3" />
+          <div style={{
+            borderRadius: "16px",
+            padding: "24px",
+            marginBottom: "24px",
+            background: "rgba(255,255,255,0.02)",
+            border: "1px solid rgba(255,255,255,0.06)",
+          }}>
+            <h4 style={{
+              fontSize: "14px",
+              fontWeight: "600",
+              color: "rgba(255,255,255,0.6)",
+              marginBottom: "14px",
+            }}>Interview Recording</h4>
+            <audio controls src={audioUrl} style={{ width: "100%", marginBottom: "12px" }} />
             {onDownload && (
               <button
                 onClick={onDownload}
-                className="px-4 py-2 text-sm rounded-lg transition"
-                style={{ background: "var(--bg-surface)", color: "var(--text-secondary)", border: "1px solid var(--border-default)" }}
+                style={{
+                  padding: "8px 18px",
+                  fontSize: "13px",
+                  borderRadius: "10px",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  color: "rgba(255,255,255,0.5)",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                }}
               >
                 ⬇ Download Recording
               </button>
@@ -747,26 +1149,44 @@ export default function FeedbackReport({ report, confidenceData, sessionId, dura
           </div>
         )}
 
-        {/* Bottom Actions */}
-        <div className="flex gap-3 pb-8">
+        {/* ═══ BOTTOM ACTIONS ═══ */}
+        <div style={{
+          display: "flex",
+          gap: "12px",
+          paddingBottom: "32px",
+        }}>
           <button
             onClick={onReset}
-            className="flex-1 py-4 rounded-2xl font-bold text-white transition-all hover:opacity-90 active:scale-[0.98] font-geist"
             style={{
+              flex: 1,
+              padding: "16px",
+              borderRadius: "14px",
+              fontWeight: "700",
+              color: "white",
+              fontSize: "14px",
+              fontFamily: "'Geist', 'Inter', sans-serif",
+              letterSpacing: "-0.01em",
+              border: "none",
+              cursor: "pointer",
               background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
-              boxShadow: "0 0 30px rgba(37,99,235,0.3)",
-              fontSize: "15px",
+              boxShadow: "0 0 30px rgba(37,99,235,0.25)",
+              transition: "all 0.2s ease",
             }}
           >
             Start New Interview →
           </button>
           <button
             onClick={() => (window.location.href = "/dashboard")}
-            className="px-8 py-4 rounded-2xl font-semibold transition-all hover:opacity-80"
             style={{
-              background: "var(--bg-surface)",
-              border: "1px solid var(--border-default)",
-              color: "var(--text-secondary)",
+              padding: "16px 32px",
+              borderRadius: "14px",
+              fontWeight: "600",
+              fontSize: "14px",
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              color: "rgba(255,255,255,0.5)",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
             }}
           >
             Dashboard

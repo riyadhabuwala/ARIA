@@ -1,10 +1,27 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 export default function CameraPermissionScreen({ onReady, candidateName, domain }) {
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState("");
   const [cameraGranted, setCameraGranted] = useState(false);
   const [micGranted, setMicGranted] = useState(false);
+  const [previewStream, setPreviewStream] = useState(null);
+  const previewRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (previewStream) {
+        previewStream.getTracks().forEach((t) => t.stop());
+      }
+    };
+  }, [previewStream]);
+
+  useEffect(() => {
+    if (previewRef.current && previewStream) {
+      previewRef.current.srcObject = previewStream;
+      previewRef.current.play().catch(() => {});
+    }
+  }, [previewStream]);
 
   async function requestPermissions() {
     setChecking(true);
@@ -12,8 +29,8 @@ export default function CameraPermissionScreen({ onReady, candidateName, domain 
 
     try {
       const camStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-      camStream.getTracks().forEach((t) => t.stop());
       setCameraGranted(true);
+      setPreviewStream(camStream);
     } catch {
       setCameraGranted(false);
     }
@@ -32,28 +49,169 @@ export default function CameraPermissionScreen({ onReady, candidateName, domain 
     setChecking(false);
   }
 
+  function handleStart() {
+    if (previewStream) {
+      previewStream.getTracks().forEach((t) => t.stop());
+      setPreviewStream(null);
+    }
+    onReady();
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-6" style={{ background: "var(--bg-base)" }}>
-      <div className="w-full max-w-md animate-fadeUp">
-        <div className="text-center mb-8">
-          <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center font-bold text-white text-xl mx-auto mb-4"
-            style={{
-              background: "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))",
-              boxShadow: "var(--shadow-accent)",
-            }}
-          >
-            AI
-          </div>
-          <h1 className="text-2xl font-bold heading-font mb-2" style={{ color: "var(--text-primary)" }}>
+    <div style={{
+      minHeight: "100vh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "24px",
+      background: "#000000",
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+    }}>
+      {/* Background effects */}
+      <div style={{
+        position: "fixed",
+        inset: 0,
+        pointerEvents: "none",
+        zIndex: 0,
+      }}>
+        <div style={{
+          position: "absolute",
+          top: "-20%",
+          right: "10%",
+          width: "500px",
+          height: "500px",
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(37,99,235,0.12), transparent 60%)",
+          filter: "blur(60px)",
+          animation: "drift 18s ease-in-out infinite",
+        }} />
+        <div style={{
+          position: "absolute",
+          bottom: "-10%",
+          left: "5%",
+          width: "400px",
+          height: "400px",
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(139,92,246,0.08), transparent 60%)",
+          filter: "blur(60px)",
+          animation: "drift 18s ease-in-out infinite 3s",
+        }} />
+      </div>
+
+      <div className="animate-fadeUp" style={{
+        width: "100%",
+        maxWidth: "560px",
+        position: "relative",
+        zIndex: 1,
+      }}>
+        {/* Header */}
+        <div style={{ textAlign: "center", marginBottom: "32px" }}>
+          <div style={{
+            width: "56px",
+            height: "56px",
+            borderRadius: "16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontWeight: "800",
+            color: "white",
+            fontSize: "18px",
+            background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+            boxShadow: "0 0 30px rgba(37,99,235,0.3)",
+            margin: "0 auto 16px",
+          }}>AI</div>
+          <h1 style={{
+            fontSize: "28px",
+            fontWeight: "800",
+            color: "#ffffff",
+            letterSpacing: "-0.03em",
+            fontFamily: "'Geist', 'Inter', sans-serif",
+            marginBottom: "8px",
+          }}>
             Ready to start, {candidateName}?
           </h1>
-          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+          <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.45)" }}>
             {domain} Interview · ~10–15 minutes
           </p>
         </div>
 
-        <div className="space-y-3 mb-6">
+        {/* Camera Preview */}
+        <div style={{
+          borderRadius: "16px",
+          overflow: "hidden",
+          marginBottom: "24px",
+          aspectRatio: "16/9",
+          background: "#0a0a0a",
+          border: "1px solid rgba(255,255,255,0.06)",
+          position: "relative",
+        }}>
+          {previewStream ? (
+            <video
+              ref={previewRef}
+              autoPlay
+              playsInline
+              muted
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                transform: "scaleX(-1)",
+              }}
+            />
+          ) : (
+            <div style={{
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "12px",
+            }}>
+              <div style={{
+                width: "64px", height: "64px",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "28px",
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}>📷</div>
+              <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.25)" }}>
+                Camera preview will appear here
+              </p>
+            </div>
+          )}
+
+          {/* Preview Label */}
+          {previewStream && (
+            <div style={{
+              position: "absolute",
+              bottom: "12px",
+              left: "12px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "6px 12px",
+              borderRadius: "8px",
+              background: "rgba(0,0,0,0.65)",
+              backdropFilter: "blur(8px)",
+            }}>
+              <div style={{
+                width: "7px", height: "7px", borderRadius: "50%",
+                background: "#22c55e",
+                boxShadow: "0 0 6px rgba(34,197,94,0.3)",
+              }} />
+              <span style={{ fontSize: "11px", fontWeight: "600", color: "#fff" }}>
+                Camera Preview
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Permission Cards */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "20px" }}>
           {[
             {
               icon: "🎤",
@@ -72,38 +230,59 @@ export default function CameraPermissionScreen({ onReady, candidateName, domain 
           ].map((item) => (
             <div
               key={item.title}
-              className="flex items-center gap-4 p-4 rounded-xl"
               style={{
-                background: "var(--bg-surface)",
+                display: "flex",
+                alignItems: "center",
+                gap: "14px",
+                padding: "14px 16px",
+                borderRadius: "12px",
+                background: "rgba(255,255,255,0.02)",
                 border: item.granted
-                  ? "1px solid rgba(34,197,94,0.3)"
-                  : "1px solid var(--border-subtle)",
+                  ? "1px solid rgba(34,197,94,0.2)"
+                  : "1px solid rgba(255,255,255,0.06)",
+                transition: "border-color 0.3s ease",
               }}
             >
               <div
-                className="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0"
                 style={{
-                  background: item.granted ? "var(--success-subtle)" : "var(--bg-elevated)",
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "10px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "18px",
+                  flexShrink: 0,
+                  background: item.granted ? "rgba(34,197,94,0.08)" : "rgba(255,255,255,0.03)",
+                  border: "1px solid " + (item.granted ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.06)"),
                 }}
               >
                 {item.granted ? "✅" : item.icon}
               </div>
-              <div className="flex-1">
-                <div
-                  className="text-sm font-semibold flex items-center gap-2"
-                  style={{ color: "var(--text-primary)" }}
-                >
+              <div style={{ flex: 1 }}>
+                <div style={{
+                  fontSize: "13px",
+                  fontWeight: "600",
+                  color: "#ffffff",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}>
                   {item.title}
                   {item.required && (
-                    <span
-                      className="text-xs px-1.5 py-0.5 rounded"
-                      style={{ background: "var(--danger-subtle)", color: "var(--danger)" }}
-                    >
-                      Required
-                    </span>
+                    <span style={{
+                      fontSize: "10px",
+                      fontWeight: "700",
+                      padding: "2px 7px",
+                      borderRadius: "4px",
+                      background: "rgba(239,68,68,0.08)",
+                      color: "#ef4444",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.3px",
+                    }}>Required</span>
                   )}
                 </div>
-                <div className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginTop: "2px" }}>
                   {item.granted ? "Permission granted ✓" : item.desc}
                 </div>
               </div>
@@ -111,56 +290,84 @@ export default function CameraPermissionScreen({ onReady, candidateName, domain 
           ))}
         </div>
 
+        {/* Error */}
         {error && (
-          <div
-            className="mb-4 px-4 py-3 rounded-xl text-sm"
-            style={{
-              background: "var(--danger-subtle)",
-              border: "1px solid rgba(239,68,68,0.2)",
-              color: "var(--danger)",
-            }}
-          >
+          <div style={{
+            marginBottom: "16px",
+            padding: "12px 16px",
+            borderRadius: "12px",
+            fontSize: "13px",
+            background: "rgba(239,68,68,0.06)",
+            border: "1px solid rgba(239,68,68,0.15)",
+            color: "#ef4444",
+          }}>
             {error}
           </div>
         )}
 
-        <div
-          className="mb-6 p-4 rounded-xl"
-          style={{ background: "var(--accent-subtle)", border: "1px solid rgba(124,106,255,0.15)" }}
-        >
-          <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-            💡 <strong>How it works:</strong> ARIA will ask questions out loud. Press and hold the
-            microphone button to record your answer, then release to send. Speak clearly and take
-            your time.
+        {/* Tip */}
+        <div style={{
+          marginBottom: "20px",
+          padding: "14px 16px",
+          borderRadius: "12px",
+          background: "rgba(37,99,235,0.04)",
+          border: "1px solid rgba(37,99,235,0.1)",
+        }}>
+          <p style={{ fontSize: "12px", lineHeight: "1.6", color: "rgba(255,255,255,0.5)", margin: 0 }}>
+            💡 <strong style={{ color: "rgba(255,255,255,0.7)" }}>How it works:</strong> ARIA will ask questions out loud. Press and hold the
+            microphone button to record your answer, then release to send. Speak clearly and take your time.
           </p>
         </div>
 
+        {/* Action Button */}
         {!micGranted ? (
           <button
             onClick={requestPermissions}
             disabled={checking}
-            className="w-full py-4 rounded-xl font-semibold text-white text-sm transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60"
             style={{
-              background: "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))",
-              boxShadow: "var(--shadow-accent)",
+              width: "100%",
+              padding: "16px",
+              borderRadius: "14px",
+              fontWeight: "700",
+              color: "white",
+              fontSize: "14px",
+              border: "none",
+              cursor: checking ? "wait" : "pointer",
+              opacity: checking ? 0.7 : 1,
+              background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+              boxShadow: "0 0 30px rgba(37,99,235,0.25)",
+              transition: "all 0.2s ease",
             }}
           >
             {checking ? "Requesting permissions..." : "Allow Camera & Microphone →"}
           </button>
         ) : (
           <button
-            onClick={onReady}
-            className="w-full py-4 rounded-xl font-semibold text-white text-sm transition-all hover:opacity-90 active:scale-[0.98]"
+            onClick={handleStart}
             style={{
-              background: "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))",
-              boxShadow: "var(--shadow-accent)",
+              width: "100%",
+              padding: "16px",
+              borderRadius: "14px",
+              fontWeight: "700",
+              color: "white",
+              fontSize: "14px",
+              border: "none",
+              cursor: "pointer",
+              background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+              boxShadow: "0 0 30px rgba(37,99,235,0.25)",
+              transition: "all 0.2s ease",
             }}
           >
             🚀 Start Interview
           </button>
         )}
 
-        <p className="text-center text-xs mt-4" style={{ color: "var(--text-muted)" }}>
+        <p style={{
+          textAlign: "center",
+          fontSize: "11px",
+          marginTop: "14px",
+          color: "rgba(255,255,255,0.2)",
+        }}>
           Camera is optional. You can proceed with microphone only.
         </p>
       </div>

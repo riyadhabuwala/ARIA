@@ -8,7 +8,6 @@ import { useCamera } from "../hooks/useCamera";
 import ARIAWaveformStrip from "./ARIAWaveformStrip";
 import EndInterviewModal from "./EndInterviewModal";
 import CameraPermissionScreen from "./CameraPermissionScreen";
-import ThemeToggle from "./ThemeToggle";
 
 export default function InterviewRoom({ name, domain, resumeText, onComplete }) {
   const [sessionId, setSessionId] = useState(null);
@@ -22,6 +21,7 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
   const [showEndModal, setShowEndModal] = useState(false);
   const [micEnabled, setMicEnabled] = useState(false);
   const [isPermissionScreen, setIsPermissionScreen] = useState(true);
+  const [showTranscript, setShowTranscript] = useState(false);
 
   const { transcript, isListening, startListening, stopListening, setTranscript } =
     useSpeechRecognition();
@@ -33,6 +33,7 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
   const startTimeRef = useRef(null);
   const timerRef = useRef(null);
   const messagesRef = useRef([]);
+  const transcriptEndRef = useRef(null);
 
   const setAllMessages = (next) => {
     messagesRef.current = next;
@@ -46,6 +47,12 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
       return next;
     });
   };
+
+  useEffect(() => {
+    if (transcriptEndRef.current) {
+      transcriptEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
 
   useEffect(() => {
     if (sessionId && !isPermissionScreen && !isDone) {
@@ -195,328 +202,745 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
     );
   }
 
+  const statusColor = isListening
+    ? "#ef4444"
+    : isSpeaking
+    ? "#2563eb"
+    : isLoading
+    ? "#f59e0b"
+    : "#22c55e";
+
+  const statusText = isListening
+    ? "Recording your answer..."
+    : isSpeaking
+    ? "ARIA is speaking..."
+    : isLoading
+    ? "ARIA is thinking..."
+    : micEnabled
+    ? "Your turn — hold mic to answer"
+    : "Waiting...";
+
   return (
-    <div className="h-screen flex flex-col overflow-hidden" style={{ background: "var(--bg-base)" }}>
-      <div
-        className="flex items-center justify-between px-6 py-3 flex-shrink-0 z-10"
-        style={{
-          background: "rgba(0,0,0,0.85)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          borderBottom: "1px solid var(--border-subtle)",
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white text-xs"
-            style={{
-              background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
-              boxShadow: "0 0 12px rgba(37,99,235,0.3)"
-            }}
-          >
-            AI
+    <div style={{
+      height: "100vh",
+      display: "flex",
+      flexDirection: "column",
+      overflow: "hidden",
+      background: "#000000",
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+    }}>
+      {/* ═══ TOP BAR ═══ */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "0 20px",
+        height: "56px",
+        flexShrink: 0,
+        background: "rgba(10,10,10,0.95)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        zIndex: 20,
+      }}>
+        {/* Left: Logo + Info */}
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{
+            width: "32px",
+            height: "32px",
+            borderRadius: "10px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontWeight: "800",
+            color: "white",
+            fontSize: "11px",
+            background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+            boxShadow: "0 0 16px rgba(37,99,235,0.35)",
+          }}>AI</div>
+          <div style={{ height: "20px", width: "1px", background: "rgba(255,255,255,0.1)" }} />
+          <div>
+            <div style={{ fontSize: "13px", fontWeight: "600", color: "#ffffff", letterSpacing: "-0.01em" }}>
+              {domain} Interview
+            </div>
+            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", marginTop: "1px" }}>
+              ARIA AI Interviewer
+            </div>
           </div>
-          <div className="h-4 w-px" style={{ background: "var(--border-default)" }} />
-          <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
-            {domain} Interview
-          </span>
-          <div className="h-4 w-px" style={{ background: "var(--border-default)" }} />
-          <span className="text-sm font-mono" style={{ color: "var(--text-muted)" }}>
-            ⏱ {timerDisplay}
-          </span>
-          {questionCount > 0 && (
-            <span
-              className="px-2 py-0.5 rounded-full text-xs font-semibold"
-              style={{
-                background: "var(--accent-subtle)",
-                color: "var(--accent-primary)",
-                border: "1px solid rgba(37,99,235,0.2)",
-              }}
-            >
-              Q{questionCount} / 7
-            </span>
-          )}
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* Center: Timer + Status */}
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "6px 14px",
+            borderRadius: "999px",
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.08)",
+          }}>
+            <span style={{ fontSize: "13px", fontFamily: "'Geist', monospace", fontWeight: "600", color: "#ffffff" }}>
+              ⏱ {timerDisplay}
+            </span>
+          </div>
+
           {isRecording && (
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                Recording
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "5px 12px",
+              borderRadius: "999px",
+              background: "rgba(239,68,68,0.1)",
+              border: "1px solid rgba(239,68,68,0.2)",
+            }}>
+              <div style={{
+                width: "7px", height: "7px", borderRadius: "50%",
+                background: "#ef4444",
+                animation: "pulse-blue 1.5s ease-in-out infinite",
+              }} />
+              <span style={{ fontSize: "11px", fontWeight: "600", color: "#ef4444", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Rec
               </span>
             </div>
           )}
-          <ThemeToggle />
+
+          {questionCount > 0 && (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "5px 12px",
+              borderRadius: "999px",
+              background: "rgba(37,99,235,0.08)",
+              border: "1px solid rgba(37,99,235,0.2)",
+            }}>
+              <span style={{ fontSize: "11px", fontWeight: "600", color: "#60a5fa" }}>
+                Q{questionCount}/7
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Right: Actions */}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <button
+            onClick={() => setShowTranscript(!showTranscript)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "7px 14px",
+              borderRadius: "10px",
+              fontSize: "12px",
+              fontWeight: "600",
+              background: showTranscript ? "rgba(37,99,235,0.15)" : "rgba(255,255,255,0.04)",
+              border: showTranscript ? "1px solid rgba(37,99,235,0.3)" : "1px solid rgba(255,255,255,0.08)",
+              color: showTranscript ? "#60a5fa" : "rgba(255,255,255,0.5)",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+            }}
+          >
+            💬 Transcript
+          </button>
           <button
             onClick={() => setShowEndModal(true)}
             disabled={questionCount < 1 || isLoading}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all hover:opacity-80 disabled:opacity-30 disabled:cursor-not-allowed"
             style={{
-              background: "var(--danger-subtle)",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "7px 14px",
+              borderRadius: "10px",
+              fontSize: "12px",
+              fontWeight: "600",
+              background: "rgba(239,68,68,0.08)",
               border: "1px solid rgba(239,68,68,0.2)",
-              color: "var(--danger)",
+              color: "#ef4444",
+              cursor: questionCount < 1 || isLoading ? "not-allowed" : "pointer",
+              opacity: questionCount < 1 || isLoading ? 0.3 : 1,
+              transition: "all 0.2s ease",
             }}
           >
-            ⏹ End Interview
+            ⏹ End
           </button>
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center gap-6 px-8 py-6 overflow-hidden">
-        <div
-          className="relative rounded-2xl overflow-hidden flex-shrink-0 shadow-2xl"
-          style={{
-            width: "min(480px, 100%)",
-            aspectRatio: "16/10",
-            background: "var(--bg-elevated)",
-            border: isListening
-              ? "3px solid var(--danger)"
-              : isSpeaking
-              ? "3px solid var(--accent-primary)"
-              : "2px solid var(--border-default)",
-            boxShadow: isListening
-              ? "0 0 30px rgba(239,68,68,0.25)"
-              : isSpeaking
-              ? "0 0 30px rgba(37,99,235,0.2)"
-              : "var(--shadow-lg)",
-            transition: "border-color 0.3s, box-shadow 0.3s",
-          }}
-        >
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full h-full object-cover"
-            style={{ transform: "scaleX(-1)" }}
-          />
+      {/* ═══ MAIN CONTENT AREA ═══ */}
+      <div style={{
+        flex: 1,
+        display: "flex",
+        overflow: "hidden",
+        position: "relative",
+      }}>
+        {/* ── Video + AI Panel Area ── */}
+        <div style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          padding: "16px",
+          gap: "12px",
+          overflow: "hidden",
+        }}>
+          {/* Video Grid */}
+          <div style={{
+            flex: 1,
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "12px",
+            minHeight: 0,
+          }}>
+            {/* ── User Camera ── */}
+            <div style={{
+              position: "relative",
+              borderRadius: "16px",
+              overflow: "hidden",
+              background: "#0a0a0a",
+              border: isListening
+                ? "2px solid #ef4444"
+                : "1px solid rgba(255,255,255,0.06)",
+              boxShadow: isListening
+                ? "0 0 40px rgba(239,68,68,0.2), inset 0 0 20px rgba(239,68,68,0.05)"
+                : "0 4px 24px rgba(0,0,0,0.5)",
+              transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+            }}>
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  transform: "scaleX(-1)",
+                  display: cameraActive ? "block" : "none",
+                }}
+              />
 
-          {!cameraActive && (
-            <div
-              className="absolute inset-0 flex flex-col items-center justify-center gap-3"
-              style={{ background: "var(--bg-elevated)" }}
-            >
-              <div
-                className="w-20 h-20 rounded-full flex items-center justify-center text-4xl"
-                style={{ background: "var(--bg-overlay)" }}
-              >
-                👤
-              </div>
-              <p className="text-xs text-center max-w-[200px]" style={{ color: "var(--text-muted)" }}>
-                {cameraError || "Camera not available"}
-              </p>
-            </div>
-          )}
-
-          {isListening && (
-            <div
-              className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 rounded-full"
-              style={{
-                background: "rgba(239,68,68,0.9)",
-                backdropFilter: "blur(8px)",
-              }}
-            >
-              <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-              <span className="text-white text-xs font-semibold">Listening...</span>
-            </div>
-          )}
-
-          <div
-            className="absolute bottom-3 left-3 px-3 py-1 rounded-lg text-xs font-medium text-white"
-            style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
-          >
-            {name}
-          </div>
-        </div>
-
-        <div className="w-full flex flex-col items-center gap-4" style={{ maxWidth: "600px" }}>
-          <div
-            className="w-full rounded-2xl overflow-hidden"
-            style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}
-          >
-            <div
-              className="flex items-center justify-between px-5 py-3"
-              style={{ borderBottom: "1px solid var(--border-subtle)" }}
-            >
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold"
-                  style={{ background: "var(--accent-primary)" }}
-                >
-                  AI
+              {!cameraActive && (
+                <div style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "12px",
+                  background: "linear-gradient(135deg, #0a0a0a, #111111)",
+                }}>
+                  <div style={{
+                    width: "80px", height: "80px",
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "36px",
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                  }}>👤</div>
+                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)", textAlign: "center", maxWidth: "200px" }}>
+                    {cameraError || "Camera off"}
+                  </p>
                 </div>
-                <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-                  ARIA
-                </span>
-                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  Interview Assistant
+              )}
+
+              {/* Name Tag */}
+              <div style={{
+                position: "absolute",
+                bottom: "12px",
+                left: "12px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "6px 12px",
+                borderRadius: "8px",
+                background: "rgba(0,0,0,0.65)",
+                backdropFilter: "blur(8px)",
+              }}>
+                <div style={{
+                  width: "8px", height: "8px", borderRadius: "50%",
+                  background: isListening ? "#ef4444" : "#22c55e",
+                  boxShadow: isListening ? "0 0 8px rgba(239,68,68,0.5)" : "0 0 8px rgba(34,197,94,0.3)",
+                  transition: "all 0.3s ease",
+                }} />
+                <span style={{ fontSize: "12px", fontWeight: "600", color: "#ffffff" }}>
+                  {name}
                 </span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <div
-                  className={`w-2 h-2 rounded-full transition-colors ${
-                    isSpeaking
-                      ? "bg-blue-400 animate-pulse"
-                      : isLoading
-                      ? "bg-yellow-400 animate-pulse"
-                      : "bg-green-400"
-                  }`}
-                />
-                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  {isSpeaking ? "Speaking" : isLoading ? "Thinking" : "Live"}
+
+              {/* Listening Indicator */}
+              {isListening && (
+                <div style={{
+                  position: "absolute",
+                  top: "12px",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "6px 16px",
+                  borderRadius: "999px",
+                  background: "rgba(239,68,68,0.9)",
+                  backdropFilter: "blur(8px)",
+                  animation: "fadeUp 0.3s ease forwards",
+                }}>
+                  <div style={{
+                    width: "6px", height: "6px", borderRadius: "50%",
+                    background: "white",
+                    animation: "pulse-blue 1s ease-in-out infinite",
+                  }} />
+                  <span style={{ fontSize: "11px", fontWeight: "700", color: "white", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                    Listening
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* ── AI Interviewer Panel ── */}
+            <div style={{
+              position: "relative",
+              borderRadius: "16px",
+              overflow: "hidden",
+              background: "linear-gradient(160deg, #0d1117, #0a0a0a)",
+              border: isSpeaking
+                ? "2px solid rgba(37,99,235,0.5)"
+                : "1px solid rgba(255,255,255,0.06)",
+              boxShadow: isSpeaking
+                ? "0 0 40px rgba(37,99,235,0.15), inset 0 0 30px rgba(37,99,235,0.03)"
+                : "0 4px 24px rgba(0,0,0,0.5)",
+              display: "flex",
+              flexDirection: "column",
+              transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+            }}>
+              {/* AI Avatar + Waveform */}
+              <div style={{
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "16px",
+                padding: "24px",
+              }}>
+                {/* AI Avatar */}
+                <div style={{ position: "relative" }}>
+                  {isSpeaking && (
+                    <>
+                      <div style={{
+                        position: "absolute",
+                        inset: "-12px",
+                        borderRadius: "50%",
+                        background: "rgba(37,99,235,0.1)",
+                        animation: "pulse-ring 2s ease-out infinite",
+                      }} />
+                      <div style={{
+                        position: "absolute",
+                        inset: "-6px",
+                        borderRadius: "50%",
+                        background: "rgba(37,99,235,0.15)",
+                        animation: "pulse-ring 2s ease-out infinite 0.5s",
+                      }} />
+                    </>
+                  )}
+                  <div style={{
+                    width: "72px",
+                    height: "72px",
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: "800",
+                    color: "white",
+                    fontSize: "22px",
+                    background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+                    boxShadow: isSpeaking
+                      ? "0 0 30px rgba(37,99,235,0.4)"
+                      : "0 4px 16px rgba(37,99,235,0.25)",
+                    position: "relative",
+                    zIndex: 1,
+                    transition: "box-shadow 0.3s ease",
+                  }}>AI</div>
+                </div>
+
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: "16px", fontWeight: "700", color: "#ffffff", letterSpacing: "-0.02em" }}>
+                    ARIA
+                  </div>
+                  <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", marginTop: "2px" }}>
+                    Interview Assistant
+                  </div>
+                </div>
+
+                {/* Waveform */}
+                <div style={{ width: "100%", maxWidth: "320px" }}>
+                  <ARIAWaveformStrip isSpeaking={isSpeaking} isThinking={isLoading} />
+                </div>
+
+                {/* Status */}
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "6px 16px",
+                  borderRadius: "999px",
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                }}>
+                  <div style={{
+                    width: "7px",
+                    height: "7px",
+                    borderRadius: "50%",
+                    background: isSpeaking ? "#2563eb" : isLoading ? "#f59e0b" : "#22c55e",
+                    animation: (isSpeaking || isLoading) ? "pulse-blue 1.5s ease-in-out infinite" : "none",
+                    transition: "background 0.3s ease",
+                  }} />
+                  <span style={{ fontSize: "11px", fontWeight: "600", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                    {isSpeaking ? "Speaking" : isLoading ? "Thinking" : "Live"}
+                  </span>
+                </div>
+              </div>
+
+              {/* AI Name Tag */}
+              <div style={{
+                position: "absolute",
+                bottom: "12px",
+                left: "12px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "6px 12px",
+                borderRadius: "8px",
+                background: "rgba(0,0,0,0.65)",
+                backdropFilter: "blur(8px)",
+              }}>
+                <div style={{
+                  width: "8px", height: "8px", borderRadius: "50%",
+                  background: isSpeaking ? "#2563eb" : "#22c55e",
+                  boxShadow: isSpeaking ? "0 0 8px rgba(37,99,235,0.5)" : "0 0 8px rgba(34,197,94,0.3)",
+                }} />
+                <span style={{ fontSize: "12px", fontWeight: "600", color: "#ffffff" }}>
+                  ARIA Interviewer
                 </span>
               </div>
             </div>
-
-            <ARIAWaveformStrip isSpeaking={isSpeaking} isThinking={isLoading} />
           </div>
 
+          {/* ── Question Strip ── */}
           {(currentQuestion || isLoading) && (
-            <div
-              className="w-full rounded-2xl p-5"
-              style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}
-            >
-              {isLoading ? (
-                <div className="flex items-center gap-3">
+            <div style={{
+              flexShrink: 0,
+              borderRadius: "14px",
+              overflow: "hidden",
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(255,255,255,0.06)",
+              padding: "14px 20px",
+              display: "flex",
+              alignItems: "center",
+              gap: "16px",
+            }}>
+              {isLoading && !currentQuestion ? (
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                   {[0, 1, 2].map((i) => (
                     <div
                       key={i}
-                      className="w-2 h-2 rounded-full animate-bounce"
                       style={{
-                        background: "var(--accent-primary)",
-                        animationDelay: `${i * 150}ms`,
+                        width: "6px", height: "6px", borderRadius: "50%",
+                        background: "#2563eb",
+                        animation: `pulse-blue 1.2s ease-in-out infinite ${i * 200}ms`,
                       }}
                     />
                   ))}
-                  <span className="text-sm" style={{ color: "var(--text-muted)" }}>
-                    ARIA is thinking...
+                  <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)" }}>
+                    ARIA is preparing your question...
                   </span>
                 </div>
               ) : (
-                <div>
+                <>
+                  {/* Progress Dots */}
                   {questionCount > 0 && (
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                        Question {questionCount} of 7
-                      </span>
-                      <div className="flex gap-1 flex-1">
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+                      <span style={{
+                        fontSize: "11px",
+                        fontWeight: "700",
+                        color: "#60a5fa",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px",
+                      }}>Q{questionCount}</span>
+                      <div style={{ display: "flex", gap: "3px" }}>
                         {Array.from({ length: 7 }).map((_, i) => (
                           <div
                             key={i}
-                            className="h-1 flex-1 rounded-full transition-all"
                             style={{
-                              background: i < questionCount ? "var(--accent-primary)" : "var(--bg-elevated)",
+                              width: i < questionCount ? "16px" : "8px",
+                              height: "3px",
+                              borderRadius: "999px",
+                              background: i < questionCount ? "#2563eb" : "rgba(255,255,255,0.08)",
+                              transition: "all 0.3s ease",
                             }}
                           />
                         ))}
                       </div>
                     </div>
                   )}
-                  <p className="text-base font-medium leading-relaxed" style={{ color: "var(--text-primary)" }}>
+                  <div style={{ width: "1px", height: "20px", background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
+                  <p style={{
+                    fontSize: "13px",
+                    fontWeight: "500",
+                    color: "rgba(255,255,255,0.8)",
+                    lineHeight: "1.5",
+                    margin: 0,
+                  }}>
                     {currentQuestion}
                   </p>
-                </div>
+                </>
               )}
             </div>
           )}
         </div>
+
+        {/* ── Transcript Sidebar ── */}
+        <div style={{
+          width: showTranscript ? "340px" : "0px",
+          flexShrink: 0,
+          overflow: "hidden",
+          transition: "width 0.3s ease",
+          borderLeft: showTranscript ? "1px solid rgba(255,255,255,0.06)" : "none",
+          background: "rgba(10,10,10,0.95)",
+          display: "flex",
+          flexDirection: "column",
+        }}>
+          <div style={{
+            padding: "16px 20px",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexShrink: 0,
+          }}>
+            <span style={{ fontSize: "13px", fontWeight: "700", color: "#ffffff" }}>
+              Live Transcript
+            </span>
+            <button
+              onClick={() => setShowTranscript(false)}
+              style={{
+                background: "none",
+                border: "none",
+                color: "rgba(255,255,255,0.3)",
+                cursor: "pointer",
+                fontSize: "16px",
+                padding: "4px",
+              }}
+            >✕</button>
+          </div>
+
+          <div style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "16px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+          }}>
+            {messages.length === 0 ? (
+              <div style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100%",
+                gap: "8px",
+              }}>
+                <span style={{ fontSize: "24px" }}>💬</span>
+                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.25)" }}>
+                  Transcript will appear here...
+                </p>
+              </div>
+            ) : (
+              messages.map((msg, i) => {
+                const isAI = msg.role === "ai";
+                const time = msg.timestamp
+                  ? new Date(msg.timestamp).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+                  : "";
+                return (
+                  <div key={i} style={{ animation: "fadeUp 0.3s ease forwards" }}>
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      marginBottom: "4px",
+                    }}>
+                      <div style={{
+                        width: "18px", height: "18px",
+                        borderRadius: "5px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "8px",
+                        fontWeight: "800",
+                        color: "white",
+                        background: isAI
+                          ? "linear-gradient(135deg, #2563eb, #1d4ed8)"
+                          : "rgba(255,255,255,0.1)",
+                      }}>{isAI ? "AI" : "Y"}</div>
+                      <span style={{ fontSize: "11px", fontWeight: "600", color: "rgba(255,255,255,0.4)" }}>
+                        {isAI ? "ARIA" : name}
+                      </span>
+                      {time && (
+                        <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.2)", marginLeft: "auto" }}>
+                          {time}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{
+                      padding: "10px 12px",
+                      borderRadius: "10px",
+                      fontSize: "12px",
+                      lineHeight: "1.6",
+                      color: "rgba(255,255,255,0.75)",
+                      background: isAI ? "rgba(37,99,235,0.06)" : "rgba(255,255,255,0.03)",
+                      border: "1px solid " + (isAI ? "rgba(37,99,235,0.1)" : "rgba(255,255,255,0.04)"),
+                    }}>
+                      {msg.text.length > 200 ? msg.text.substring(0, 200) + "..." : msg.text}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+            <div ref={transcriptEndRef} />
+          </div>
+        </div>
       </div>
 
-      <div
-        className="flex-shrink-0 px-6 py-4 flex items-center justify-center gap-6"
-        style={{
-          background: "rgba(0,0,0,0.85)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          borderTop: "1px solid var(--border-subtle)"
-        }}
-      >
+      {/* ═══ BOTTOM CONTROL BAR ═══ */}
+      <div style={{
+        flexShrink: 0,
+        height: "80px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "24px",
+        padding: "0 24px",
+        background: "rgba(10,10,10,0.95)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderTop: "1px solid rgba(255,255,255,0.06)",
+        zIndex: 20,
+      }}>
+        {/* Confidence Meter */}
         {answers.length > 0 && (
-          <div
-            className="flex items-center gap-2 px-3 py-2 rounded-xl"
-            style={{ background: "var(--bg-overlay)", border: "1px solid var(--border-subtle)" }}
-          >
-            <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-              💪 Confidence
-            </span>
-            <span className="text-sm font-bold" style={{ color: "var(--success)" }}>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            padding: "8px 16px",
+            borderRadius: "12px",
+            background: "rgba(34,197,94,0.06)",
+            border: "1px solid rgba(34,197,94,0.12)",
+          }}>
+            <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>💪 Confidence</span>
+            <span style={{ fontSize: "14px", fontWeight: "700", color: "#22c55e" }}>
               {Math.max(60, 100 - answers.length * 2)}%
             </span>
           </div>
         )}
 
+        {/* Mic Button */}
         <button
           onMouseDown={handleMicPress}
           onMouseUp={handleMicRelease}
           onTouchStart={handleMicPress}
           onTouchEnd={handleMicRelease}
           disabled={!micEnabled || isSpeaking || isLoading}
-          className="relative flex flex-col items-center justify-center rounded-full transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 select-none"
           style={{
-            width: "80px",
-            height: "80px",
+            position: "relative",
+            width: "60px",
+            height: "60px",
+            borderRadius: "50%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: !micEnabled || isSpeaking || isLoading ? "not-allowed" : "pointer",
+            opacity: !micEnabled || isSpeaking || isLoading ? 0.3 : 1,
             background: isListening
               ? "linear-gradient(135deg, #ef4444, #dc2626)"
               : micEnabled && !isSpeaking && !isLoading
-              ? "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))"
-              : "var(--bg-elevated)",
-            border: isListening ? "3px solid rgba(239,68,68,0.4)" : "2px solid var(--border-default)",
-            boxShadow: isListening
-              ? "0 0 30px rgba(239,68,68,0.4), 0 0 60px rgba(239,68,68,0.2)"
+              ? "linear-gradient(135deg, #2563eb, #1d4ed8)"
+              : "rgba(255,255,255,0.05)",
+            border: isListening
+              ? "2px solid rgba(239,68,68,0.4)"
               : micEnabled && !isSpeaking && !isLoading
-              ? "var(--shadow-accent)"
+              ? "2px solid rgba(37,99,235,0.4)"
+              : "1px solid rgba(255,255,255,0.1)",
+            boxShadow: isListening
+              ? "0 0 24px rgba(239,68,68,0.35)"
+              : micEnabled && !isSpeaking && !isLoading
+              ? "0 0 24px rgba(37,99,235,0.3)"
               : "none",
+            transition: "all 0.2s ease",
+            userSelect: "none",
           }}
         >
           {isListening && (
             <>
-              <div className="absolute inset-0 rounded-full animate-ping" style={{ background: "rgba(239,68,68,0.2)" }} />
-              <div
-                className="absolute inset-[-8px] rounded-full animate-ping"
-                style={{ background: "rgba(239,68,68,0.1)", animationDelay: "0.3s" }}
-              />
+              <div style={{
+                position: "absolute",
+                inset: 0,
+                borderRadius: "50%",
+                background: "rgba(239,68,68,0.2)",
+                animation: "pulse-ring 1.5s ease-out infinite",
+              }} />
+              <div style={{
+                position: "absolute",
+                inset: "-6px",
+                borderRadius: "50%",
+                background: "rgba(239,68,68,0.1)",
+                animation: "pulse-ring 1.5s ease-out infinite 0.3s",
+              }} />
             </>
           )}
-
-          <span className="text-2xl relative z-10">{isListening ? "🔴" : "🎤"}</span>
-          <span
-            className="text-xs font-semibold relative z-10 mt-1"
-            style={{
-              color: isListening || (micEnabled && !isSpeaking) ? "white" : "var(--text-muted)",
-            }}
-          >
-            {isListening ? "Release" : isSpeaking ? "Wait..." : isLoading ? "..." : "Hold"}
+          <span style={{ fontSize: "20px", position: "relative", zIndex: 1 }}>
+            {isListening ? "🔴" : "🎤"}
           </span>
         </button>
 
-        <div className="text-center">
-          <p
-            className="text-xs font-medium"
-            style={{
-              color: isListening
-                ? "var(--danger)"
-                : isSpeaking
-                ? "var(--accent-primary)"
-                : isLoading
-                ? "var(--warning)"
-                : micEnabled
-                ? "var(--success)"
-                : "var(--text-muted)",
-            }}
-          >
-            {isListening
-              ? "Recording your answer..."
-              : isSpeaking
-              ? "ARIA is speaking..."
-              : isLoading
-              ? "ARIA is thinking..."
-              : micEnabled
-              ? "Hold mic to answer"
-              : "Waiting..."}
-          </p>
+        {/* Status Text */}
+        <div style={{ textAlign: "center", minWidth: "160px" }}>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            justifyContent: "center",
+          }}>
+            <div style={{
+              width: "6px", height: "6px", borderRadius: "50%",
+              background: statusColor,
+              animation: isListening || isSpeaking || isLoading ? "pulse-blue 1.5s ease-in-out infinite" : "none",
+            }} />
+            <p style={{
+              fontSize: "12px",
+              fontWeight: "600",
+              color: statusColor,
+              margin: 0,
+              transition: "color 0.3s ease",
+            }}>
+              {statusText}
+            </p>
+          </div>
           {transcript && !isListening && (
-            <p className="text-xs mt-1 italic max-w-xs truncate" style={{ color: "var(--text-muted)" }}>
+            <p style={{
+              fontSize: "11px",
+              color: "rgba(255,255,255,0.25)",
+              marginTop: "4px",
+              fontStyle: "italic",
+              maxWidth: "220px",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}>
               Heard: "{transcript}"
             </p>
           )}

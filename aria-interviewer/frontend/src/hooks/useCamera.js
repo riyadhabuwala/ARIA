@@ -1,14 +1,31 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export function useCamera() {
-  const [videoElement, setVideoElement] = useState(null);
+  const videoElRef = useRef(null);
   const streamRef = useRef(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState(null);
 
-  const videoRef = useCallback((node) => {
-    setVideoElement(node);
-  }, []);
+  // Attach stream to video element whenever both are available
+  function attachStream() {
+    const el = videoElRef.current;
+    const stream = streamRef.current;
+    if (el && stream) {
+      if (el.srcObject !== stream) {
+        el.srcObject = stream;
+        el.play().catch(() => {});
+      }
+    }
+  }
+
+  // Ref callback — fires when the <video> DOM node mounts/unmounts.
+  // If the stream is already available, attach it immediately.
+  const videoRef = (node) => {
+    videoElRef.current = node;
+    if (node) {
+      attachStream();
+    }
+  };
 
   const startCamera = async () => {
     try {
@@ -21,11 +38,14 @@ export function useCamera() {
         audio: false,
       });
       streamRef.current = stream;
-      if (videoElement) {
-        videoElement.srcObject = stream;
-        videoElement.play();
-      }
       setCameraActive(true);
+
+      // Attach immediately if video element already exists
+      attachStream();
+
+      // Retry shortly in case the element hasn't mounted yet
+      setTimeout(attachStream, 50);
+      setTimeout(attachStream, 200);
     } catch (err) {
       if (err.name === "NotAllowedError") {
         setCameraError("Camera access denied. You can still do the interview without video.");
@@ -38,22 +58,13 @@ export function useCamera() {
     }
   };
 
-  useEffect(() => {
-    if (videoElement && streamRef.current) {
-      if (videoElement.srcObject !== streamRef.current) {
-        videoElement.srcObject = streamRef.current;
-        videoElement.play();
-      }
-    }
-  }, [videoElement]);
-
   const stopCamera = () => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
-    if (videoElement) {
-      videoElement.srcObject = null;
+    if (videoElRef.current) {
+      videoElRef.current.srcObject = null;
     }
     setCameraActive(false);
   };
