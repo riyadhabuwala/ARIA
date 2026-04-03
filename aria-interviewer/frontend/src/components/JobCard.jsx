@@ -16,17 +16,9 @@ export default function JobCard({ job, rank }) {
   };
   const vc = verdictColors[job.verdict] || verdictColors["Partial Match"];
 
-  const sourceColors = {
-    Adzuna: "#e94d3a",
-    LinkedIn: "#0077b5",
-    Indeed: "#2164f3",
-    Glassdoor: "#0caa41",
-  };
-  const sourceColor = sourceColors[job.source] || "var(--text-muted)";
-
   function formatSalary(min, max) {
     if (!min && !max) return null;
-    const fmt = (n) => (n >= 100000 ? `INR ${(n / 100000).toFixed(1)}L` : `INR ${(n / 1000).toFixed(0)}K`);
+    const fmt = (n) => (n >= 100000 ? `₹${(n / 100000).toFixed(1)}L` : `₹${(n / 1000).toFixed(0)}K`);
     if (min && max) return `${fmt(min)} - ${fmt(max)}`;
     if (min) return `From ${fmt(min)}`;
     if (max) return `Up to ${fmt(max)}`;
@@ -36,127 +28,135 @@ export default function JobCard({ job, rank }) {
   const salary = formatSalary(job.salary_min, job.salary_max);
 
   return (
-    <div
-      className="rounded-2xl p-5 transition-all duration-200 hover:-translate-y-0.5 animate-fadeUp"
-      style={{
-        background: "var(--bg-surface)",
-        border: "1px solid var(--border-subtle)",
-        boxShadow: "var(--shadow-sm)",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = "var(--shadow-md)";
-        e.currentTarget.style.borderColor = "var(--border-default)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = "var(--shadow-sm)";
-        e.currentTarget.style.borderColor = "var(--border-subtle)";
-      }}
-    >
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span
-              className="text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ background: "var(--accent-subtle)", color: "var(--accent-primary)" }}
-            >
-              {rank}
-            </span>
-            <h3 className="font-semibold text-sm truncate" style={{ color: "var(--text-primary)" }}>
-              {job.title}
-            </h3>
-          </div>
-
-          <p className="text-sm ml-7" style={{ color: "var(--text-secondary)" }}>
-            {job.company}
-            {job.location && <span style={{ color: "var(--text-muted)" }}>{" - "}{job.location}</span>}
-          </p>
-        </div>
-
-        <div className="flex flex-col items-center flex-shrink-0">
-          <div
-            className="w-14 h-14 rounded-full flex items-center justify-center font-bold text-lg relative"
-            style={{
-              background: `conic-gradient(${scoreColor} ${job.match_score}%, var(--bg-elevated) 0)`,
-            }}
-          >
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
-              style={{ background: "var(--bg-surface)", color: scoreColor }}
-            >
-              {job.match_score}
-            </div>
-          </div>
-          <span className="text-xs mt-1 font-medium" style={{ color: scoreColor }}>
-            match
-          </span>
-        </div>
+    <div className="card-premium relative group p-8 flex flex-col md:flex-row gap-10 overflow-hidden">
+      {/* Decorative Glow */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--accent-primary)]/5 blur-[100px] -mr-32 -mt-32 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+      
+      {/* Index Badge */}
+      <div className="absolute top-0 left-0 px-4 py-1.5 bg-[var(--bg-elevated)] border-b border-r border-[var(--border-subtle)] rounded-br-2xl text-[10px] font-black font-geist uppercase tracking-widest text-[var(--text-muted)] group-hover:text-[var(--accent-primary)] transition-colors">
+        #{rank}
       </div>
 
-      <div className="flex items-center gap-2 mb-3 ml-7">
-        <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: vc.bg, color: vc.text }}>
-          {job.verdict}
-        </span>
-        <span
-          className="px-2 py-0.5 rounded-full text-xs font-medium"
-          style={{
-            background: "var(--bg-elevated)",
-            color: sourceColor,
-            border: "1px solid var(--border-subtle)",
-          }}
-        >
-          {job.source}
-        </span>
-        {salary && (
-          <span
-            className="px-2 py-0.5 rounded-full text-xs"
-            style={{ background: "var(--bg-elevated)", color: "var(--text-secondary)" }}
-          >
-            {salary}
-          </span>
+      {/* Main Content */}
+      <div className="flex-1 space-y-6 pt-4">
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <span 
+              className="px-3 py-1 rounded-full text-[10px] font-black font-geist uppercase tracking-wider border border-transparent shadow-sm"
+              style={{ background: vc.bg, color: vc.text, borderColor: `${vc.text}22` }}
+            >
+              {job.verdict}
+            </span>
+            <span className="px-3 py-1 rounded-full text-[10px] font-black font-geist uppercase tracking-wider text-[var(--text-muted)] border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+              {job.source}
+            </span>
+          </div>
+
+          <h3 className="text-3xl font-black font-geist tracking-tighter uppercase leading-tight text-[var(--text-primary)] group-hover:text-[var(--accent-primary)] transition-colors duration-300">
+            {job.title}
+          </h3>
+
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-semibold tracking-tight text-[var(--text-secondary)]">
+            <span className="flex items-center gap-2 italic">
+              {job.company}
+            </span>
+            {job.location && (
+              <span className="flex items-center gap-2 text-[var(--text-muted)]">
+                <span className="w-1 h-1 rounded-full bg-[var(--border-strong)]" />
+                {job.location}
+              </span>
+            )}
+            {salary && (
+              <span className="flex items-center gap-2 text-[var(--accent-primary)]">
+                <span className="w-1 h-1 rounded-full bg-[var(--border-strong)]" />
+                {salary}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* AI Insight Section */}
+        {job.match_reason && (
+          <div className="relative p-5 rounded-3xl bg-[var(--bg-base)]/40 border border-[var(--border-subtle)] space-y-2 group/insight">
+            <div className="flex items-center gap-2 text-[10px] font-black font-geist uppercase tracking-[0.2em] text-[var(--accent-primary)] opacity-70">
+              <span className="animate-pulse">●</span> AI Insight
+            </div>
+            <p className="text-sm leading-relaxed text-[var(--text-secondary)] font-medium italic">
+              "{job.match_reason}"
+            </p>
+          </div>
+        )}
+
+        {/* Missing Skills */}
+        {job.missing_skills?.length > 0 && (
+          <div className="space-y-3">
+            <h4 className="text-[10px] font-black font-geist uppercase tracking-widest text-[var(--text-muted)]">Key Focus Areas:</h4>
+            <div className="flex flex-wrap gap-2">
+              {job.missing_skills.slice(0, 5).map((skill) => (
+                <span
+                  key={skill}
+                  className="px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-tight bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-subtle)]"
+                >
+                  {skill}
+                </span>
+              ))}
+            </div>
+          </div>
         )}
       </div>
 
-      {job.match_reason && (
-        <div className="flex items-start gap-2 mb-3 ml-7">
-          <span className="text-green-500 flex-shrink-0 text-xs mt-0.5">*</span>
-          <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-            {job.match_reason}
-          </p>
-        </div>
-      )}
-
-      {job.missing_skills?.length > 0 && (
-        <div className="flex items-start gap-2 mb-4 ml-7">
-          <span className="text-yellow-500 flex-shrink-0 text-xs mt-0.5">!</span>
-          <div className="flex flex-wrap gap-1">
-            {job.missing_skills.slice(0, 4).map((skill) => (
-              <span
-                key={skill}
-                className="px-1.5 py-0.5 rounded text-xs"
-                style={{
-                  background: "var(--warning-subtle)",
-                  color: "var(--warning)",
-                  border: "1px solid rgba(245,158,11,0.15)",
-                }}
-              >
-                {skill}
-              </span>
-            ))}
+      {/* Right Action Column */}
+      <div className="flex flex-col items-center justify-between gap-8 md:w-48 py-4">
+        {/* Match Circle */}
+        <div className="relative w-28 h-28 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-500">
+          <svg className="w-full h-full -rotate-90">
+            <circle
+              cx="56"
+              cy="56"
+              r="52"
+              stroke="var(--border-subtle)"
+              strokeWidth="6"
+              fill="none"
+            />
+            <circle
+              cx="56"
+              cy="56"
+              r="52"
+              stroke={scoreColor}
+              strokeWidth="6"
+              fill="none"
+              strokeDasharray={`${2 * Math.PI * 52}`}
+              strokeDashoffset={`${2 * Math.PI * 52 * (1 - job.match_score / 100)}`}
+              strokeLinecap="round"
+              className="transition-all duration-1000 ease-out"
+              style={{ filter: `drop-shadow(0 0 12px ${scoreColor}88)` }}
+            />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center space-y-0.5">
+            <span className="text-3xl font-black font-geist tracking-tighter text-[var(--text-primary)]">{job.match_score}%</span>
+            <span className="text-[8px] font-black uppercase tracking-[0.3em] text-[var(--text-muted)]">PROBABILITY</span>
           </div>
         </div>
-      )}
 
-      {job.apply_url && (
-        <a
-          href={job.apply_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98] ml-0"
-          style={{ background: "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))" }}
-        >
-          Apply Now -&gt;
-        </a>
-      )}
+        {job.apply_url && (
+          <a
+            href={job.apply_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-primary w-full py-4 text-xs tracking-[0.2em] uppercase flex items-center justify-center gap-3 overflow-hidden group/btn"
+          >
+            Apply Now
+            <svg 
+              className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" 
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </a>
+        )}
+      </div>
     </div>
   );
 }

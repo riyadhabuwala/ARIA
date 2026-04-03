@@ -301,13 +301,13 @@ export default function CareerCoachPage() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-full bg-[var(--bg-base)]">
       {/* Left Panel - Conversation History */}
-      <div className="w-1/3 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+      <div className="w-[300px] bg-[var(--bg-surface)] border-r border-[var(--border-subtle)] flex flex-col">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-            Career Coach
+        <div className="p-6 border-b border-[var(--border-subtle)]">
+          <h2 className="text-sm font-black text-[var(--text-primary)] font-geist uppercase tracking-widest italic mb-4">
+            Coaching History
           </h2>
           <button
             onClick={createNewConversation}
@@ -323,21 +323,21 @@ export default function CareerCoachPage() {
             <div
               key={conversation.id}
               onClick={() => loadConversation(conversation.id)}
-              className={`p-4 border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+              className={`p-5 border-b border-[var(--border-subtle)] cursor-pointer hover:bg-[var(--bg-hover)] transition-all ${
                 activeConversationId === conversation.id
-                  ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-blue-500'
+                  ? 'bg-[var(--accent-subtle)] border-l-4 border-l-[var(--accent-primary)] shadow-[inset_0_0_20px_rgba(37,99,235,0.05)]'
                   : ''
               }`}
             >
-              <div className="flex justify-between items-start mb-1">
-                <h3 className="font-medium text-gray-900 dark:text-white text-sm truncate flex-1">
+              <div className="flex justify-between items-start mb-1.5">
+                <h3 className="font-bold text-[var(--text-primary)] text-xs tracking-tight truncate flex-1 uppercase">
                   {conversation.title}
                 </h3>
-                <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                <span className="text-[10px] font-bold text-[var(--text-muted)] ml-2 uppercase tracking-tighter">
                   {formatDate(conversation.createdAt)}
                 </span>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+              <p className="text-[11px] text-[var(--text-muted)] truncate font-medium">
                 {conversation.lastMessagePreview}
               </p>
             </div>
@@ -348,12 +348,12 @@ export default function CareerCoachPage() {
       {/* Right Panel - Active Chat */}
       <div className="flex-1 flex flex-col">
         {/* Chat Header */}
-        <div className="p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-            🤖 ARIA Career Coach
+        <div className="p-6 bg-[var(--bg-surface)] border-b border-[var(--border-subtle)] backdrop-blur-xl">
+          <h1 className="text-2xl font-black text-[var(--text-primary)] font-geist uppercase italic tracking-tighter">
+            🤖 ARIA CAREER COACH
           </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Your personal AI career advisor
+          <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-[0.2em] mt-1">
+            Personal Intelligence Advisor
           </p>
         </div>
 
@@ -365,10 +365,10 @@ export default function CareerCoachPage() {
               className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[70%] rounded-lg px-4 py-2 ${
+                className={`max-w-[80%] rounded-2xl px-5 py-3.5 text-xs font-medium leading-relaxed shadow-sm ${
                   message.role === 'user'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
+                    ? 'bg-[var(--accent-primary)] text-white shadow-[0_0_20px_rgba(37,99,235,0.2)]'
+                    : 'bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-subtle)]'
                 }`}
               >
                 <div className="whitespace-pre-wrap break-words">
@@ -388,11 +388,11 @@ export default function CareerCoachPage() {
           {/* Loading indicator */}
           {isLoading && (
             <div className="flex justify-start">
-              <div className="bg-gray-100 dark:bg-gray-700 rounded-lg px-4 py-2">
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+              <div className="bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-xl px-4 py-3">
+                <div className="flex space-x-1.5 items-center">
+                  <div className="w-1.5 h-1.5 bg-[var(--accent-primary)] rounded-full animate-bounce"></div>
+                  <div className="w-1.5 h-1.5 bg-[var(--accent-primary)] rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                  <div className="w-1.5 h-1.5 bg-[var(--accent-primary)] rounded-full animate-bounce [animation-delay:0.4s]"></div>
                 </div>
               </div>
             </div>
@@ -411,17 +411,17 @@ export default function CareerCoachPage() {
         </div>
 
         {/* Input Area */}
-        <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+        <div className="p-8 bg-[var(--bg-surface)] border-t border-[var(--border-subtle)]">
           {/* Context Shortcuts */}
-          <div className="mb-3 flex flex-wrap gap-2">
+          <div className="mb-6 flex flex-wrap gap-2.5">
             {CONTEXT_SHORTCUTS.map((shortcut, index) => (
               <button
                 key={index}
                 onClick={() => handleShortcutClick(shortcut.text)}
                 disabled={isLoading}
-                className="inline-flex items-center px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-4 py-2 text-[10px] font-bold bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--text-secondary)] rounded-xl hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] hover:border-[var(--text-muted)] transition-all uppercase tracking-widest disabled:opacity-50"
               >
-                <span className="mr-1.5">{shortcut.icon}</span>
+                <span className="mr-2 text-sm">{shortcut.icon}</span>
                 {shortcut.text}
               </button>
             ))}
@@ -433,14 +433,14 @@ export default function CareerCoachPage() {
               type="text"
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              placeholder="Ask me anything about your career..."
+              placeholder="Ask ARIA anything about your career..."
               disabled={isLoading}
-              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              className="flex-1 px-6 py-4 rounded-2xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:ring-2 focus:ring-[var(--accent-primary)]/20 focus:border-[var(--accent-primary)] outline-none placeholder-[var(--text-muted)] transition-all"
             />
             <button
               type="submit"
               disabled={!inputMessage.trim() || isLoading}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-8 py-4 btn-primary rounded-2xl disabled:opacity-50 shadow-lg"
             >
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

@@ -1,24 +1,23 @@
-import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useState } from "react";
 
-// Navigation menu structure
 const navigationSections = [
   {
-    title: "MAIN",
+    title: "DASHBOARD",
     items: [
-      { name: "Dashboard", path: "/dashboard", icon: "📊" },
-      { name: "Start Interview", path: "/interview", icon: "🎯", badge: "New" },
-      { name: "Analytics", path: "/analytics", icon: "📈" },
-      { name: "History", path: "/history", icon: "📋" }
+      { name: "Overview", path: "/dashboard", icon: "🏠" },
+      { name: "Interview History", path: "/history", icon: "📋" },
+      { name: "Performance", path: "/analytics", icon: "📈" }
     ]
   },
   {
-    title: "CAREER",
+    title: "PREPARATION",
     items: [
-      { name: "Resume", path: "/resume", icon: "📄" },
-      { name: "Job Matches", path: "/job-match", icon: "💼" },
-      { name: "AI Coach", path: "/coach", icon: "🤖" }
+      { name: "Resume Manager", path: "/resume", icon: "📄" },
+      { name: "Job Matches", path: "/jobs", icon: "🎯", badge: "NEW" },
+      { name: "Career Coach", path: "/coach", icon: "🤖" },
+      { name: "Practice Drills", path: "/practice", icon: "⚡" }
     ]
   },
   {
@@ -41,7 +40,6 @@ export default function LeftSidebar({ isOpen, onToggle }) {
     navigate("/");
   };
 
-  // Get user initials from name or email
   const getUserInitials = (user) => {
     const name = user?.user_metadata?.full_name || user?.email || "";
     return name
@@ -52,12 +50,10 @@ export default function LeftSidebar({ isOpen, onToggle }) {
       .slice(0, 2);
   };
 
-  // Get display name
   const getDisplayName = (user) => {
     return user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
   };
 
-  // Check if route is active
   const isActiveRoute = (path) => {
     if (path === "/dashboard") {
       return location.pathname === "/dashboard";
@@ -70,15 +66,15 @@ export default function LeftSidebar({ isOpen, onToggle }) {
       {/* Mobile overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
           onClick={onToggle}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar container */}
       <div className={`
-        fixed left-0 top-0 h-full w-[220px] bg-white dark:bg-gray-900
-        border-r border-gray-200 dark:border-gray-700 z-50
+        fixed left-0 top-0 h-full w-[240px] z-50
+        bg-[var(--bg-base)] border-r border-[var(--border-subtle)]
         transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0 lg:static lg:z-auto
@@ -86,30 +82,30 @@ export default function LeftSidebar({ isOpen, onToggle }) {
       `}>
 
         {/* Logo Section */}
-        <div className="flex items-center px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center px-7 py-8 border-b border-[var(--border-subtle)]">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">A</span>
+            <div className="w-10 h-10 bg-[var(--accent-primary)] rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.4)]">
+              <span className="text-white font-bold text-lg">A</span>
             </div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl font-black italic tracking-tighter text-[var(--text-primary)] font-geist uppercase">
               ARIA
             </h1>
           </div>
         </div>
 
         {/* Navigation Sections */}
-        <div className="flex-1 overflow-y-auto py-4">
+        <div className="flex-1 overflow-y-auto py-8 px-4 space-y-9">
           {navigationSections.map((section, sectionIndex) => (
-            <div key={section.title} className={sectionIndex > 0 ? "mt-6" : ""}>
+            <div key={section.title}>
               {/* Section Title */}
-              <div className="px-6 pb-2">
-                <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <div className="px-3 pb-4">
+                <h3 className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-[0.25em] font-geist">
                   {section.title}
                 </h3>
               </div>
 
               {/* Section Items */}
-              <nav className="space-y-1 px-3">
+              <nav className="space-y-1.5">
                 {section.items.map((item) => {
                   const isActive = isActiveRoute(item.path);
 
@@ -118,31 +114,35 @@ export default function LeftSidebar({ isOpen, onToggle }) {
                       key={item.path}
                       to={item.path}
                       onClick={() => {
-                        // Close mobile sidebar on navigation
                         if (window.innerWidth < 1024) {
                           onToggle();
                         }
                       }}
                       className={`
-                        group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg
-                        transition-all duration-200 ease-in-out
+                        group flex items-center px-4 py-3.5 text-sm font-semibold rounded-xl
+                        transition-all duration-200 relative overflow-hidden
                         ${isActive
-                          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-r-2 border-blue-500'
-                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
+                          ? 'bg-[var(--accent-subtle)] text-[var(--accent-primary)] shadow-[0_0_15px_rgba(37,99,235,0.1)]'
+                          : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]'
                         }
                       `}
                     >
+                      {/* Active Indicator Bar */}
+                      {isActive && (
+                        <div className="absolute left-0 top-3 bottom-3 w-1 bg-[var(--accent-primary)] rounded-full" />
+                      )}
+
                       {/* Icon */}
-                      <span className="mr-3 text-lg flex-shrink-0">
+                      <span className={`mr-3 text-xl transition-transform group-hover:scale-110 ${isActive ? 'scale-110' : 'opacity-70'}`}>
                         {item.icon}
                       </span>
 
                       {/* Label */}
-                      <span className="flex-1">{item.name}</span>
+                      <span className="flex-1 tracking-tight">{item.name}</span>
 
                       {/* Badge */}
                       {item.badge && (
-                        <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[var(--accent-primary)] text-white uppercase tracking-widest">
                           {item.badge}
                         </span>
                       )}
@@ -155,62 +155,62 @@ export default function LeftSidebar({ isOpen, onToggle }) {
         </div>
 
         {/* User Profile Section */}
-        <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+        <div className="border-t border-[var(--border-subtle)] p-6">
           <div
             className="relative"
             onMouseEnter={() => setShowUserDropdown(true)}
             onMouseLeave={() => setShowUserDropdown(false)}
           >
-            <button className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200">
+            <button className="w-full flex items-center space-x-3 px-3 py-3.5 rounded-2xl hover:bg-[var(--bg-hover)] transition-all group">
               {/* Avatar */}
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-sm font-semibold">
+              <div className="w-10 h-10 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:border-[var(--accent-primary)] transition-all">
+                <span className="text-[var(--text-primary)] text-xs font-bold font-geist">
                   {getUserInitials(user)}
                 </span>
               </div>
 
               {/* User Info */}
               <div className="flex-1 text-left min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                <p className="text-sm font-bold text-[var(--text-primary)] truncate tracking-tight">
                   {getDisplayName(user)}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Free Plan
+                <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
+                  Personal Account
                 </p>
               </div>
 
               {/* Chevron */}
               <svg
-                className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showUserDropdown ? 'rotate-180' : ''}`}
+                className={`w-4 h-4 text-[var(--text-muted)] transition-all duration-300 ${showUserDropdown ? 'rotate-180 text-[var(--text-primary)]' : ''}`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
             {/* User Dropdown */}
             {showUserDropdown && (
-              <div className="absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1">
+              <div className="absolute bottom-full left-0 right-0 mb-4 bg-[var(--bg-overlay)] rounded-2xl shadow-2xl border border-[var(--border-subtle)] py-2.5 backdrop-blur-xl transition-all">
                 <Link
                   to="/profile"
-                  className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+                  className="flex items-center px-4 py-3 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
                 >
-                  View Profile
+                  <span className="mr-3 opacity-60">👤</span> View Profile
                 </Link>
                 <Link
                   to="/settings"
-                  className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+                  className="flex items-center px-4 py-3 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
                 >
-                  Settings
+                  <span className="mr-3 opacity-60">⚙️</span> Settings
                 </Link>
-                <hr className="my-1 border-gray-200 dark:border-gray-600" />
+                <div className="my-2.5 h-[1px] bg-[var(--border-subtle)] mx-4" />
                 <button
                   onClick={handleSignOut}
-                  className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+                  className="w-full flex items-center px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-500/10 transition-colors"
                 >
-                  Sign Out
+                  <span className="mr-3 opacity-60">🚪</span> Sign Out
                 </button>
               </div>
             )}

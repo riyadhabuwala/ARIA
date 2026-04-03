@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { getHistory, parseResume } from "../api/interviewApi";
 import { getAnalytics } from "../api/analyticsApi";
 import { getJobMatchResults } from "../api/jobsApi";
@@ -18,10 +19,10 @@ const INTERVIEW_DOMAINS = [
 // Skeleton loader component
 function StatSkeleton() {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+    <div className="card-premium p-6">
       <div className="animate-pulse">
-        <div className="h-8 bg-gray-300 dark:bg-gray-600 rounded w-16 mb-2"></div>
-        <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-24"></div>
+        <div className="h-8 bg-[var(--bg-elevated)] rounded-xl w-16 mb-2"></div>
+        <div className="h-4 bg-[var(--bg-elevated)] rounded-lg w-24"></div>
       </div>
     </div>
   );
@@ -29,27 +30,28 @@ function StatSkeleton() {
 
 function TableRowSkeleton() {
   return (
-    <tr className="animate-pulse">
+    <tr className="animate-pulse border-b border-[var(--border-subtle)]">
       <td className="px-6 py-4">
-        <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-24"></div>
+        <div className="h-4 bg-[var(--bg-elevated)] rounded w-24"></div>
       </td>
       <td className="px-6 py-4">
-        <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-20"></div>
+        <div className="h-4 bg-[var(--bg-elevated)] rounded w-20"></div>
       </td>
       <td className="px-6 py-4">
-        <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-12"></div>
+        <div className="h-4 bg-[var(--bg-elevated)] rounded w-12"></div>
       </td>
       <td className="px-6 py-4">
-        <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-8"></div>
+        <div className="h-4 bg-[var(--bg-elevated)] rounded w-8"></div>
       </td>
       <td className="px-6 py-4">
-        <div className="h-8 bg-gray-300 dark:bg-gray-600 rounded w-20"></div>
+        <div className="h-8 bg-[var(--bg-elevated)] rounded w-20"></div>
       </td>
     </tr>
   );
 }
 
 export default function Dashboard({ user, onNewInterview, onViewSession, onJobMatch }) {
+  const navigate = useNavigate();
   const [sessions, setSessions] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [jobMatches, setJobMatches] = useState([]);
@@ -65,11 +67,9 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Fetch interview history
         const historyData = await getHistory(user.id);
         setSessions(historyData.sessions || []);
 
-        // Fetch analytics
         try {
           const analyticsData = await getAnalytics(user.id);
           setAnalytics(analyticsData);
@@ -77,7 +77,6 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
           console.warn("Analytics not available:", error);
         }
 
-        // Fetch job matches
         try {
           const jobData = await getJobMatchResults(user.id);
           setJobMatches(jobData.jobs || []);
@@ -85,7 +84,6 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
           console.warn("Job matches not available:", error);
         }
 
-        // Fetch resume quality
         try {
           const resumeData = await getResumeQuality(user.id);
           setResumeQuality(resumeData);
@@ -102,7 +100,6 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
     fetchDashboardData();
   }, [user.id]);
 
-  // Calculate stats
   const totalInterviews = sessions.length;
   const avgScore = sessions.length
     ? Math.round(sessions.reduce((a, s) => a + (s.overall_score || 0), 0) / sessions.length)
@@ -112,7 +109,6 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
     : 0;
   const jobMatchCount = jobMatches.length;
 
-  // Format date helper
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -121,15 +117,14 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
     });
   };
 
-  // Get grade color
   const getGradeColor = (grade) => {
     switch (grade) {
-      case 'A': return 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/30';
-      case 'B': return 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/30';
-      case 'C': return 'text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/30';
-      case 'D': return 'text-orange-600 bg-orange-100 dark:text-orange-400 dark:bg-orange-900/30';
-      case 'F': return 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/30';
-      default: return 'text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-900/30';
+      case 'A': return 'text-[var(--success)] bg-[var(--success-subtle)]';
+      case 'B': return 'text-[var(--accent-primary)] bg-[var(--accent-subtle)]';
+      case 'C': return 'text-[var(--warning)] bg-[var(--warning-subtle)]';
+      case 'D': return 'text-[var(--danger)] bg-[var(--danger-subtle)]';
+      case 'F': return 'text-[var(--danger)] bg-[var(--danger-subtle)]';
+      default: return 'text-[var(--text-muted)] bg-[var(--bg-elevated)]';
     }
   };
 
@@ -148,222 +143,141 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
   };
 
   const handleResumeUpload = async (file) => {
-    console.log("🔄 Starting resume upload...", file);
-    if (!file) {
-      console.error("❌ No file provided");
-      return;
-    }
-
-    if (!user?.id) {
-      console.error("❌ No user ID available");
-      return;
-    }
+    if (!file || !user?.id) return;
 
     setUploadLoading(true);
     try {
-      console.log("📄 Parsing resume...");
-      // Parse resume
       const parseData = await parseResume(file);
-      console.log("✅ Parse result:", parseData);
+      if (!parseData.resume_text) throw new Error("Text extraction failed");
 
-      if (!parseData.resume_text) {
-        throw new Error("Could not extract text from resume");
-      }
+      await saveResumeProfile(user.id, parseData.resume_text, parseData.extracted_profile || {}, file.name);
 
-      console.log("💾 Saving to profile...");
-      // Save to profile
-      await saveResumeProfile(
-        user.id,
-        parseData.resume_text,
-        parseData.extracted_profile || {},
-        file.name
-      );
-      console.log("✅ Resume saved successfully");
-
-      // Refresh resume quality data
-      try {
-        console.log("📊 Getting updated resume quality...");
-        const resumeData = await getResumeQuality(user.id, true); // Force refresh
-        setResumeQuality(resumeData);
-        console.log("✅ Resume quality updated:", resumeData);
-      } catch (error) {
-        console.warn("Failed to get updated resume quality:", error);
-      }
-
+      const resumeData = await getResumeQuality(user.id, true);
+      setResumeQuality(resumeData);
       setShowUploadModal(false);
-      console.log("✅ Upload completed successfully");
     } catch (error) {
-      console.error("❌ Resume upload failed:", error);
-      // Show error to user - we'll add this
+      console.error("Resume upload failed:", error);
     } finally {
       setUploadLoading(false);
     }
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Welcome back, {user.user_metadata?.full_name || user.email?.split('@')[0]}
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Here's your interview progress dashboard
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                console.log("📂 Opening upload modal...");
-                setShowUploadModal(true);
-              }}
-              disabled={uploadLoading}
-              className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
-              {uploadLoading ? 'Uploading...' : 'Upload Resume'}
-            </button>
-          </div>
+    <div className="p-8 max-w-7xl mx-auto space-y-10 min-h-screen">
+      {/* Header Section */}
+      <section className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-4xl font-black tracking-tight text-[var(--text-primary)] font-geist mb-1 italic">
+            DASHBOARD
+          </h1>
+          <p className="text-[var(--text-secondary)] font-medium">
+            Welcome back, <span className="text-[var(--text-primary)]">{user.user_metadata?.full_name || user.email?.split('@')[0]}</span>. Here's your status.
+          </p>
         </div>
-      </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowUploadModal(true)}
+            disabled={uploadLoading}
+            className="flex items-center gap-2 px-6 py-3 border border-[var(--border-default)] rounded-xl text-[var(--text-primary)] font-semibold bg-[var(--bg-surface)] hover:bg-[var(--bg-hover)] transition-all disabled:opacity-50"
+          >
+            <svg className="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            {uploadLoading ? 'Uploading...' : 'Upload Resume'}
+          </button>
+        </div>
+      </section>
 
-      {/* Top Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* Top Stats Grid */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {loading ? (
           Array(4).fill(0).map((_, i) => <StatSkeleton key={i} />)
         ) : (
           <>
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                  <span className="text-blue-600 dark:text-blue-400 text-xl">📊</span>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Interviews</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalInterviews}</p>
-                </div>
+            <div className="card-premium p-6 flex items-center gap-5">
+              <div className="w-12 h-12 bg-[var(--accent-subtle)] border border-[var(--accent-border)] rounded-2xl flex items-center justify-center text-2xl shadow-lg">
+                📈
+              </div>
+              <div>
+                <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-1">Total Sessions</p>
+                <p className="text-2xl font-black text-[var(--text-primary)] font-geist">{totalInterviews}</p>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-              <div className="flex justify-center">
-                <ScoreGauge
-                  score={avgScore}
-                  label="Average Score"
-                  size="sm"
-                  showGrade={false}
-                />
-              </div>
+            <div className="card-premium p-6 flex items-center justify-center">
+              <ScoreGauge score={avgScore} label="Avg Score" size="sm" showGrade={false} />
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-              <div className="flex justify-center">
-                <ScoreGauge
-                  score={avgConfidence}
-                  label="Confidence"
-                  size="sm"
-                  showGrade={false}
-                />
-              </div>
+            <div className="card-premium p-6 flex items-center justify-center">
+              <ScoreGauge score={avgConfidence} label="Confidence" size="sm" showGrade={false} />
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center">
-                <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-                  <span className="text-orange-600 dark:text-orange-400 text-xl">💼</span>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Job Matches</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{jobMatchCount}</p>
-                </div>
+            <div className="card-premium p-6 flex items-center gap-5">
+              <div className="w-12 h-12 bg-[var(--success-subtle)] border border-[var(--success)]/20 rounded-2xl flex items-center justify-center text-2xl shadow-lg">
+                💼
+              </div>
+              <div>
+                <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-1">Job Matches</p>
+                <p className="text-2xl font-black text-[var(--text-primary)] font-geist">{jobMatchCount}</p>
               </div>
             </div>
           </>
         )}
-      </div>
+      </section>
 
-      {/* Main Content - 2 Columns */}
+      {/* Main Grid Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column - Wider */}
+        {/* Left Column: Recent & Picker */}
         <div className="lg:col-span-2 space-y-8">
-          {/* Recent Interviews Table */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Interviews</h3>
+          {/* Recent Interviews */}
+          <div className="card-premium overflow-hidden">
+            <div className="px-7 py-5 border-b border-[var(--border-subtle)] flex items-center justify-between">
+              <h3 className="text-lg font-bold text-[var(--text-primary)] font-geist uppercase tracking-widest italic">
+                RECENT SESSION REPORTS
+              </h3>
+              <button onClick={() => navigate("/history")} className="text-xs font-bold text-[var(--accent-primary)] hover:underline uppercase tracking-tighter">
+                View All
+              </button>
             </div>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
+              <table className="w-full">
+                <thead className="bg-[var(--bg-surface)]">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Domain
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Score
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Grade
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Action
-                    </th>
+                    {["Domain", "Date", "Score", "Grade", "Action"].map(h => (
+                      <th key={h} className="px-7 py-4 text-left text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em]">{h}</th>
+                    ))}
                   </tr>
                 </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="divide-y divide-[var(--border-subtle)]">
                   {loading ? (
                     Array(3).fill(0).map((_, i) => <TableRowSkeleton key={i} />)
                   ) : sessions.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="px-6 py-12 text-center">
-                        <div className="text-gray-500 dark:text-gray-400">
-                          <p className="text-4xl mb-2">🎯</p>
-                          <p className="font-medium">No interviews yet</p>
-                          <p className="text-sm mb-4">Start your first interview to see your progress here</p>
-                          <button
-                            onClick={onNewInterview}
-                            className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-medium"
-                          >
-                            Start your first interview →
-                          </button>
+                      <td colSpan="5" className="px-7 py-16 text-center">
+                        <div className="max-w-xs mx-auto space-y-4">
+                          <p className="text-4xl opacity-50 grayscale">🎯</p>
+                          <p className="text-[var(--text-secondary)] font-medium">No sessions logged yet.</p>
+                          <button onClick={onNewInterview} className="btn-primary w-full py-3 text-xs">START INITIAL INTERVIEW</button>
                         </div>
                       </td>
                     </tr>
                   ) : (
                     sessions.slice(0, 5).map((session) => (
-                      <tr key={session.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-medium text-gray-900 dark:text-white">
-                            {session.domain}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm text-gray-500 dark:text-gray-400">
-                            {formatDate(session.created_at)}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-medium text-gray-900 dark:text-white">
-                            {session.overall_score || 0}/100
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getGradeColor(session.grade)}`}>
+                      <tr key={session.id} className="hover:bg-[var(--bg-hover)] transition-colors group">
+                        <td className="px-7 py-5 font-bold text-[var(--text-primary)] tracking-tight">{session.domain}</td>
+                        <td className="px-7 py-5 text-sm text-[var(--text-secondary)]">{formatDate(session.created_at)}</td>
+                        <td className="px-7 py-5 font-black text-[var(--text-primary)]">{session.overall_score || 0}%</td>
+                        <td className="px-7 py-5">
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${getGradeColor(session.grade)}`}>
                             {session.grade || 'N/A'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-7 py-5">
                           <button
                             onClick={() => onViewSession(session)}
-                            className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 text-sm font-medium"
+                            className="text-[var(--accent-primary)] hover:text-[var(--accent-hover)] font-bold text-xs uppercase tracking-tighter transition-colors"
                           >
-                            View Report
+                            Report →
                           </button>
                         </td>
                       </tr>
@@ -374,25 +288,27 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
             </div>
           </div>
 
-          {/* Start New Interview Domain Picker */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Start New Interview</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">Choose your interview domain</p>
-
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+          {/* New Interview Picker */}
+          <div className="card-premium p-8">
+            <h3 className="text-lg font-bold text-[var(--text-primary)] font-geist mb-6 uppercase tracking-widest italic">
+              START NEW SESSION
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-8">
               {INTERVIEW_DOMAINS.map((domain) => (
                 <button
                   key={domain.id}
                   onClick={() => setSelectedDomain(domain)}
-                  className={`p-4 rounded-lg border-2 transition-all duration-200 ${
-                    selectedDomain?.id === domain.id
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                  }`}
+                  className={`
+                    group p-5 rounded-2xl border-2 transition-all duration-300 text-center
+                    ${selectedDomain?.id === domain.id
+                      ? 'border-[var(--accent-primary)] bg-[var(--accent-subtle)] shadow-[0_0_20px_rgba(37,99,235,0.15)] scale-105'
+                      : 'border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:border-[var(--border-default)] hover:scale-[1.02]'
+                    }
+                  `}
                 >
-                  <div className={`w-8 h-8 ${domain.color} rounded-lg mx-auto mb-2`}></div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">{domain.name}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{domain.fullName}</p>
+                  <div className={`w-10 h-10 ${domain.color} rounded-xl mx-auto mb-3 shadow-lg group-hover:rotate-6 transition-transform opacity-80 group-hover:opacity-100`}></div>
+                  <p className="text-xs font-black text-[var(--text-primary)] uppercase tracking-tighter mb-1">{domain.name}</p>
+                  <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-widest leading-tight">{domain.fullName}</p>
                 </button>
               ))}
             </div>
@@ -400,204 +316,132 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
             <button
               onClick={handleStartInterview}
               disabled={!selectedDomain}
-              className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-200 ${
-                selectedDomain
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                  : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-              }`}
+              className={`
+                w-full py-4 px-6 rounded-2xl font-black uppercase tracking-[0.1em] transition-all duration-300
+                ${selectedDomain
+                  ? 'btn-primary text-sm'
+                  : 'bg-[var(--bg-elevated)] text-[var(--text-muted)] border border-[var(--border-subtle)] cursor-not-allowed text-xs'
+                }
+              `}
             >
-              {selectedDomain ? `Start ${selectedDomain.fullName} Interview` : 'Select a Domain First'}
+              {selectedDomain ? `LAUNCH ${selectedDomain.fullName} SESSION` : 'SELECT A DOMAIN TO START'}
             </button>
           </div>
         </div>
 
-        {/* Right Column - Narrower */}
+        {/* Right Column: AI & Stats */}
         <div className="space-y-8">
-          {/* AI Coach Preview */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-                <span className="mr-2">🤖</span>
-                AI Coach
+          {/* AI Coach */}
+          <div className="card-premium h-[420px] flex flex-col">
+            <div className="px-7 py-5 border-b border-[var(--border-subtle)] flex items-center gap-3">
+              <span className="text-xl">🤖</span>
+              <h3 className="text-sm font-black text-[var(--text-primary)] font-geist uppercase tracking-widest italic">
+                AI COACH
               </h3>
             </div>
-
-            <div className="p-4 space-y-4 max-h-80 overflow-y-auto">
-              {messages.slice(-3).map((message, index) => (
-                <div
-                  key={index}
-                  className={`p-3 rounded-lg ${
-                    message.role === 'user'
-                      ? 'bg-blue-100 dark:bg-blue-900/30 ml-4'
-                      : 'bg-gray-100 dark:bg-gray-700 mr-4'
-                  }`}
-                >
-                  <p className="text-sm text-gray-800 dark:text-gray-200">{message.content}</p>
+            <div className="flex-1 p-6 space-y-4 overflow-y-auto custom-scrollbar">
+              {messages.slice(-4).map((msg, idx) => (
+                <div key={idx} className={`max-w-[85%] p-4 rounded-2xl text-xs font-medium leading-relaxed shadow-sm
+                  ${msg.role === 'user'
+                    ? 'bg-[var(--accent-primary)] text-white ml-auto rounded-tr-none'
+                    : 'bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-subtle)] mr-auto rounded-tl-none'
+                  }
+                `}>
+                  {msg.content}
                 </div>
               ))}
               {chatLoading && (
-                <div className="bg-gray-100 dark:bg-gray-700 mr-4 p-3 rounded-lg">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                <div className="bg-[var(--bg-elevated)] p-4 rounded-2xl rounded-tl-none border border-[var(--border-subtle)] w-16">
+                  <div className="flex gap-1 justify-center">
+                    <div className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce"></div>
+                    <div className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                    <div className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce [animation-delay:0.4s]"></div>
                   </div>
                 </div>
               )}
             </div>
-
-            <form onSubmit={handleChatSubmit} className="p-4 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex space-x-2">
+            <form onSubmit={handleChatSubmit} className="p-5 border-t border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+              <div className="flex gap-2">
                 <input
                   type="text"
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Ask your AI coach..."
-                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Ask for feedback..."
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs focus:ring-1 focus:ring-[var(--accent-primary)] outline-none placeholder-[var(--text-muted)]"
                   disabled={chatLoading}
                 />
                 <button
                   type="submit"
                   disabled={!chatInput.trim() || chatLoading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-2.5 bg-[var(--accent-primary)] text-white rounded-xl hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-all font-bold text-[10px] uppercase shadow-lg"
                 >
-                  Send
+                  GO
                 </button>
               </div>
             </form>
           </div>
 
-          {/* Quick Links */}
-          <div className="space-y-4">
-            {/* Resume Quality Card */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 min-h-[180px] flex flex-col">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="font-semibold text-gray-900 dark:text-white">Resume Quality</h4>
-                <span className="text-2xl">📄</span>
-              </div>
-              {loading ? (
-                <div className="animate-pulse flex-1 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="h-6 bg-gray-300 dark:bg-gray-600 rounded w-16 mb-2 mx-auto"></div>
-                    <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-24 mx-auto"></div>
-                  </div>
-                </div>
-              ) : resumeQuality && resumeQuality.overall_score > 0 ? (
-                <div className="flex-1 flex flex-col justify-between">
-                  <div>
-                    {resumeQuality.filename && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 truncate">
-                        {resumeQuality.filename}
-                      </p>
-                    )}
-                    <div className="flex justify-center mb-4">
-                      <ScoreGauge
-                        score={resumeQuality.overall_score || 0}
-                        label="Quality Score"
-                        size="sm"
-                        showGrade={true}
-                      />
-                    </div>
-                    {resumeQuality.suggestions && resumeQuality.suggestions.length > 0 && (
-                      <div className="mb-3">
-                        <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Top Suggestions:</p>
-                        <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
-                          {resumeQuality.suggestions.slice(0, 2).map((suggestion, index) => (
-                            <li key={index} className="flex items-start">
-                              <span className="text-blue-500 mr-1">•</span>
-                              <span className="line-clamp-2">{suggestion}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => setShowUploadModal(true)}
-                    className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 text-center"
-                  >
-                    Re-upload Resume
-                  </button>
-                </div>
-              ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-center">
-                  <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 w-full mb-4">
-                    <div className="text-3xl mb-2">📄</div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-                      No resume uploaded
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-500">
-                      Upload your PDF to get AI quality analysis
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setShowUploadModal(true)}
-                    disabled={uploadLoading}
-                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {uploadLoading ? 'Uploading...' : 'Upload Resume →'}
-                  </button>
-                </div>
-              )}
+          {/* Resume Quality */}
+          <div className="card-premium p-7 space-y-6">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-black text-[var(--text-primary)] font-geist uppercase tracking-widest italic">RESUME QUALITY</h4>
+              <span className="text-xl grayscale opacity-50">📄</span>
             </div>
-
-            {/* Job Matches Card */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-semibold text-gray-900 dark:text-white">Job Matches</h4>
-                <span className="text-2xl">💼</span>
+            
+            {loading ? (
+              <div className="space-y-4 animate-pulse">
+                <div className="h-20 bg-[var(--bg-elevated)] rounded-2xl mx-auto w-20"></div>
+                <div className="h-4 bg-[var(--bg-elevated)] rounded-lg w-full"></div>
               </div>
-              {loading ? (
-                <div className="animate-pulse">
-                  <div className="h-6 bg-gray-300 dark:bg-gray-600 rounded w-12 mb-2"></div>
-                  <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-20"></div>
+            ) : resumeQuality && resumeQuality.overall_score > 0 ? (
+              <div className="space-y-6">
+                <div className="flex justify-center">
+                  <ScoreGauge score={resumeQuality.overall_score} label="Score" size="sm" showGrade={true} />
                 </div>
-              ) : (
-                <>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                    {jobMatchCount}
+                {resumeQuality.suggestions?.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-wider">Top Fixes:</p>
+                    <ul className="space-y-1.5">
+                      {resumeQuality.suggestions.slice(0, 2).map((s, i) => (
+                        <li key={i} className="text-[11px] text-[var(--text-secondary)] flex items-start gap-2">
+                          <span className="text-[var(--accent-primary)] mt-0.5">•</span>
+                          <span className="leading-tight font-medium">{s}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <button
-                    onClick={onJobMatch}
-                    className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
-                  >
-                    View all matches →
-                  </button>
-                </>
-              )}
-            </div>
+                )}
+                <button onClick={() => setShowUploadModal(true)} className="w-full py-2.5 text-[10px] font-black uppercase text-[var(--accent-primary)] border border-[var(--accent-border)] rounded-xl hover:bg-[var(--accent-subtle)] transition-all">
+                  RE-UPLOAD
+                </button>
+              </div>
+            ) : (
+              <div className="text-center space-y-5 py-4">
+                <div className="p-6 border-2 border-dashed border-[var(--border-subtle)] rounded-2xl bg-[var(--bg-surface)]">
+                  <p className="text-2xl mb-2 opacity-30">📂</p>
+                  <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">No Resume Found</p>
+                </div>
+                <button onClick={() => setShowUploadModal(true)} className="btn-primary w-full py-3 text-[10px]">UPLOAD PDF</button>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Upload Modal */}
       {showUploadModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Upload Resume</h3>
-                <button
-                  onClick={() => {
-                    console.log("🚪 Closing modal via X button");
-                    setShowUploadModal(false);
-                  }}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100] p-6 animate-fadeIn">
+          <div className="card-premium max-w-md w-full bg-[var(--bg-surface)] p-0 overflow-hidden border-[var(--border-strong)]">
+            <div className="p-8">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-xl font-black text-[var(--text-primary)] font-geist italic uppercase tracking-widest">UPLOAD DOCUMENT</h3>
+                <button onClick={() => setShowUploadModal(false)} className="text-[var(--text-muted)] hover:text-white transition-colors">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
               <ResumeUploadInline
-                onComplete={(file) => {
-                  console.log("⚡ onComplete callback triggered with file:", file);
-                  handleResumeUpload(file);
-                }}
-                onCancel={() => {
-                  console.log("🚪 Closing modal via Cancel button");
-                  setShowUploadModal(false);
-                }}
+                onComplete={handleResumeUpload}
+                onCancel={() => setShowUploadModal(false)}
                 loading={uploadLoading}
               />
             </div>
@@ -608,7 +452,7 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
   );
 }
 
-// Inline Resume Upload Component (simplified version for modal use)
+// Inline Upload Component Refactored
 function ResumeUploadInline({ onComplete, onCancel, loading = false }) {
   const [file, setFile] = useState(null);
   const [error, setError] = useState("");
@@ -620,108 +464,38 @@ function ResumeUploadInline({ onComplete, onCancel, loading = false }) {
       setFile(f);
       setError("");
     } else {
-      setError("Please upload a PDF file");
-    }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    const droppedFile = e.dataTransfer.files[0];
-    handleFile(droppedFile);
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  };
-
-  const handleDragLeave = () => setIsDragOver(false);
-
-  const handleUpload = () => {
-    console.log("🔘 Upload button clicked!");
-    console.log("📁 File selected:", file);
-    console.log("🔄 onComplete function:", typeof onComplete);
-
-    if (file) {
-      console.log("✅ File exists, calling onComplete...");
-      onComplete(file);
-    } else {
-      console.log("❌ No file selected");
+      setError("UPLOAD PDF ONLY");
     }
   };
 
   return (
-    <div>
-      {/* Drop Zone */}
+    <div className="space-y-6">
       <div
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
+        onDrop={(e) => { e.preventDefault(); setIsDragOver(false); handleFile(e.dataTransfer.files[0]); }}
+        onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+        onDragLeave={() => setIsDragOver(false)}
         onClick={() => inputRef.current?.click()}
-        className={`rounded-lg p-8 text-center cursor-pointer transition-all duration-200 mb-4 border-2 border-dashed ${
-          isDragOver
-            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-            : file
-            ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-            : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700'
-        }`}
+        className={`
+          aspect-video rounded-3xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all duration-300
+          ${isDragOver 
+            ? 'border-[var(--accent-primary)] bg-[var(--accent-subtle)]' 
+            : file 
+              ? 'border-[var(--success)] bg-[var(--success-subtle)]' 
+              : 'border-[var(--border-strong)] bg-[var(--bg-elevated)] hover:border-[var(--text-muted)]'
+          }
+        `}
       >
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".pdf"
-          className="hidden"
-          onChange={(e) => handleFile(e.target.files[0])}
-          disabled={loading}
-        />
-
-        {file ? (
-          <div>
-            <div className="text-4xl mb-3">📄</div>
-            <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
-              {file.name}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Click to change file
-            </p>
-          </div>
-        ) : (
-          <div>
-            <div className="text-4xl mb-3">📁</div>
-            <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
-              Drag & drop your PDF resume here
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              or click to browse
-            </p>
-          </div>
-        )}
+        <input ref={inputRef} type="file" accept=".pdf" className="hidden" onChange={(e) => handleFile(e.target.files[0])} disabled={loading} />
+        <span className="text-4xl mb-4 opacity-50">{file ? '📄' : '📤'}</span>
+        <p className="text-xs font-black text-[var(--text-primary)] uppercase tracking-widest">{file ? file.name : 'DRAG PDF HERE'}</p>
+        <p className="text-[10px] font-bold text-[var(--text-muted)] mt-1 uppercase tracking-tighter">{file ? 'Click to change' : 'or click to browse'}</p>
       </div>
 
-      {/* Error */}
-      {error && (
-        <div className="mb-4 px-4 py-3 rounded-lg text-sm text-center bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400">
-          {error}
-        </div>
-      )}
+      {error && <p className="text-center text-[10px] font-black text-[var(--danger)] uppercase tracking-wider">{error}</p>}
 
-      {/* Actions */}
       <div className="flex gap-3">
-        <button
-          onClick={onCancel}
-          disabled={loading}
-          className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleUpload}
-          disabled={!file || loading}
-          className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? 'Uploading...' : 'Upload Resume'}
-        </button>
+        <button onClick={onCancel} disabled={loading} className="flex-1 py-4 text-[10px] font-black border border-[var(--border-default)] rounded-2xl text-[var(--text-muted)] hover:text-white transition-colors">CANCEL</button>
+        <button onClick={() => onComplete(file)} disabled={!file || loading} className="flex-1 py-4 text-[10px] font-black btn-primary rounded-2xl disabled:opacity-30">CONFIRM</button>
       </div>
     </div>
   );

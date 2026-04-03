@@ -18,7 +18,6 @@ import Layout from "./components/Layout";
 import Analytics from "./components/Analytics";
 import History from "./components/History";
 import Resume from "./components/Resume";
-import JobMatches from "./components/JobMatches";
 import AICoach from "./components/AICoach";
 import Profile from "./components/Profile";
 import Settings from "./components/Settings";
@@ -221,7 +220,7 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <Layout>
-                <JobMatches />
+                <JobMatchPage user={user} onBack={() => navigate("/dashboard")} />
               </Layout>
             </ProtectedRoute>
           }
@@ -231,7 +230,9 @@ function AppContent() {
           path="/coach"
           element={
             <ProtectedRoute>
-              <CareerCoachPage />
+              <Layout>
+                <CareerCoachPage />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -259,6 +260,22 @@ function AppContent() {
         />
 
         {/* Interview flow routes */}
+        <Route
+          path="/practice"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <DomainSelector
+                  onStart={(name, domain) => {
+                    setInterviewData((prev) => ({ ...prev, name, domain }));
+                    navigate("/interview/resume");
+                  }}
+                />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/interview"
           element={

@@ -4,9 +4,9 @@ export default function ScoreGauge({ score = 0, label = "", size = "md", showGra
   const [animatedScore, setAnimatedScore] = useState(0);
 
   const sizes = {
-    sm: { diameter: 100, strokeWidth: 7, gradeSize: "22px", scoreSize: "14px", labelSize: "11px" },
-    md: { diameter: 140, strokeWidth: 9, gradeSize: "30px", scoreSize: "18px", labelSize: "13px" },
-    lg: { diameter: 180, strokeWidth: 11, gradeSize: "40px", scoreSize: "22px", labelSize: "14px" },
+    sm: { diameter: 80, strokeWidth: 4, gradeSize: "20px", scoreSize: "13px", labelSize: "10px" },
+    md: { diameter: 140, strokeWidth: 6, gradeSize: "36px", scoreSize: "18px", labelSize: "12px" },
+    lg: { diameter: 220, strokeWidth: 8, gradeSize: "64px", scoreSize: "28px", labelSize: "14px" },
   };
 
   const config = sizes[size];
@@ -16,10 +16,10 @@ export default function ScoreGauge({ score = 0, label = "", size = "md", showGra
   const strokeDashoffset = circumference * (1 - animatedScore / 100);
 
   const getColor = (s) => {
-    if (s >= 85) return "#22c55e";
-    if (s >= 70) return "#2563eb";
-    if (s >= 50) return "#f59e0b";
-    return "#ef4444";
+    if (s >= 80) return "var(--success)";
+    if (s >= 65) return "var(--accent-primary)";
+    if (s >= 45) return "var(--warning)";
+    return "var(--danger)";
   };
 
   const getGrade = (s) => {
@@ -43,37 +43,33 @@ export default function ScoreGauge({ score = 0, label = "", size = "md", showGra
   const color = getColor(score);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+    <div className="flex flex-col items-center relative group">
+      {/* Glow Effect Background */}
+      <div 
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-0 group-hover:opacity-20 transition-opacity blur-[40px] pointer-events-none"
+        style={{ background: color }}
+      />
+
       <div
         style={{
           position: "relative",
           width: config.diameter,
-          height: config.diameter / 2 + config.strokeWidth / 2 + 10,
+          height: config.diameter / 2 + config.strokeWidth + 5,
         }}
       >
         <svg
           width={config.diameter}
-          height={config.diameter / 2 + config.strokeWidth / 2 + 10}
+          height={config.diameter / 2 + config.strokeWidth + 5}
           style={{ overflow: "visible" }}
         >
-          {/* Glow filter */}
-          <defs>
-            <filter id={`glow-${size}`} x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="3" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
-
           {/* Background arc */}
           <path
             d={pathD}
             fill="none"
-            stroke="rgba(255,255,255,0.06)"
+            stroke="var(--border-subtle)"
             strokeWidth={config.strokeWidth}
             strokeLinecap="round"
+            className="opacity-20"
           />
 
           {/* Progress arc */}
@@ -81,28 +77,24 @@ export default function ScoreGauge({ score = 0, label = "", size = "md", showGra
             d={pathD}
             fill="none"
             stroke={color}
-            strokeWidth={config.strokeWidth}
+            strokeWidth={config.strokeWidth + 1}
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
-            filter={`url(#glow-${size})`}
-            style={{ transition: "stroke-dashoffset 1s ease-out" }}
+            style={{ 
+              transition: "stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1)",
+              filter: `drop-shadow(0 0 12px ${color}88)`
+            }}
           />
         </svg>
 
         {/* Center grade */}
         {showGrade && (
           <div
+            className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 font-geist font-black italic tracking-tighter"
             style={{
-              position: "absolute",
-              top: "40%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              fontFamily: "'Geist', 'Inter', sans-serif",
-              fontWeight: "800",
               fontSize: config.gradeSize,
               color: color,
-              letterSpacing: "-0.03em",
               textShadow: `0 0 20px ${color}44`,
             }}
           >
@@ -112,22 +104,12 @@ export default function ScoreGauge({ score = 0, label = "", size = "md", showGra
       </div>
 
       {/* Score + label */}
-      <div style={{ textAlign: "center", marginTop: "4px" }}>
-        <div style={{
-          fontFamily: "'Geist', 'Inter', sans-serif",
-          fontWeight: "700",
-          fontSize: config.scoreSize,
-          color: "#ffffff",
-          letterSpacing: "-0.02em",
-        }}>
-          {score}<span style={{ color: "rgba(255,255,255,0.3)", fontWeight: "400" }}>/100</span>
+      <div className="text-center mt-2 space-y-1">
+        <div className="font-geist font-black text-[var(--text-primary)] leading-none italic" style={{ fontSize: config.scoreSize }}>
+          {score}<span className="text-[var(--text-muted)] font-medium not-italic opacity-40 ml-1">/100</span>
         </div>
         {label && (
-          <div style={{
-            fontSize: config.labelSize,
-            color: "rgba(255,255,255,0.4)",
-            marginTop: "2px",
-          }}>
+          <div className="text-[var(--text-muted)] font-black uppercase tracking-[0.3em] font-geist leading-tight" style={{ fontSize: config.labelSize }}>
             {label}
           </div>
         )}

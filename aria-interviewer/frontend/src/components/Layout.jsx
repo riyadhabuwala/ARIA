@@ -10,7 +10,7 @@ export default function Layout({ children }) {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-screen bg-[var(--bg-base)] text-[var(--text-primary)]">
       {/* Left Sidebar */}
       <LeftSidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
 

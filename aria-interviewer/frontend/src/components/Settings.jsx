@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { supabase } from "../api/authApi";
 
-// Toast notification component
+// Toast notification component - Glassmorphism refactor
 function Toast({ message, type, onClose }) {
   useEffect(() => {
     const timer = setTimeout(onClose, 3000);
@@ -11,41 +11,45 @@ function Toast({ message, type, onClose }) {
   }, [onClose]);
 
   return (
-    <div className={`fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${
-      type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-    }`}>
-      <div className="flex items-center space-x-2">
-        <span>{type === 'success' ? '✓' : '✗'}</span>
-        <span>{message}</span>
-        <button onClick={onClose} className="ml-2 text-white hover:text-gray-200">×</button>
+    <div className={`fixed top-8 right-8 px-6 py-4 rounded-2xl shadow-2xl z-[200] border backdrop-blur-xl animate-fadeIn
+      ${type === 'success' 
+        ? 'bg-[var(--success-subtle)] border-[var(--success)]/30 text-[var(--success)]' 
+        : 'bg-[var(--danger-subtle)] border-[var(--danger)]/30 text-[var(--danger)]'
+      }`}>
+      <div className="flex items-center gap-3">
+        <span className="text-lg font-black">{type === 'success' ? '✓' : '⚠'}</span>
+        <span className="text-xs font-black uppercase tracking-widest leading-none">{message}</span>
+        <button onClick={onClose} className="ml-4 opacity-50 hover:opacity-100 transition-opacity">×</button>
       </div>
     </div>
   );
 }
 
-// Confirmation modal component
-function ConfirmationModal({ isOpen, onClose, onConfirm, title, message, confirmText = "Confirm", isDanger = false }) {
+// Confirmation modal component - Premium refactor
+function ConfirmationModal({ isOpen, onClose, onConfirm, title, message, confirmText = "CONFIRM", isDanger = false }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{title}</h3>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">{message}</p>
-        <div className="flex space-x-3">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[150] p-6 animate-fadeIn">
+      <div className="card-premium max-w-md w-full bg-[var(--bg-surface)] p-8 space-y-8 border-[var(--border-strong)]">
+        <div className="space-y-2">
+          <h3 className="text-xl font-black text-[var(--text-primary)] font-geist italic uppercase tracking-widest">{title}</h3>
+          <p className="text-sm text-[var(--text-secondary)] font-medium leading-relaxed">{message}</p>
+        </div>
+        <div className="flex gap-4">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500"
+            className="flex-1 px-4 py-3 bg-[var(--bg-elevated)] text-[var(--text-muted)] font-black text-[10px] rounded-xl uppercase tracking-widest hover:text-white transition-colors border border-[var(--border-subtle)]"
           >
-            Cancel
+            CANCEL
           </button>
           <button
             onClick={onConfirm}
-            className={`flex-1 px-4 py-2 rounded-lg ${
-              isDanger
-                ? 'bg-red-600 hover:bg-red-700 text-white'
-                : 'bg-blue-600 hover:bg-blue-700 text-white'
-            }`}
+            className={`flex-1 px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg
+              ${isDanger
+                ? 'bg-[var(--danger)] text-white hover:bg-red-700'
+                : 'bg-[var(--accent-primary)] text-white hover:bg-[var(--accent-hover)]'
+              }`}
           >
             {confirmText}
           </button>
@@ -55,7 +59,6 @@ function ConfirmationModal({ isOpen, onClose, onConfirm, title, message, confirm
   );
 }
 
-// Domain options
 const DOMAIN_OPTIONS = [
   { value: "software-engineering", label: "Software Engineering" },
   { value: "web-development", label: "Web Development" },
@@ -64,32 +67,24 @@ const DOMAIN_OPTIONS = [
   { value: "hr-behavioral", label: "HR/Behavioral" }
 ];
 
-// Load preferences from localStorage
 const loadPreferences = () => {
   try {
     const saved = localStorage.getItem("aria_prefs");
     return saved ? JSON.parse(saved) : {};
-  } catch {
-    return {};
-  }
+  } catch { return {}; }
 };
 
-// Save preferences to localStorage
-const savePreferences = (prefs) => {
-  localStorage.setItem("aria_prefs", JSON.stringify(prefs));
-};
+const savePreferences = (prefs) => localStorage.setItem("aria_prefs", JSON.stringify(prefs));
 
 export default function Settings() {
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
 
-  // State for form data
   const [displayName, setDisplayName] = useState(user?.user_metadata?.full_name || "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // Preferences state
   const [preferences, setPreferences] = useState(() => {
     const defaultPrefs = {
       defaultDomain: "software-engineering",
@@ -102,337 +97,226 @@ export default function Settings() {
     return { ...defaultPrefs, ...loadPreferences() };
   });
 
-  // UI state
   const [toast, setToast] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [loading, setLoading] = useState({});
 
-  // Show toast notification
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type });
-  };
+  const showToast = (message, type = 'success') => setToast({ message, type });
 
-  // Update display name
   const handleUpdateDisplayName = async () => {
     setLoading(prev => ({ ...prev, displayName: true }));
     try {
-      const { error } = await supabase.auth.updateUser({
-        data: { full_name: displayName }
-      });
-
+      const { error } = await supabase.auth.updateUser({ data: { full_name: displayName } });
       if (error) throw error;
-      showToast("Display name updated successfully");
-    } catch (error) {
-      showToast(error.message, 'error');
-    } finally {
-      setLoading(prev => ({ ...prev, displayName: false }));
-    }
+      showToast("Identity parameters synchronized");
+    } catch (error) { showToast(error.message, 'error'); }
+    finally { setLoading(prev => ({ ...prev, displayName: false })); }
   };
 
-  // Change password
   const handleChangePassword = async () => {
-    if (newPassword !== confirmPassword) {
-      showToast("New passwords don't match", 'error');
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      showToast("Password must be at least 6 characters", 'error');
-      return;
-    }
-
+    if (newPassword !== confirmPassword) { showToast("Security tokens mismatch", 'error'); return; }
+    if (newPassword.length < 6) { showToast("Signal strength too low", 'error'); return; }
     setLoading(prev => ({ ...prev, password: true }));
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
-
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      showToast("Password updated successfully");
-    } catch (error) {
-      showToast(error.message, 'error');
-    } finally {
-      setLoading(prev => ({ ...prev, password: false }));
-    }
+      setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
+      showToast("Access key updated");
+    } catch (error) { showToast(error.message, 'error'); }
+    finally { setLoading(prev => ({ ...prev, password: false })); }
   };
 
-  // Delete account
   const handleDeleteAccount = async () => {
     setLoading(prev => ({ ...prev, delete: true }));
     try {
       const { error } = await supabase.auth.admin.deleteUser(user.id);
       if (error) throw error;
-      showToast("Account deleted successfully");
-      // User will be automatically signed out
-    } catch (error) {
-      showToast("Failed to delete account: " + error.message, 'error');
-    } finally {
-      setLoading(prev => ({ ...prev, delete: false }));
-      setIsDeleteModalOpen(false);
-    }
+      showToast("Identity terminated");
+    } catch (error) { showToast(error.message, 'error'); }
+    finally { setLoading(prev => ({ ...prev, delete: false })); setIsDeleteModalOpen(false); }
   };
 
-  // Update preferences
   const updatePreference = (key, value) => {
     const newPrefs = { ...preferences, [key]: value };
     setPreferences(newPrefs);
     savePreferences(newPrefs);
-    showToast("Preference updated");
-  };
-
-  // Handle theme change
-  const handleThemeChange = (newTheme) => {
-    setTheme(newTheme);
+    showToast("Logic core updated");
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-8 max-w-4xl mx-auto space-y-10 min-h-screen">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Settings</h1>
-        <p className="text-gray-600 dark:text-gray-400">Manage your account and preferences</p>
-      </div>
+      <section>
+        <h1 className="text-4xl font-black tracking-tight text-[var(--text-primary)] font-geist mb-2 italic uppercase">
+          SYSTEM SETTINGS
+        </h1>
+        <p className="text-[var(--text-secondary)] font-medium">
+          Configure operational parameters and security protocols.
+        </p>
+      </section>
 
-      <div className="space-y-6">
-        {/* ACCOUNT Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Account</h2>
+      <div className="space-y-8">
+        {/* IDENTITY & SECURITY Section */}
+        <section className="card-premium p-8 space-y-10">
+          <div className="border-l-4 border-l-[var(--accent-primary)] pl-4">
+            <h2 className="text-sm font-black text-[var(--text-primary)] font-geist uppercase tracking-widest italic">IDENTITY & SECURITY</h2>
+          </div>
 
-          {/* Display Name */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Display Name
-            </label>
-            <div className="flex space-x-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            {/* Display Name */}
+            <div className="space-y-4">
+              <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">DISPLAY NAME</label>
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  className="flex-1 px-4 py-3 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-bold text-sm focus:ring-2 focus:ring-[var(--accent-primary)] outline-none transition-all"
+                  placeholder="ID ENTITY"
+                />
+                <button
+                  onClick={handleUpdateDisplayName}
+                  disabled={loading.displayName || displayName === user?.user_metadata?.full_name}
+                  className="px-6 py-3 bg-[var(--accent-primary)] text-white font-black text-[10px] rounded-xl uppercase tracking-widest hover:bg-[var(--accent-hover)] disabled:opacity-30 transition-all shadow-lg"
+                >
+                  {loading.displayName ? "SYNC" : "SAVE"}
+                </button>
+              </div>
+            </div>
+
+            {/* Email */}
+            <div className="space-y-4">
+              <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">REGISTERED SIGNAL</label>
               <input
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter your display name"
+                type="email"
+                value={user?.email || ""}
+                readOnly
+                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-muted)] font-bold text-sm cursor-not-allowed opacity-60"
               />
-              <button
-                onClick={handleUpdateDisplayName}
-                disabled={loading.displayName || displayName === user?.user_metadata?.full_name}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading.displayName ? "Saving..." : "Save"}
-              </button>
             </div>
           </div>
 
-          {/* Email (Read-only) */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              value={user?.email || ""}
-              readOnly
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-600 text-gray-500 dark:text-gray-400"
-            />
-          </div>
-
-          {/* Change Password */}
-          <div className="mb-6">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Change Password</h3>
-            <div className="space-y-3">
-              <input
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Current password"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-              />
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="New password"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-              />
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm new password"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-              />
-              <button
+          {/* Password Reset */}
+          <div className="space-y-6 pt-6 border-t border-[var(--border-subtle)]">
+             <h3 className="text-xs font-black text-[var(--text-primary)] font-geist uppercase tracking-widest italic">ACCESS KEY RECOVERY</h3>
+             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="CURRENT KEY"
+                  className="px-4 py-3 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-bold text-sm focus:ring-1 focus:ring-[var(--accent-primary)] outline-none"
+                />
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="NEW KEY"
+                  className="px-4 py-3 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-bold text-sm focus:ring-1 focus:ring-[var(--accent-primary)] outline-none"
+                />
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="VALIDATE KEY"
+                  className="px-4 py-3 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-bold text-sm focus:ring-1 focus:ring-[var(--accent-primary)] outline-none"
+                />
+             </div>
+             <button
                 onClick={handleChangePassword}
                 disabled={loading.password || !newPassword || !confirmPassword}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-8 py-3 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-black text-[10px] rounded-xl uppercase tracking-widest hover:bg-[var(--bg-hover)] transition-all"
               >
-                {loading.password ? "Updating..." : "Update Password"}
+                {loading.password ? "RE-ROUTING..." : "RE-ENCRYPT ACCESS"}
               </button>
-            </div>
+          </div>
+        </section>
+
+        {/* OPERATION PREFERENCES Section */}
+        <section className="card-premium p-8 space-y-10">
+          <div className="border-l-4 border-l-[var(--warning)] pl-4">
+            <h2 className="text-sm font-black text-[var(--text-primary)] font-geist uppercase tracking-widest italic">OPERATIONAL PREFERENCES</h2>
           </div>
 
-          {/* Danger Zone */}
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-            <h3 className="text-lg font-medium text-red-600 dark:text-red-400 mb-4">Danger Zone</h3>
-            <button
-              onClick={() => setIsDeleteModalOpen(true)}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-            >
-              Delete Account
-            </button>
-          </div>
-        </div>
-
-        {/* INTERVIEW PREFERENCES Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Interview Preferences</h2>
-
-          {/* Default Domain */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Default Domain
-            </label>
-            <select
-              value={preferences.defaultDomain}
-              onChange={(e) => updatePreference('defaultDomain', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-            >
-              {DOMAIN_OPTIONS.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Toggles */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-gray-900 dark:text-white">Voice Mode</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Enable text-to-speech for AI responses</p>
-              </div>
-              <button
-                onClick={() => updatePreference('voiceMode', !preferences.voiceMode)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full ${
-                  preferences.voiceMode ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
-                }`}
+          <div className="space-y-8">
+            {/* Domain */}
+            <div className="space-y-4 max-w-md">
+              <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">DEFAULT EXPERTISE SECTOR</label>
+              <select
+                value={preferences.defaultDomain}
+                onChange={(e) => updatePreference('defaultDomain', e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-bold text-sm focus:ring-2 focus:ring-[var(--accent-primary)] outline-none transition-all appearance-none cursor-pointer"
               >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                  preferences.voiceMode ? 'translate-x-6' : 'translate-x-1'
-                }`} />
-              </button>
+                {DOMAIN_OPTIONS.map(option => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-gray-900 dark:text-white">Camera Mode</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Enable camera during interviews</p>
-              </div>
-              <button
-                onClick={() => updatePreference('cameraMode', !preferences.cameraMode)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full ${
-                  preferences.cameraMode ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
-                }`}
-              >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                  preferences.cameraMode ? 'translate-x-6' : 'translate-x-1'
-                }`} />
-              </button>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-gray-900 dark:text-white">Auto-save Sessions</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Automatically save interview sessions</p>
-              </div>
-              <button
-                onClick={() => updatePreference('autoSaveSessions', !preferences.autoSaveSessions)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full ${
-                  preferences.autoSaveSessions ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
-                }`}
-              >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                  preferences.autoSaveSessions ? 'translate-x-6' : 'translate-x-1'
-                }`} />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* NOTIFICATIONS Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Notifications</h2>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-gray-900 dark:text-white">Email After Each Interview</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Receive performance summary via email</p>
-              </div>
-              <button
-                onClick={() => updatePreference('emailAfterInterview', !preferences.emailAfterInterview)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full ${
-                  preferences.emailAfterInterview ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
-                }`}
-              >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                  preferences.emailAfterInterview ? 'translate-x-6' : 'translate-x-1'
-                }`} />
-              </button>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-gray-900 dark:text-white">Weekly Progress Report</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Get weekly insights on your improvement</p>
-              </div>
-              <button
-                onClick={() => updatePreference('weeklyProgressReport', !preferences.weeklyProgressReport)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full ${
-                  preferences.weeklyProgressReport ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
-                }`}
-              >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                  preferences.weeklyProgressReport ? 'translate-x-6' : 'translate-x-1'
-                }`} />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* APPEARANCE Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Appearance</h2>
-
-          <div>
-            <h4 className="font-medium text-gray-900 dark:text-white mb-4">Theme</h4>
-            <div className="space-y-2">
+            {/* Toggles */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
               {[
-                { value: 'system', label: 'System', description: 'Use system preference' },
-                { value: 'light', label: 'Light', description: 'Light mode' },
-                { value: 'dark', label: 'Dark', description: 'Dark mode' }
-              ].map((option) => (
-                <label key={option.value} className="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="theme"
-                    value={option.value}
-                    checked={theme === option.value || (option.value === 'system' && !['light', 'dark'].includes(theme))}
-                    onChange={() => handleThemeChange(option.value)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 focus:ring-blue-500"
-                  />
-                  <div>
-                    <div className="font-medium text-gray-900 dark:text-white">{option.label}</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">{option.description}</div>
+                { key: 'voiceMode', label: 'NEURAL AUDIO SYNC', desc: 'Synthesize AI vocal feedback' },
+                { key: 'cameraMode', label: 'VISUAL DATA FEED', desc: 'Analyze facial kinetics' },
+                { key: 'autoSaveSessions', label: 'ARCHIVE AUTOMATION', desc: 'Persistent session logging' },
+                { key: 'emailAfterInterview', label: 'SUMMARY RELAY', desc: 'Sync report to external signal' },
+              ].map(item => (
+                <div key={item.key} className="flex items-center justify-between group">
+                  <div className="space-y-1">
+                    <h4 className="text-xs font-black text-[var(--text-primary)] uppercase tracking-wider group-hover:text-[var(--accent-primary)] transition-colors">{item.label}</h4>
+                    <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tighter">{item.desc}</p>
                   </div>
-                </label>
+                  <button
+                    onClick={() => updatePreference(item.key, !preferences[item.key])}
+                    className={`relative inline-flex h-6 w-12 items-center rounded-full transition-all duration-300 shadow-inner
+                      ${preferences[item.key] ? 'bg-[var(--accent-primary)] shadow-[0_0_15px_rgba(37,99,235,0.3)]' : 'bg-[var(--bg-elevated)] border border-[var(--border-subtle)]'}
+                    `}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-300
+                      ${preferences[item.key] ? 'translate-x-7' : 'translate-x-1'}
+                    `} />
+                  </button>
+                </div>
               ))}
             </div>
           </div>
-        </div>
+        </section>
+
+        {/* APPEARANCE & TERMINATION Section */}
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="card-premium p-8 md:col-span-2 space-y-8">
+            <h3 className="text-xs font-black text-[var(--text-primary)] font-geist uppercase tracking-widest italic border-l-4 border-l-[var(--success)] pl-4">VISUAL INTERFACE</h3>
+             <div className="flex gap-4">
+                {['DARK', 'LIGHT', 'SYSTEM'].map(mode => (
+                  <button
+                    key={mode}
+                    onClick={() => setTheme(mode.toLowerCase())}
+                    className={`flex-1 py-4 px-2 rounded-2xl border-2 font-black text-[10px] uppercase tracking-[0.2em] transition-all
+                      ${theme === mode.toLowerCase() 
+                        ? 'border-[var(--accent-primary)] bg-[var(--accent-subtle)] text-[var(--accent-primary)] shadow-lg' 
+                        : 'border-[var(--border-subtle)] bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:border-[var(--border-default)]'
+                      }
+                    `}
+                  >
+                    {mode}
+                  </button>
+                ))}
+             </div>
+          </div>
+
+          <div className="card-premium p-8 flex flex-col justify-between border-[var(--danger)]/20 bg-[var(--danger-subtle)]/5 group">
+             <div className="space-y-4">
+                <h3 className="text-xs font-black text-[var(--danger)] font-geist uppercase tracking-widest italic border-l-4 border-l-[var(--danger)] pl-4">TERMINATION</h3>
+                <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase leading-relaxed tracking-wider">Permanent identity deletion. Archive data will be purged.</p>
+             </div>
+             <button
+                onClick={() => setIsDeleteModalOpen(true)}
+                className="w-full py-4 bg-[var(--danger)] text-white font-black text-[10px] rounded-2xl uppercase tracking-[0.2em] hover:bg-red-700 transition-all shadow-[0_5px_20px_rgba(220,38,38,0.2)] mt-6"
+              >
+                TERMINATE ACCOUNT
+              </button>
+          </div>
+        </section>
       </div>
 
       {/* Toast Notification */}
@@ -444,14 +328,14 @@ export default function Settings() {
         />
       )}
 
-      {/* Delete Account Confirmation Modal */}
+      {/* Confirmation Modal */}
       <ConfirmationModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDeleteAccount}
-        title="Delete Account"
-        message="Are you sure you want to delete your account? This action cannot be undone and will permanently remove all your data."
-        confirmText="Delete Account"
+        title="IDENTITY TERMINATION"
+        message="This action will permanently purge all operational sessions and baseline metrics. This signal cannot be restored."
+        confirmText="INITIATE PURGE"
         isDanger={true}
       />
     </div>
