@@ -542,6 +542,16 @@ RULES:
         return {"debrief": fallback}
 
 
+@app.get("/api/model-info")
+async def get_model_info():
+    """Return information about the current AI model being used."""
+    return {
+        "model": "openai/gpt-oss-120b",
+        "provider": "Groq",
+        "description": "GPT-OSS 120B model via Groq API"
+    }
+
+
 @app.get("/health")
 async def health():
     return {"status": "ARIA backend is running"}

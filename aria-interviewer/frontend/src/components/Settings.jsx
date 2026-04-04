@@ -100,8 +100,24 @@ export default function Settings() {
   const [toast, setToast] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [loading, setLoading] = useState({});
+  const [modelInfo, setModelInfo] = useState(null);
 
   const showToast = (message, type = 'success') => setToast({ message, type });
+
+  useEffect(() => {
+    const fetchModelInfo = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/model-info`);
+        if (response.ok) {
+          const data = await response.json();
+          setModelInfo(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch model info:", error);
+      }
+    };
+    fetchModelInfo();
+  }, []);
 
   const handleUpdateDisplayName = async () => {
     setLoading(prev => ({ ...prev, displayName: true }));
@@ -252,6 +268,28 @@ export default function Settings() {
                 ))}
               </select>
             </div>
+
+            {/* AI Model Info */}
+            {modelInfo && (
+              <div className="space-y-4 max-w-md">
+                <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">CURRENT AI MODEL</label>
+                <div className="px-4 py-3 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">MODEL:</span>
+                      <span className="text-sm font-bold text-[var(--text-primary)]">{modelInfo.model}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">PROVIDER:</span>
+                      <span className="text-sm font-bold text-[var(--text-primary)]">{modelInfo.provider}</span>
+                    </div>
+                    <div className="pt-2 border-t border-[var(--border-subtle)]">
+                      <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">{modelInfo.description}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Toggles */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
