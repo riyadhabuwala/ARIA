@@ -81,8 +81,9 @@ HERE IS THE USER'S DATA:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"(http://localhost:\d+|https://aria-interviewer[^.]*\.vercel\.app)",
+    allow_origin_regex=r"(http://localhost:\d+|https://aria[^.]*\.vercel\.app)",
     allow_origins=[
+        "https://aria-lyart.vercel.app",
         "https://aria-interviewer.vercel.app",
     ],
     allow_credentials=True,
