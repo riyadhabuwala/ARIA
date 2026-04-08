@@ -226,7 +226,7 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
       display: "flex",
       flexDirection: "column",
       overflow: "hidden",
-      background: "#000000",
+      background: "var(--bg-base)",
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
     }}>
       {/* ═══ TOP BAR ═══ */}
@@ -237,10 +237,10 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
         padding: "0 20px",
         height: "56px",
         flexShrink: 0,
-        background: "rgba(10,10,10,0.95)",
+        background: "var(--bg-surface)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        borderBottom: "1px solid var(--border-subtle)",
         zIndex: 20,
       }}>
         {/* Left: Logo + Info */}
@@ -258,12 +258,12 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
             background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
             boxShadow: "0 0 16px rgba(37,99,235,0.35)",
           }}>AI</div>
-          <div style={{ height: "20px", width: "1px", background: "rgba(255,255,255,0.1)" }} />
+          <div style={{ height: "20px", width: "1px", background: "var(--border-subtle)" }} />
           <div>
-            <div style={{ fontSize: "13px", fontWeight: "600", color: "#ffffff", letterSpacing: "-0.01em" }}>
+            <div style={{ fontSize: "13px", fontWeight: "600", color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
               {domain} Interview
             </div>
-            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", marginTop: "1px" }}>
+            <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "1px" }}>
               ARIA AI Interviewer
             </div>
           </div>
@@ -277,10 +277,10 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
             gap: "8px",
             padding: "6px 14px",
             borderRadius: "999px",
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.08)",
+            background: "var(--bg-elevated)",
+            border: "1px solid var(--border-subtle)",
           }}>
-            <span style={{ fontSize: "13px", fontFamily: "'Geist', monospace", fontWeight: "600", color: "#ffffff" }}>
+            <span style={{ fontSize: "13px", fontFamily: "'Geist', monospace", fontWeight: "600", color: "var(--text-primary)" }}>
               ⏱ {timerDisplay}
             </span>
           </div>
@@ -335,9 +335,9 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
               borderRadius: "10px",
               fontSize: "12px",
               fontWeight: "600",
-              background: showTranscript ? "rgba(37,99,235,0.15)" : "rgba(255,255,255,0.04)",
-              border: showTranscript ? "1px solid rgba(37,99,235,0.3)" : "1px solid rgba(255,255,255,0.08)",
-              color: showTranscript ? "#60a5fa" : "rgba(255,255,255,0.5)",
+              background: showTranscript ? "rgba(37,99,235,0.15)" : "var(--bg-elevated)",
+              border: showTranscript ? "1px solid rgba(37,99,235,0.3)" : "1px solid var(--border-subtle)",
+              color: showTranscript ? "#60a5fa" : "var(--text-muted)",
               cursor: "pointer",
               transition: "all 0.2s ease",
             }}
@@ -397,13 +397,13 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
               position: "relative",
               borderRadius: "16px",
               overflow: "hidden",
-              background: "#0a0a0a",
+              background: "var(--bg-surface)",
               border: isListening
                 ? "2px solid #ef4444"
-                : "1px solid rgba(255,255,255,0.06)",
+                : "1px solid var(--border-subtle)",
               boxShadow: isListening
                 ? "0 0 40px rgba(239,68,68,0.2), inset 0 0 20px rgba(239,68,68,0.05)"
-                : "0 4px 24px rgba(0,0,0,0.5)",
+                : "0 4px 24px rgba(15,23,42,0.08)",
               transition: "border-color 0.3s ease, box-shadow 0.3s ease",
             }}>
               <video
@@ -429,7 +429,7 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
                   alignItems: "center",
                   justifyContent: "center",
                   gap: "12px",
-                  background: "linear-gradient(135deg, #0a0a0a, #111111)",
+                  background: "var(--bg-elevated)",
                 }}>
                   <div style={{
                     width: "80px", height: "80px",
@@ -438,10 +438,10 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: "36px",
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    background: "var(--bg-surface)",
+                    border: "1px solid var(--border-subtle)",
                   }}>👤</div>
-                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)", textAlign: "center", maxWidth: "200px" }}>
+                  <p style={{ fontSize: "12px", color: "var(--text-muted)", textAlign: "center", maxWidth: "200px" }}>
                     {cameraError || "Camera off"}
                   </p>
                 </div>
@@ -457,7 +457,7 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
                 gap: "8px",
                 padding: "6px 12px",
                 borderRadius: "8px",
-                background: "rgba(0,0,0,0.65)",
+                background: "var(--bg-overlay)",
                 backdropFilter: "blur(8px)",
               }}>
                 <div style={{
@@ -466,7 +466,7 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
                   boxShadow: isListening ? "0 0 8px rgba(239,68,68,0.5)" : "0 0 8px rgba(34,197,94,0.3)",
                   transition: "all 0.3s ease",
                 }} />
-                <span style={{ fontSize: "12px", fontWeight: "600", color: "#ffffff" }}>
+                <span style={{ fontSize: "12px", fontWeight: "600", color: "var(--text-primary)" }}>
                   {name}
                 </span>
               </div>
@@ -504,13 +504,13 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
               position: "relative",
               borderRadius: "16px",
               overflow: "hidden",
-              background: "linear-gradient(160deg, #0d1117, #0a0a0a)",
+              background: "var(--bg-surface)",
               border: isSpeaking
                 ? "2px solid rgba(37,99,235,0.5)"
-                : "1px solid rgba(255,255,255,0.06)",
+                : "1px solid var(--border-subtle)",
               boxShadow: isSpeaking
                 ? "0 0 40px rgba(37,99,235,0.15), inset 0 0 30px rgba(37,99,235,0.03)"
-                : "0 4px 24px rgba(0,0,0,0.5)",
+                : "0 4px 24px rgba(15,23,42,0.08)",
               display: "flex",
               flexDirection: "column",
               transition: "border-color 0.3s ease, box-shadow 0.3s ease",
@@ -566,10 +566,10 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
                 </div>
 
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: "16px", fontWeight: "700", color: "#ffffff", letterSpacing: "-0.02em" }}>
+                  <div style={{ fontSize: "16px", fontWeight: "700", color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
                     ARIA
                   </div>
-                  <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", marginTop: "2px" }}>
+                  <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>
                     Interview Assistant
                   </div>
                 </div>
@@ -586,8 +586,8 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
                   gap: "8px",
                   padding: "6px 16px",
                   borderRadius: "999px",
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(255,255,255,0.06)",
+                  background: "var(--bg-elevated)",
+                  border: "1px solid var(--border-subtle)",
                 }}>
                   <div style={{
                     width: "7px",
@@ -597,7 +597,7 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
                     animation: (isSpeaking || isLoading) ? "pulse-blue 1.5s ease-in-out infinite" : "none",
                     transition: "background 0.3s ease",
                   }} />
-                  <span style={{ fontSize: "11px", fontWeight: "600", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  <span style={{ fontSize: "11px", fontWeight: "600", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                     {isSpeaking ? "Speaking" : isLoading ? "Thinking" : "Live"}
                   </span>
                 </div>
@@ -613,7 +613,7 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
                 gap: "8px",
                 padding: "6px 12px",
                 borderRadius: "8px",
-                background: "rgba(0,0,0,0.65)",
+                background: "var(--bg-overlay)",
                 backdropFilter: "blur(8px)",
               }}>
                 <div style={{
@@ -621,7 +621,7 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
                   background: isSpeaking ? "#2563eb" : "#22c55e",
                   boxShadow: isSpeaking ? "0 0 8px rgba(37,99,235,0.5)" : "0 0 8px rgba(34,197,94,0.3)",
                 }} />
-                <span style={{ fontSize: "12px", fontWeight: "600", color: "#ffffff" }}>
+                <span style={{ fontSize: "12px", fontWeight: "600", color: "var(--text-primary)" }}>
                   ARIA Interviewer
                 </span>
               </div>
@@ -634,8 +634,8 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
               flexShrink: 0,
               borderRadius: "14px",
               overflow: "hidden",
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.06)",
+              background: "var(--bg-surface)",
+              border: "1px solid var(--border-subtle)",
               padding: "14px 20px",
               display: "flex",
               alignItems: "center",
@@ -653,7 +653,7 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
                       }}
                     />
                   ))}
-                  <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)" }}>
+                  <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>
                     ARIA is preparing your question...
                   </span>
                 </div>
@@ -677,7 +677,7 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
                               width: i < questionCount ? "16px" : "8px",
                               height: "3px",
                               borderRadius: "999px",
-                              background: i < questionCount ? "#2563eb" : "rgba(255,255,255,0.08)",
+                              background: i < questionCount ? "#2563eb" : "var(--border-subtle)",
                               transition: "all 0.3s ease",
                             }}
                           />
@@ -685,11 +685,11 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
                       </div>
                     </div>
                   )}
-                  <div style={{ width: "1px", height: "20px", background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
+                  <div style={{ width: "1px", height: "20px", background: "var(--border-subtle)", flexShrink: 0 }} />
                   <p style={{
                     fontSize: "13px",
                     fontWeight: "500",
-                    color: "rgba(255,255,255,0.8)",
+                    color: "var(--text-primary)",
                     lineHeight: "1.5",
                     margin: 0,
                   }}>
@@ -707,20 +707,20 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
           flexShrink: 0,
           overflow: "hidden",
           transition: "width 0.3s ease",
-          borderLeft: showTranscript ? "1px solid rgba(255,255,255,0.06)" : "none",
-          background: "rgba(10,10,10,0.95)",
+          borderLeft: showTranscript ? "1px solid var(--border-subtle)" : "none",
+          background: "var(--bg-surface)",
           display: "flex",
           flexDirection: "column",
         }}>
           <div style={{
             padding: "16px 20px",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            borderBottom: "1px solid var(--border-subtle)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             flexShrink: 0,
           }}>
-            <span style={{ fontSize: "13px", fontWeight: "700", color: "#ffffff" }}>
+            <span style={{ fontSize: "13px", fontWeight: "700", color: "var(--text-primary)" }}>
               Live Transcript
             </span>
             <button
@@ -728,7 +728,7 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
               style={{
                 background: "none",
                 border: "none",
-                color: "rgba(255,255,255,0.3)",
+                color: "var(--text-muted)",
                 cursor: "pointer",
                 fontSize: "16px",
                 padding: "4px",
@@ -754,7 +754,7 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
                 gap: "8px",
               }}>
                 <span style={{ fontSize: "24px" }}>💬</span>
-                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.25)" }}>
+                <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>
                   Transcript will appear here...
                 </p>
               </div>
@@ -783,13 +783,13 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
                         color: "white",
                         background: isAI
                           ? "linear-gradient(135deg, #2563eb, #1d4ed8)"
-                          : "rgba(255,255,255,0.1)",
+                          : "var(--bg-elevated)",
                       }}>{isAI ? "AI" : "Y"}</div>
-                      <span style={{ fontSize: "11px", fontWeight: "600", color: "rgba(255,255,255,0.4)" }}>
+                      <span style={{ fontSize: "11px", fontWeight: "600", color: "var(--text-muted)" }}>
                         {isAI ? "ARIA" : name}
                       </span>
                       {time && (
-                        <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.2)", marginLeft: "auto" }}>
+                        <span style={{ fontSize: "10px", color: "var(--text-muted)", marginLeft: "auto" }}>
                           {time}
                         </span>
                       )}
@@ -799,9 +799,9 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
                       borderRadius: "10px",
                       fontSize: "12px",
                       lineHeight: "1.6",
-                      color: "rgba(255,255,255,0.75)",
-                      background: isAI ? "rgba(37,99,235,0.06)" : "rgba(255,255,255,0.03)",
-                      border: "1px solid " + (isAI ? "rgba(37,99,235,0.1)" : "rgba(255,255,255,0.04)"),
+                      color: "var(--text-primary)",
+                      background: isAI ? "rgba(37,99,235,0.06)" : "var(--bg-elevated)",
+                      border: "1px solid " + (isAI ? "rgba(37,99,235,0.1)" : "var(--border-subtle)"),
                     }}>
                       {msg.text.length > 200 ? msg.text.substring(0, 200) + "..." : msg.text}
                     </div>
@@ -823,10 +823,10 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
         justifyContent: "center",
         gap: "24px",
         padding: "0 24px",
-        background: "rgba(10,10,10,0.95)",
+        background: "var(--bg-surface)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
-        borderTop: "1px solid rgba(255,255,255,0.06)",
+        borderTop: "1px solid var(--border-subtle)",
         zIndex: 20,
       }}>
         {/* Confidence Meter */}
@@ -840,7 +840,7 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
             background: "rgba(34,197,94,0.06)",
             border: "1px solid rgba(34,197,94,0.12)",
           }}>
-            <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>💪 Confidence</span>
+            <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>💪 Confidence</span>
             <span style={{ fontSize: "14px", fontWeight: "700", color: "#22c55e" }}>
               {Math.max(60, 100 - answers.length * 2)}%
             </span>
@@ -869,12 +869,12 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
               ? "linear-gradient(135deg, #ef4444, #dc2626)"
               : micEnabled && !isSpeaking && !isLoading
               ? "linear-gradient(135deg, #2563eb, #1d4ed8)"
-              : "rgba(255,255,255,0.05)",
+              : "var(--bg-elevated)",
             border: isListening
               ? "2px solid rgba(239,68,68,0.4)"
               : micEnabled && !isSpeaking && !isLoading
               ? "2px solid rgba(37,99,235,0.4)"
-              : "1px solid rgba(255,255,255,0.1)",
+              : "1px solid var(--border-subtle)",
             boxShadow: isListening
               ? "0 0 24px rgba(239,68,68,0.35)"
               : micEnabled && !isSpeaking && !isLoading
@@ -933,7 +933,7 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
           {transcript && !isListening && (
             <p style={{
               fontSize: "11px",
-              color: "rgba(255,255,255,0.25)",
+              color: "var(--text-muted)",
               marginTop: "4px",
               fontStyle: "italic",
               maxWidth: "220px",

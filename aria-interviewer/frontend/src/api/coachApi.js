@@ -83,3 +83,9 @@ export async function addCoachMessage(
     }),
   });
 }
+
+export async function deleteCoachConversation(userId, conversationId) {
+  return apiClient(`/api/coach/conversations/${conversationId}?user_id=${userId}`, {
+    method: "DELETE",
+  });
+}

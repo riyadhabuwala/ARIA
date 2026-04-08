@@ -8,6 +8,7 @@ import {
   createCoachConversation,
   getCoachMessages,
   addCoachMessage,
+  deleteCoachConversation,
 } from "../api/coachApi";
 
 // Context shortcuts for quick prompts
@@ -155,6 +156,40 @@ export default function CareerCoachPage() {
       setCurrentMessages([{ ...WELCOME_MESSAGE, id: Date.now() }]);
     }
   }, [conversations, mapStoredMessages, user?.id]);
+
+  const handleDeleteConversation = useCallback(async (conversationId, event) => {
+    event?.stopPropagation();
+    if (!user?.id) return;
+
+    try {
+      await deleteCoachConversation(user.id, conversationId);
+      setConversations((prev) => prev.filter((conv) => conv.id !== conversationId));
+
+      if (activeConversationId === conversationId) {
+        const remaining = conversations.filter((conv) => conv.id !== conversationId);
+        const nextConversation = remaining[0];
+
+        if (nextConversation) {
+          setActiveConversationId(nextConversation.id);
+          const messageData = await getCoachMessages(user.id, nextConversation.id);
+          const storedMessages = mapStoredMessages(messageData?.messages || []);
+          setCurrentMessages(storedMessages.length ? storedMessages : [{ ...WELCOME_MESSAGE, id: Date.now() }]);
+        } else {
+          setActiveConversationId(null);
+          setCurrentMessages([{ ...WELCOME_MESSAGE, id: Date.now() }]);
+          await createNewConversation();
+        }
+      }
+    } catch (err) {
+      console.error("Failed to delete conversation:", err);
+    }
+  }, [
+    activeConversationId,
+    conversations,
+    createNewConversation,
+    mapStoredMessages,
+    user?.id,
+  ]);
 
   // Update current conversation in the list
   const updateCurrentConversation = useCallback((newMessages) => {
@@ -408,6 +443,7 @@ export default function CareerCoachPage() {
     addCoachMessage,
     currentMessages,
     createCoachConversation,
+    deleteCoachConversation,
     isLoading,
     sendChatMessage,
     user?.id,
@@ -478,7 +514,7 @@ export default function CareerCoachPage() {
             <div
               key={conversation.id}
               onClick={() => loadConversation(conversation.id)}
-              className={`p-5 border-b border-[var(--border-subtle)] cursor-pointer hover:bg-[var(--bg-hover)] transition-all ${
+              className={`group p-5 border-b border-[var(--border-subtle)] cursor-pointer hover:bg-[var(--bg-hover)] transition-all ${
                 activeConversationId === conversation.id
                   ? 'bg-[var(--accent-subtle)] border-l-4 border-l-[var(--accent-primary)] shadow-[inset_0_0_20px_rgba(37,99,235,0.05)]'
                   : ''
@@ -488,9 +524,25 @@ export default function CareerCoachPage() {
                 <h3 className="font-bold text-[var(--text-primary)] text-xs tracking-tight truncate flex-1 uppercase">
                   {conversation.title}
                 </h3>
-                <span className="text-[10px] font-bold text-[var(--text-muted)] ml-2 uppercase tracking-tighter">
-                  {formatDate(conversation.createdAt)}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tighter">
+                    {formatDate(conversation.createdAt)}
+                  </span>
+                  <button
+                    onClick={(event) => handleDeleteConversation(conversation.id, event)}
+                    className="p-1 rounded-lg text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger-subtle)] transition-colors opacity-0 group-hover:opacity-100"
+                    aria-label="Delete chat"
+                    title="Delete chat"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 6h18" />
+                      <path d="M8 6V4h8v2" />
+                      <path d="M6 6l1 14h10l1-14" />
+                      <path d="M10 11v6" />
+                      <path d="M14 11v6" />
+                    </svg>
+                  </button>
+                </div>
               </div>
               <p className="text-[11px] text-[var(--text-muted)] truncate font-medium">
                 {conversation.lastMessagePreview}

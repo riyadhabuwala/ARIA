@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getAnalytics } from "../api/analyticsApi";
+import { getAnalytics, getStreakData } from "../api/analyticsApi";
 import { getProfile, getResumeQuality } from "../api/profileApi";
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer } from 'recharts';
 import ScoreGauge from "./ScoreGauge";
@@ -35,6 +36,7 @@ const BADGES = [
 
 export default function Profile() {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [profileData, setProfileData] = useState(null);
   const [analytics, setAnalytics] = useState(null);
   const [resumeQuality, setResumeQuality] = useState(null);
@@ -45,10 +47,11 @@ export default function Profile() {
     const fetchProfileData = async () => {
       if (!user?.id) return;
       try {
-        const [pData, aData, rData] = await Promise.allSettled([
+        const [pData, aData, rData, sData] = await Promise.allSettled([
           getProfile(user.id),
           getAnalytics(user.id),
-          getResumeQuality(user.id)
+          getResumeQuality(user.id),
+          getStreakData(user.id)
         ]);
 
         if (pData.status === 'fulfilled') setProfileData(pData.value);
@@ -57,6 +60,13 @@ export default function Profile() {
           if (aData.value?.sessions) calculateInterviewStreak(aData.value.sessions);
         }
         if (rData.status === 'fulfilled') setResumeQuality(rData.value);
+        if (sData.status === 'fulfilled' && sData.value) {
+          const streak = sData.value;
+          setInterviewStreak({
+            currentStreak: streak.currentStreak || 0,
+            weekData: streak.weekData || Array(7).fill(false),
+          });
+        }
       } catch (error) {
         console.error("Profile fetch error:", error);
       } finally {
@@ -87,13 +97,18 @@ export default function Profile() {
     return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
   };
 
-  const getRadarData = () => [
-    { skill: 'TECHNICAL', score: analytics?.technical_score || 75 },
-    { skill: 'COMMUNICATION', score: analytics?.communication_score || 80 },
-    { skill: 'CONFIDENCE', score: analytics?.confidence_score || 70 },
-    { skill: 'BEHAVIORAL', score: analytics?.behavioral_score || 85 },
-    { skill: 'PROBLEM SOLVING', score: analytics?.problem_solving_score || 78 }
-  ];
+  const radarData = useMemo(() => {
+    const avgScore = Math.round(analytics?.average_score || 0);
+    const avgConfidence = Math.round(analytics?.average_confidence || 0);
+    const base = avgScore || 0;
+    return [
+      { skill: 'TECHNICAL', score: base || 0 },
+      { skill: 'COMMUNICATION', score: base || 0 },
+      { skill: 'CONFIDENCE', score: avgConfidence || base || 0 },
+      { skill: 'BEHAVIORAL', score: base || 0 },
+      { skill: 'PROBLEM SOLVING', score: base || 0 }
+    ];
+  }, [analytics]);
 
   const getUserStats = () => ({
     totalInterviews: analytics?.sessions?.length || 0,
@@ -115,14 +130,14 @@ export default function Profile() {
         </div>
         <button
           onClick={signOut}
-          className="group relative flex items-center justify-center gap-3 px-7 py-3.5 bg-[var(--bg-elevated)] border border-[var(--error)]/30 text-[var(--error)] hover:bg-[var(--error)] hover:text-white hover:border-[var(--error)] transition-all duration-300 font-black text-xs rounded-2xl uppercase tracking-[0.2em] shadow-sm hover:shadow-[0_0_20px_rgba(239,68,68,0.3)] overflow-hidden"
+          className="group relative flex items-center justify-center gap-3 px-7 py-3.5 bg-[var(--bg-elevated)] border border-[var(--error)]/30 text-[var(--error)] hover:bg-[var(--error)] hover:text-black hover:border-[var(--error)] transition-all duration-300 font-black text-xs rounded-2xl uppercase tracking-[0.2em] shadow-sm hover:shadow-[0_0_20px_rgba(239,68,68,0.3)] overflow-hidden"
         >
-          <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+          <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
           <span className="relative z-10 flex items-center gap-2">
             <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
-            DISCONNECT
+            <span className="transition-opacity duration-200 group-hover:text-black">DISCONNECT</span>
           </span>
         </button>
       </section>
@@ -148,7 +163,10 @@ export default function Profile() {
                 </div>
               </div>
             </div>
-            <button className="px-8 py-3 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-black text-[10px] rounded-xl uppercase tracking-widest hover:bg-[var(--bg-hover)] transition-all">
+            <button
+              onClick={() => (window.location.href = "/settings")}
+              className="px-8 py-3 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-black text-[10px] rounded-xl uppercase tracking-widest hover:bg-[var(--bg-hover)] transition-all"
+            >
               EDIT PARAMETERS
             </button>
           </div>
@@ -165,7 +183,7 @@ export default function Profile() {
               </h3>
               <div className="h-[350px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart data={getRadarData()}>
+                  <RadarChart data={radarData}>
                     <PolarGrid stroke="var(--border-subtle)" strokeDasharray="3 3" />
                     <PolarAngleAxis 
                       dataKey="skill" 
@@ -228,21 +246,31 @@ export default function Profile() {
           {/* Resume Analytics */}
           <section className="card-premium p-8">
             <h3 className="text-xs font-black text-[var(--text-primary)] font-geist mb-6 uppercase tracking-widest italic">DOCUMENT STATUS</h3>
-            {resumeQuality ? (
+            {resumeQuality || profileData?.has_resume ? (
               <div className="space-y-6 text-center">
-                <p className="text-xs font-black text-[var(--text-primary)] truncate border-b border-[var(--border-subtle)] pb-4 italic tracking-tight">{resumeQuality.filename || 'IDENTIFIED_RESUME.PDF'}</p>
+                <p className="text-xs font-black text-[var(--text-primary)] truncate border-b border-[var(--border-subtle)] pb-4 italic tracking-tight">
+                  {resumeQuality?.filename || profileData?.filename || 'IDENTIFIED_RESUME.PDF'}
+                </p>
                 <div className="py-4">
-                  <ScoreGauge score={resumeQuality.overall_score || 0} size="sm" showGrade={true} />
+                  <ScoreGauge score={resumeQuality?.overall_score || 0} size="sm" showGrade={true} />
                 </div>
-                <button className="w-full py-3 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--accent-primary)] font-black text-[10px] rounded-xl uppercase tracking-widest hover:bg-[var(--accent-subtle)] transition-all">
-                  UPDATE SIGNAL
+                <button
+                  onClick={() => navigate("/resume")}
+                  className="w-full py-3 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--accent-primary)] font-black text-[10px] rounded-xl uppercase tracking-widest hover:bg-[var(--accent-subtle)] transition-all"
+                >
+                  {resumeQuality ? "UPDATE SIGNAL" : "ANALYZE RESUME"}
                 </button>
               </div>
             ) : (
               <div className="text-center space-y-4 py-4">
                 <p className="text-4xl grayscale opacity-20">📂</p>
                 <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">NO DATA DETECTED</p>
-                <button className="w-full py-3 btn-primary text-[10px]">UPLOAD SOURCE</button>
+                <button
+                  onClick={() => navigate("/resume")}
+                  className="w-full py-3 btn-primary text-[10px]"
+                >
+                  UPLOAD SOURCE
+                </button>
               </div>
             )}
           </section>

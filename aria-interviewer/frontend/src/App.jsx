@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate, useParams, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { saveSession, getHistory, getSession } from "./api/interviewApi";
 
@@ -34,6 +34,7 @@ function ProtectedRoute({ children }) {
 function AppContent() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const chatWidgetRef = useRef(null);
   const [chatForceOpen, setChatForceOpen] = useState(false);
@@ -150,7 +151,30 @@ function AppContent() {
     navigate("/dashboard");
   };
 
+  const SessionReportRoute = () => {
+    const { sessionId } = useParams();
+    if (!sessionId) return <Navigate to="/dashboard" replace />;
+
+    return (
+      <ProtectedRoute>
+        <FeedbackReport
+          report={null}
+          confidenceData={null}
+          sessionId={sessionId}
+          durationSeconds={0}
+          audioUrl={null}
+          onDownload={null}
+          onReset={handleReset}
+        />
+      </ProtectedRoute>
+    );
+  };
+
   if (loading) return <LoadingScreen />;
+
+  const hideChatWidget = ["/landing", "/interview", "/interview/resume", "/interview/room", "/coach"].some((path) =>
+    location.pathname.startsWith(path)
+  );
 
   return (
     <>
@@ -341,6 +365,8 @@ function AppContent() {
           }
         />
 
+        <Route path="/report/:sessionId" element={<SessionReportRoute />} />
+
         <Route
           path="/job-match"
           element={
@@ -359,7 +385,7 @@ function AppContent() {
       </Routes>
 
       {/* Global chatbot — visible on all protected pages */}
-      {user && (
+      {user && !hideChatWidget && (
         <ChatWidget
           ref={chatWidgetRef}
           user={user}

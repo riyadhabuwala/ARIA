@@ -270,6 +270,11 @@ def get_coach_messages(user_id: str, conversation_id: str) -> list:
     return result.data or []
 
 
+def delete_coach_conversation(user_id: str, conversation_id: str) -> None:
+    """Delete a coach conversation and its messages."""
+    supabase.table("coach_conversations").delete().eq("id", conversation_id).eq("user_id", user_id).execute()
+
+
 def save_resume_quality(user_id: str, quality_data: dict) -> None:
     """Cache resume quality analysis to avoid re-running on every visit."""
     supabase.table("user_resume_profiles").update(

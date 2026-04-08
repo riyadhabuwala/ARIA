@@ -163,7 +163,10 @@ export default function LeftSidebar({ isOpen, onToggle }) {
             onMouseEnter={() => setShowUserDropdown(true)}
             onMouseLeave={() => setShowUserDropdown(false)}
           >
-            <button className="w-full flex items-center space-x-3 px-3 py-3.5 rounded-2xl hover:bg-[var(--bg-hover)] transition-all group">
+            <button
+              onClick={() => navigate("/settings")}
+              className="w-full flex items-center space-x-3 px-3 py-3.5 rounded-2xl hover:bg-[var(--bg-hover)] transition-all group"
+            >
               {/* Avatar */}
               <div className="w-10 h-10 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:border-[var(--accent-primary)] transition-all">
                 <span className="text-[var(--text-primary)] text-xs font-bold font-geist">
@@ -183,43 +186,15 @@ export default function LeftSidebar({ isOpen, onToggle }) {
 
               {/* Chevron */}
               <svg
-                className={`w-4 h-4 text-[var(--text-muted)] transition-all duration-300 ${showUserDropdown ? 'rotate-180 text-[var(--text-primary)]' : ''}`}
+                className="w-4 h-4 text-[var(--text-muted)] transition-all duration-300 group-hover:text-[var(--text-primary)]"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
               </svg>
             </button>
 
-            {/* User Dropdown */}
-            {showUserDropdown && (
-              <div className="absolute bottom-full left-0 right-0 mb-4 bg-[var(--bg-overlay)] rounded-2xl shadow-2xl border border-[var(--border-subtle)] py-2.5 backdrop-blur-xl transition-all">
-                <Link
-                  to="/profile"
-                  className="flex items-center px-4 py-3 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
-                >
-                  <span className="mr-3 opacity-60">👤</span> View Profile
-                </Link>
-                <Link
-                  to="/settings"
-                  className="flex items-center px-4 py-3 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
-                >
-                  <span className="mr-3 opacity-60">⚙️</span> Settings
-                </Link>
-                <div className="my-2.5 h-[1px] bg-[var(--border-subtle)] mx-4" />
-                <button
-                  onClick={handleSignOut}
-                  className="group w-full flex items-center justify-between px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-[var(--error)] bg-[var(--bg-elevated)] border border-[var(--error)]/30 rounded-xl hover:bg-[var(--error)] hover:text-white transition-all"
-                >
-                  <span className="flex items-center gap-3">
-                    <span className="text-sm opacity-70 group-hover:opacity-100">🚪</span>
-                    Sign Out
-                  </span>
-                  <span className="text-[10px] opacity-60 group-hover:opacity-100">Now</span>
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>

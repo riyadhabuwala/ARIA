@@ -19,10 +19,11 @@ export default function Resume() {
   const [success, setSuccess] = useState("");
 
   const displayName =
+    user?.user_metadata?.full_name ||
     profile?.name ||
     profile?.full_name ||
     profile?.extracted_profile?.name ||
-    (profile?.email ? profile.email.split("@")[0] : "Candidate");
+    (user?.email || profile?.email ? (user?.email || profile?.email).split("@")[0] : "Candidate");
 
   const avatarLetter = (displayName || "C").charAt(0).toUpperCase();
 
@@ -226,7 +227,7 @@ export default function Resume() {
                       </div>
                       <div className="min-w-0">
                         <p className="font-semibold text-[var(--text-primary)] truncate">{displayName}</p>
-                        <p className="text-xs text-[var(--text-muted)] truncate">{profile?.email || "No email available"}</p>
+                        <p className="text-xs text-[var(--text-muted)] truncate">{user?.email || profile?.email || "No email available"}</p>
                       </div>
                     </div>
 

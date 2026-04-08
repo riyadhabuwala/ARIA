@@ -1,9 +1,9 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getHistory, parseResume } from "../api/interviewApi";
+import { getHistory } from "../api/interviewApi";
 import { getAnalytics } from "../api/analyticsApi";
 import { getJobMatchResults } from "../api/jobsApi";
-import { getResumeQuality, saveResumeProfile } from "../api/profileApi";
+import { getProfile, getResumeQuality } from "../api/profileApi";
 import { useChatbot } from "../hooks/useChatbot";
 import ScoreGauge from "./ScoreGauge";
 
@@ -55,12 +55,11 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
   const [sessions, setSessions] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [jobMatches, setJobMatches] = useState([]);
+  const [profileData, setProfileData] = useState(null);
   const [resumeQuality, setResumeQuality] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedDomain, setSelectedDomain] = useState(null);
   const [chatInput, setChatInput] = useState("");
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [uploadLoading, setUploadLoading] = useState(false);
 
   const { messages, isLoading: chatLoading, sendMessage } = useChatbot(user.id);
 
@@ -72,11 +71,13 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
           historyRes,
           analyticsRes,
           jobRes,
-          resumeRes
+          profileRes,
+          resumeRes,
         ] = await Promise.allSettled([
           getHistory(user.id),
           getAnalytics(user.id),
           getJobMatchResults(user.id),
+          getProfile(user.id),
           getResumeQuality(user.id)
         ]);
 
@@ -94,6 +95,12 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
           setJobMatches(jobRes.value.jobs || []);
         } else {
           console.warn("Job matches not available:", jobRes.reason);
+        }
+
+        if (profileRes.status === "fulfilled") {
+          setProfileData(profileRes.value);
+        } else {
+          console.warn("Profile not available:", profileRes.reason);
         }
 
         if (resumeRes.status === "fulfilled") {
@@ -153,25 +160,6 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
     }
   };
 
-  const handleResumeUpload = async (file) => {
-    if (!file || !user?.id) return;
-
-    setUploadLoading(true);
-    try {
-      const parseData = await parseResume(file);
-      if (!parseData.resume_text) throw new Error("Text extraction failed");
-
-      await saveResumeProfile(user.id, parseData.resume_text, parseData.extracted_profile || {}, file.name);
-
-      const resumeData = await getResumeQuality(user.id, true);
-      setResumeQuality(resumeData);
-      setShowUploadModal(false);
-    } catch (error) {
-      console.error("Resume upload failed:", error);
-    } finally {
-      setUploadLoading(false);
-    }
-  };
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-10 min-h-screen">
@@ -185,18 +173,7 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
             Welcome back, <span className="text-[var(--text-primary)]">{user.user_metadata?.full_name || user.email?.split('@')[0]}</span>. Here's your status.
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowUploadModal(true)}
-            disabled={uploadLoading}
-            className="flex items-center gap-2 px-6 py-3 border border-[var(--border-default)] rounded-xl text-[var(--text-primary)] font-semibold bg-[var(--bg-surface)] hover:bg-[var(--bg-hover)] transition-all disabled:opacity-50"
-          >
-            <svg className="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-            </svg>
-            {uploadLoading ? 'Uploading...' : 'Upload Resume'}
-          </button>
-        </div>
+        <div className="flex items-center gap-3" />
       </section>
 
       {/* Top Stats Grid */}
@@ -343,7 +320,10 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
         {/* Right Column: AI & Stats */}
         <div className="space-y-8">
           {/* AI Coach */}
-          <div className="card-premium h-[420px] flex flex-col">
+          <div
+            className="card-premium h-[420px] flex flex-col cursor-pointer"
+            onClick={() => navigate("/coach")}
+          >
             <div className="px-7 py-5 border-b border-[var(--border-subtle)] flex items-center gap-3">
               <span className="text-xl">🤖</span>
               <h3 className="text-sm font-black text-[var(--text-primary)] font-geist uppercase tracking-widest italic">
@@ -371,7 +351,11 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
                 </div>
               )}
             </div>
-            <form onSubmit={handleChatSubmit} className="p-5 border-t border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+            <form
+              onSubmit={handleChatSubmit}
+              onClick={(event) => event.stopPropagation()}
+              className="p-5 border-t border-[var(--border-subtle)] bg-[var(--bg-surface)]"
+            >
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -422,91 +406,31 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
                     </ul>
                   </div>
                 )}
-                <button onClick={() => setShowUploadModal(true)} className="w-full py-2.5 text-[10px] font-black uppercase text-[var(--accent-primary)] border border-[var(--accent-border)] rounded-xl hover:bg-[var(--accent-subtle)] transition-all">
-                  RE-UPLOAD
+                <button
+                  onClick={() => navigate("/resume")}
+                  className="w-full py-2.5 text-[10px] font-black uppercase text-[var(--accent-primary)] border border-[var(--accent-border)] rounded-xl hover:bg-[var(--accent-subtle)] transition-all"
+                >
+                  VIEW RESUME
                 </button>
               </div>
             ) : (
               <div className="text-center space-y-5 py-4">
-                <div className="p-6 border-2 border-dashed border-[var(--border-subtle)] rounded-2xl bg-[var(--bg-surface)]">
+                <div className="p-6 border border-[var(--border-subtle)] rounded-2xl bg-[var(--bg-surface)]">
                   <p className="text-2xl mb-2 opacity-30">📂</p>
-                  <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">No Resume Found</p>
+                  <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">
+                    {profileData?.has_resume ? "Resume detected" : "Resume not uploaded"}
+                  </p>
                 </div>
-                <button onClick={() => setShowUploadModal(true)} className="btn-primary w-full py-3 text-[10px]">UPLOAD PDF</button>
+                <button
+                  onClick={() => navigate("/resume")}
+                  className="btn-primary w-full py-3 text-[10px]"
+                >
+                  GO TO RESUME MANAGER
+                </button>
               </div>
             )}
           </div>
         </div>
-      </div>
-
-      {/* Upload Modal */}
-      {showUploadModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100] p-6 animate-fadeIn">
-          <div className="card-premium max-w-md w-full bg-[var(--bg-surface)] p-0 overflow-hidden border-[var(--border-strong)]">
-            <div className="p-8">
-              <div className="flex items-center justify-between mb-8">
-                <h3 className="text-xl font-black text-[var(--text-primary)] font-geist italic uppercase tracking-widest">UPLOAD DOCUMENT</h3>
-                <button onClick={() => setShowUploadModal(false)} className="text-[var(--text-muted)] hover:text-white transition-colors">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-              </div>
-              <ResumeUploadInline
-                onComplete={handleResumeUpload}
-                onCancel={() => setShowUploadModal(false)}
-                loading={uploadLoading}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Inline Upload Component Refactored
-function ResumeUploadInline({ onComplete, onCancel, loading = false }) {
-  const [file, setFile] = useState(null);
-  const [error, setError] = useState("");
-  const [isDragOver, setIsDragOver] = useState(false);
-  const inputRef = useRef(null);
-
-  const handleFile = (f) => {
-    if (f && f.type === "application/pdf") {
-      setFile(f);
-      setError("");
-    } else {
-      setError("UPLOAD PDF ONLY");
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div
-        onDrop={(e) => { e.preventDefault(); setIsDragOver(false); handleFile(e.dataTransfer.files[0]); }}
-        onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-        onDragLeave={() => setIsDragOver(false)}
-        onClick={() => inputRef.current?.click()}
-        className={`
-          aspect-video rounded-3xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all duration-300
-          ${isDragOver 
-            ? 'border-[var(--accent-primary)] bg-[var(--accent-subtle)]' 
-            : file 
-              ? 'border-[var(--success)] bg-[var(--success-subtle)]' 
-              : 'border-[var(--border-strong)] bg-[var(--bg-elevated)] hover:border-[var(--text-muted)]'
-          }
-        `}
-      >
-        <input ref={inputRef} type="file" accept=".pdf" className="hidden" onChange={(e) => handleFile(e.target.files[0])} disabled={loading} />
-        <span className="text-4xl mb-4 opacity-50">{file ? '📄' : '📤'}</span>
-        <p className="text-xs font-black text-[var(--text-primary)] uppercase tracking-widest">{file ? file.name : 'DRAG PDF HERE'}</p>
-        <p className="text-[10px] font-bold text-[var(--text-muted)] mt-1 uppercase tracking-tighter">{file ? 'Click to change' : 'or click to browse'}</p>
-      </div>
-
-      {error && <p className="text-center text-[10px] font-black text-[var(--danger)] uppercase tracking-wider">{error}</p>}
-
-      <div className="flex gap-3">
-        <button onClick={onCancel} disabled={loading} className="flex-1 py-4 text-[10px] font-black border border-[var(--border-default)] rounded-2xl text-[var(--text-muted)] hover:text-white transition-colors">CANCEL</button>
-        <button onClick={() => onComplete(file)} disabled={!file || loading} className="flex-1 py-4 text-[10px] font-black btn-primary rounded-2xl disabled:opacity-30">CONFIRM</button>
       </div>
     </div>
   );

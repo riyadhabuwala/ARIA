@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getHistory } from "../api/interviewApi";
 
 export default function History() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -95,7 +97,7 @@ export default function History() {
             <table className="w-full">
               <thead className="bg-[var(--bg-surface)] border-b border-[var(--border-subtle)]">
                 <tr>
-                  {["Domain", "Timestamp", "Efficiency Score", "Confidence", "Grade", "Duration"].map(h => (
+                  {["Domain", "Timestamp", "Efficiency Score", "Confidence", "Grade", "Duration", "Report"].map(h => (
                     <th key={h} className="px-7 py-4 text-left text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em]">{h}</th>
                   ))}
                 </tr>
@@ -121,6 +123,14 @@ export default function History() {
                     </td>
                     <td className="px-7 py-5 text-sm font-medium text-[var(--text-muted)] uppercase tracking-tighter">
                       {session.duration_seconds ? `${Math.round(session.duration_seconds / 60)}m` : '--'}
+                    </td>
+                    <td className="px-7 py-5">
+                      <button
+                        onClick={() => navigate(`/report/${session.id}`)}
+                        className="text-[var(--accent-primary)] hover:text-[var(--accent-hover)] font-bold text-xs uppercase tracking-tighter transition-colors"
+                      >
+                        Report →
+                      </button>
                     </td>
                   </tr>
                 ))}

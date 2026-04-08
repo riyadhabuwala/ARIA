@@ -26,6 +26,7 @@ from supabase_client import (
     get_coach_conversations,
     add_coach_message,
     get_coach_messages,
+    delete_coach_conversation,
 )
 from job_agent import JobMatchAgent
 import uuid
@@ -65,7 +66,8 @@ SCOPE:
 
 FORMAT:
 - Use short paragraphs, not large bullet walls
-- Bold key numbers, for example **85/100**, **3 filler words**
+- Do not use markdown or asterisks for emphasis
+- Write numbers plainly (e.g., 85/100, 3 filler words)
 - For study plans: use numbered steps
 - Keep responses under 150 words unless user asks for more detail
 
@@ -476,6 +478,16 @@ def add_coach_message_route(conversation_id: str, req: CoachMessageCreate):
                 last_message_preview=last_message_preview,
             )
         return {"message": message}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/coach/conversations/{conversation_id}")
+def delete_coach_conversation_route(conversation_id: str, user_id: str):
+    """Delete a coach conversation and all messages."""
+    try:
+        delete_coach_conversation(user_id, conversation_id)
+        return {"success": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
