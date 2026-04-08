@@ -2,6 +2,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
+from typing import Optional
 from collections import Counter
 from interview_agent import agent
 from resume_parser import extract_resume_text
@@ -20,20 +21,25 @@ from supabase_client import (
     save_resume_profile,
     save_resume_quality,
     get_cached_quality,
+    create_coach_conversation,
+    update_coach_conversation,
+    get_coach_conversations,
+    add_coach_message,
+    get_coach_messages,
 )
 from job_agent import JobMatchAgent
 import uuid
 import os
 import json
 from dotenv import load_dotenv
-from groq import Groq
+from groq import AsyncGroq
 
 ENV_PATH = os.path.join(os.path.dirname(__file__), ".env")
 load_dotenv(ENV_PATH)
 
 app = FastAPI(title="ARIA Interview API")
 job_agent = JobMatchAgent()
-chat_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+chat_client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
 
 CHATBOT_SYSTEM_PROMPT = """
 You are ARIA Career Coach - a personal AI career advisor embedded
@@ -132,11 +138,25 @@ class ChatRequest(BaseModel):
     conversation_history: list = []
 
 
+class CoachConversationCreate(BaseModel):
+    user_id: str
+    title: str = "New Chat"
+    last_message_preview: str = ""
+
+
+class CoachMessageCreate(BaseModel):
+    user_id: str
+    role: str
+    content: str
+    title: Optional[str] = None
+    last_message_preview: Optional[str] = None
+
+
 class DebriefRequest(BaseModel):
     user_id: str
     report: dict
-    confidence_data: dict = {}
-    previous_score: int = 0
+    confidence_data: Optional[dict] = {}
+    previous_score: Optional[int] = 0
 
 
 class ResumeQualityRequest(BaseModel):
@@ -160,7 +180,7 @@ async def parse_resume(file: UploadFile = File(...)):
 async def start_interview(req: StartRequest):
     """Create new interview session, return session_id + opening message."""
     session_id = str(uuid.uuid4())
-    greeting = agent.create_session(
+    greeting = await agent.create_session(
         session_id=session_id,
         domain=req.domain,
         candidate_name=req.candidate_name,
@@ -177,7 +197,7 @@ async def start_interview(req: StartRequest):
 async def send_message(req: MessageRequest):
     """Send candidate answer, receive next question or completion signal."""
     try:
-        result = agent.send_message(req.session_id, req.message)
+        result = await agent.send_message(req.session_id, req.message)
         return result
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -187,7 +207,7 @@ async def send_message(req: MessageRequest):
 async def generate_report(req: ReportRequest):
     """Generate and return the final performance report as JSON."""
     try:
-        report = agent.generate_report(req.session_id)
+        report = await agent.generate_report(req.session_id)
         agent.end_session(req.session_id)
         return report
     except ValueError as e:
@@ -214,14 +234,14 @@ async def tts_endpoint(request: dict):
 
 
 @app.post("/api/analyze-confidence")
-async def analyze_confidence(req: ConfidenceRequest):
+def analyze_confidence(req: ConfidenceRequest):
     """Analyze all interview answers for confidence metrics."""
     result = analyze_full_interview(req.answers)
     return result
 
 
 @app.post("/api/save-session")
-async def save_session(req: SaveSessionRequest):
+def save_session(req: SaveSessionRequest):
     """Save completed interview to database."""
     try:
         saved = save_interview_session(
@@ -240,14 +260,14 @@ async def save_session(req: SaveSessionRequest):
 
 
 @app.get("/api/history/{user_id}")
-async def get_history(user_id: str):
+def get_history(user_id: str):
     """Get interview history for a user."""
     sessions = get_user_sessions(user_id)
     return {"sessions": sessions}
 
 
 @app.get("/api/session/{session_id}")
-async def get_session(session_id: str):
+def get_session(session_id: str):
     """Get full session details by ID."""
     try:
         session = get_session_by_id(session_id)
@@ -261,7 +281,7 @@ async def get_session(session_id: str):
 
 
 @app.get("/api/analytics/{user_id}")
-async def get_analytics(user_id: str):
+def get_analytics(user_id: str):
     """Get progress analytics for a user."""
     try:
         data = get_analytics_data(user_id)
@@ -271,7 +291,7 @@ async def get_analytics(user_id: str):
 
 
 @app.get("/api/streak/{user_id}")
-async def get_user_streak(user_id: str):
+def get_user_streak(user_id: str):
     """Get interview streak data for a user."""
     try:
         sessions = get_user_sessions(user_id)
@@ -301,7 +321,7 @@ async def save_resume_route(req: SaveResumeRequest):
 
 
 @app.get("/api/profile/{user_id}")
-async def get_profile_route(user_id: str):
+def get_profile_route(user_id: str):
     """Get saved resume and extracted profile for user."""
     profile = get_resume_profile(user_id)
     if not profile:
@@ -334,7 +354,7 @@ async def run_job_scan(req: ScanRequest):
 
 
 @app.get("/api/job-match/results/{user_id}")
-async def get_job_results(user_id: str):
+def get_job_results(user_id: str):
     """Get the most recent job match result set for a user."""
     results = get_latest_job_results(user_id)
     if not results:
@@ -396,6 +416,70 @@ async def get_resume_quality(req: ResumeQualityRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/coach/conversations/{user_id}")
+def list_coach_conversations(user_id: str):
+    """List stored coach conversations for a user."""
+    try:
+        conversations = get_coach_conversations(user_id)
+        return {"conversations": conversations}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/coach/conversations")
+def create_coach_conversation_route(req: CoachConversationCreate):
+    """Create a new coach conversation."""
+    try:
+        conversation = create_coach_conversation(
+            user_id=req.user_id,
+            title=req.title,
+            last_message_preview=req.last_message_preview,
+        )
+        return {"conversation": conversation}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/coach/conversations/{conversation_id}/messages")
+def list_coach_messages(conversation_id: str, user_id: str):
+    """List messages for a coach conversation."""
+    try:
+        messages = get_coach_messages(user_id, conversation_id)
+        return {"messages": messages}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/coach/conversations/{conversation_id}/messages")
+def add_coach_message_route(conversation_id: str, req: CoachMessageCreate):
+    """Add a message to a coach conversation."""
+    if req.role not in {"user", "assistant"}:
+        raise HTTPException(status_code=400, detail="Invalid role")
+
+    try:
+        message = add_coach_message(
+            conversation_id=conversation_id,
+            user_id=req.user_id,
+            role=req.role,
+            content=req.content,
+        )
+        title = req.title
+        last_message_preview = req.last_message_preview or req.content[:100]
+        if title is None and req.role == "user":
+            trimmed = req.content.strip()
+            title = (trimmed[:50] + "...") if len(trimmed) > 50 else trimmed
+        if title:
+            update_coach_conversation(
+                conversation_id=conversation_id,
+                user_id=req.user_id,
+                title=title,
+                last_message_preview=last_message_preview,
+            )
+        return {"message": message}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/chat")
 async def chat_with_coach(req: ChatRequest):
     """Career coach chatbot with user-specific context, streamed via SSE."""
@@ -419,14 +503,14 @@ async def chat_with_coach(req: ChatRequest):
 
     async def generate():
         try:
-            stream = chat_client.chat.completions.create(
-                model="openai/gpt-oss-120b",
+            stream = await chat_client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
                 messages=messages,
                 temperature=0.7,
                 max_tokens=400,
                 stream=True,
             )
-            for chunk in stream:
+            async for chunk in stream:
                 delta = chunk.choices[0].delta
                 if delta and delta.content:
                     yield f"data: {json.dumps({'content': delta.content})}\n\n"
@@ -520,8 +604,8 @@ RULES:
 """
 
     try:
-        response = chat_client.chat.completions.create(
-            model="openai/gpt-oss-120b",
+        response = await chat_client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": debrief_prompt}],
             temperature=0.7,
             max_tokens=150,

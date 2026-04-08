@@ -1,7 +1,14 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { sendChatMessage, triggerDebrief } from "../api/coachApi";
+import {
+  sendChatMessage,
+  triggerDebrief,
+  getCoachConversations,
+  createCoachConversation,
+  getCoachMessages,
+  addCoachMessage,
+} from "../api/coachApi";
 
 // Context shortcuts for quick prompts
 const CONTEXT_SHORTCUTS = [
@@ -27,12 +34,21 @@ export default function CareerCoachPage() {
   // Conversation management
   const [conversations, setConversations] = useState([]);
   const [activeConversationId, setActiveConversationId] = useState(null);
-  const [currentMessages, setCurrentMessages] = useState([WELCOME_MESSAGE]);
+  const [currentMessages, setCurrentMessages] = useState([{ ...WELCOME_MESSAGE, id: Date.now() }]);
 
   // UI state
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const mapStoredMessages = useCallback((messages) => {
+    return (messages || []).map((m) => ({
+      id: m.id,
+      role: m.role,
+      content: m.content,
+      timestamp: m.created_at ? new Date(m.created_at) : new Date(),
+    }));
+  }, []);
 
   // Auto-scroll to bottom of messages
   const scrollToBottom = useCallback(() => {
@@ -52,28 +68,93 @@ export default function CareerCoachPage() {
   }, [location.state, user?.id]);
 
   // Create a new conversation
-  const createNewConversation = useCallback(() => {
+  const createNewConversation = useCallback(async () => {
+    if (!user?.id) return;
+
+    const response = await createCoachConversation(user.id, "New Chat");
+    const conversation = response?.conversation;
+    if (!conversation?.id) return;
+
     const newConversation = {
-      id: Date.now(),
-      title: "New Chat",
-      messages: [WELCOME_MESSAGE],
-      createdAt: new Date(),
-      lastMessagePreview: "New conversation started"
+      id: conversation.id,
+      title: conversation.title || "New Chat",
+      messages: [{ ...WELCOME_MESSAGE, id: Date.now() }],
+      createdAt: conversation.created_at ? new Date(conversation.created_at) : new Date(),
+      lastMessagePreview: conversation.last_message_preview || "New conversation started",
     };
 
-    setConversations(prev => [newConversation, ...prev]);
+    setConversations((prev) => [newConversation, ...prev]);
     setActiveConversationId(newConversation.id);
-    setCurrentMessages([WELCOME_MESSAGE]);
-  }, []);
+    setCurrentMessages([{ ...WELCOME_MESSAGE, id: Date.now() }]);
+
+    await addCoachMessage(
+      user.id,
+      newConversation.id,
+      "assistant",
+      WELCOME_MESSAGE.content,
+      newConversation.title,
+      WELCOME_MESSAGE.content
+    );
+  }, [addCoachMessage, createCoachConversation, user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let isMounted = true;
+
+    const loadConversations = async () => {
+      try {
+        const data = await getCoachConversations(user.id);
+        const stored = data?.conversations || [];
+        if (!isMounted) return;
+
+        if (stored.length === 0) {
+          await createNewConversation();
+          return;
+        }
+
+        const mappedConversations = stored.map((conv) => ({
+          id: conv.id,
+          title: conv.title || "New Chat",
+          messages: [],
+          createdAt: conv.created_at ? new Date(conv.created_at) : new Date(),
+          lastMessagePreview: conv.last_message_preview || "No messages",
+        }));
+
+        setConversations(mappedConversations);
+        setActiveConversationId(mappedConversations[0].id);
+
+        const messageData = await getCoachMessages(user.id, mappedConversations[0].id);
+        const storedMessages = mapStoredMessages(messageData?.messages || []);
+        setCurrentMessages(storedMessages.length ? storedMessages : [{ ...WELCOME_MESSAGE, id: Date.now() }]);
+      } catch (err) {
+        console.error("Failed to load coach history:", err);
+        setCurrentMessages([{ ...WELCOME_MESSAGE, id: Date.now() }]);
+      }
+    };
+
+    loadConversations();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id, createNewConversation, mapStoredMessages]);
 
   // Load a conversation
-  const loadConversation = useCallback((conversationId) => {
+  const loadConversation = useCallback(async (conversationId) => {
     const conversation = conversations.find(c => c.id === conversationId);
-    if (conversation) {
-      setActiveConversationId(conversationId);
-      setCurrentMessages(conversation.messages);
+    if (!conversation || !user?.id) return;
+
+    setActiveConversationId(conversationId);
+
+    try {
+      const messageData = await getCoachMessages(user.id, conversationId);
+      const storedMessages = mapStoredMessages(messageData?.messages || []);
+      setCurrentMessages(storedMessages.length ? storedMessages : [{ ...WELCOME_MESSAGE, id: Date.now() }]);
+    } catch (err) {
+      console.error("Failed to load conversation messages:", err);
+      setCurrentMessages([{ ...WELCOME_MESSAGE, id: Date.now() }]);
     }
-  }, [conversations]);
+  }, [conversations, mapStoredMessages, user?.id]);
 
   // Update current conversation in the list
   const updateCurrentConversation = useCallback((newMessages) => {
@@ -102,17 +183,24 @@ export default function CareerCoachPage() {
       setError(null);
 
       // Create new conversation for debrief
-      const debriefConversation = {
-        id: Date.now(),
-        title: "Interview Debrief",
-        messages: [{ ...WELCOME_MESSAGE, content: "" }],
-        createdAt: new Date(),
-        lastMessagePreview: "Interview debrief session"
-      };
+      const debriefResponse = await createCoachConversation(user.id, "Interview Debrief");
+      const debriefConversation = debriefResponse?.conversation;
+      if (!debriefConversation?.id) {
+        throw new Error("Failed to create debrief conversation");
+      }
 
-      setConversations(prev => [debriefConversation, ...prev]);
+      setConversations(prev => [
+        {
+          id: debriefConversation.id,
+          title: debriefConversation.title || "Interview Debrief",
+          messages: [],
+          createdAt: debriefConversation.created_at ? new Date(debriefConversation.created_at) : new Date(),
+          lastMessagePreview: "Interview debrief session",
+        },
+        ...prev,
+      ]);
       setActiveConversationId(debriefConversation.id);
-      setCurrentMessages([{ ...WELCOME_MESSAGE, content: "" }]);
+      setCurrentMessages([{ ...WELCOME_MESSAGE, content: "", id: Date.now() + 1 }]);
 
       const data = await triggerDebrief(user.id, report, confidenceData, previousScore);
       const debriefMessage = data.debrief || "Great interview! How can I help you improve?";
@@ -120,11 +208,12 @@ export default function CareerCoachPage() {
       // Simulate typing effect
       const words = debriefMessage.split(" ");
       let revealed = "";
+      const baseId = Date.now();
 
       for (let i = 0; i < words.length; i++) {
         revealed += `${i === 0 ? "" : " "}${words[i]}`;
         const updatedMessages = [{
-          id: Date.now(),
+          id: baseId,
           role: "assistant",
           content: revealed,
           timestamp: new Date()
@@ -133,6 +222,15 @@ export default function CareerCoachPage() {
         updateCurrentConversation(updatedMessages);
         await new Promise(resolve => setTimeout(resolve, 50));
       }
+
+      await addCoachMessage(
+        user.id,
+        debriefConversation.id,
+        "assistant",
+        revealed,
+        "Interview Debrief",
+        revealed
+      );
 
     } catch (err) {
       console.error("Debrief error:", err);
@@ -147,7 +245,13 @@ export default function CareerCoachPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id, updateCurrentConversation]);
+  }, [
+    addCoachMessage,
+    createCoachConversation,
+    triggerDebrief,
+    updateCurrentConversation,
+    user?.id,
+  ]);
 
   // Send a message with streaming
   const sendMessage = useCallback(async (messageText) => {
@@ -156,6 +260,30 @@ export default function CareerCoachPage() {
 
     setError(null);
     setIsLoading(true);
+
+    let conversationId = activeConversationId;
+    if (!conversationId) {
+      const response = await createCoachConversation(user.id, "New Chat");
+      const created = response?.conversation;
+      if (!created?.id) {
+        setIsLoading(false);
+        setError("Failed to create a new chat");
+        return;
+      }
+
+      conversationId = created.id;
+      setActiveConversationId(conversationId);
+      setConversations((prev) => [
+        {
+          id: created.id,
+          title: created.title || "New Chat",
+          messages: [],
+          createdAt: created.created_at ? new Date(created.created_at) : new Date(),
+          lastMessagePreview: created.last_message_preview || "New conversation started",
+        },
+        ...prev,
+      ]);
+    }
 
     // Add user message
     const userMessage = {
@@ -174,6 +302,15 @@ export default function CareerCoachPage() {
 
     const newMessages = [...currentMessages, userMessage, assistantMessage];
     setCurrentMessages(newMessages);
+
+    await addCoachMessage(
+      user.id,
+      conversationId,
+      "user",
+      text,
+      text.length > 50 ? `${text.slice(0, 50)}...` : text,
+      text
+    );
 
     // Prepare conversation history for API (last 6 messages)
     const historyForBackend = currentMessages
@@ -204,6 +341,7 @@ export default function CareerCoachPage() {
 
       while (true) {
         const { done, value } = await reader.read();
+        console.log("[Stream] chunk read", {done, valueLength: value?.length, valueStr: value ? new TextDecoder().decode(value) : ""});
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
@@ -211,6 +349,7 @@ export default function CareerCoachPage() {
         buffer = events.pop() || "";
 
         for (const event of events) {
+          console.log("[Stream] parsing event:", event);
           const line = event.split("\n").find(l => l.startsWith("data: "));
           if (!line) continue;
 
@@ -220,7 +359,7 @@ export default function CareerCoachPage() {
           try {
             const parsed = JSON.parse(data);
             if (parsed.error) {
-              throw new Error(parsed.error);
+              throw new Error(parsed.error); // Catch this outside
             }
             if (parsed.content) {
               fullContent += parsed.content;
@@ -233,9 +372,23 @@ export default function CareerCoachPage() {
               updateCurrentConversation(updatedMessages);
             }
           } catch (parseError) {
-            // Ignore malformed SSE chunks
+            // Re-throw if it's the backend error, otherwise ignore json parse error
+            if (parseError.message === JSON.parse(data)?.error) {
+              throw parseError;
+            }
           }
         }
+      }
+
+      if (fullContent) {
+        await addCoachMessage(
+          user.id,
+          conversationId,
+          "assistant",
+          fullContent,
+          null,
+          fullContent
+        );
       }
     } catch (err) {
       if (err.name !== "AbortError") {
@@ -250,7 +403,16 @@ export default function CareerCoachPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentMessages, isLoading, user?.id, updateCurrentConversation]);
+  }, [
+    activeConversationId,
+    addCoachMessage,
+    currentMessages,
+    createCoachConversation,
+    isLoading,
+    sendChatMessage,
+    user?.id,
+    updateCurrentConversation,
+  ]);
 
   // Handle input submission
   const handleSubmit = useCallback((e) => {
@@ -266,13 +428,6 @@ export default function CareerCoachPage() {
     setInputMessage(shortcutText);
     sendMessage(shortcutText);
   }, [sendMessage]);
-
-  // Initialize with first conversation
-  useEffect(() => {
-    if (conversations.length === 0) {
-      createNewConversation();
-    }
-  }, [conversations.length, createNewConversation]);
 
   // Format message timestamp
   const formatTimestamp = (timestamp) => {

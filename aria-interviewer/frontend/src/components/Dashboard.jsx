@@ -66,29 +66,40 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
 
   useEffect(() => {
     const fetchDashboardData = async () => {
+      setLoading(true);
       try {
-        const historyData = await getHistory(user.id);
-        setSessions(historyData.sessions || []);
+        const [
+          historyRes,
+          analyticsRes,
+          jobRes,
+          resumeRes
+        ] = await Promise.allSettled([
+          getHistory(user.id),
+          getAnalytics(user.id),
+          getJobMatchResults(user.id),
+          getResumeQuality(user.id)
+        ]);
 
-        try {
-          const analyticsData = await getAnalytics(user.id);
-          setAnalytics(analyticsData);
-        } catch (error) {
-          console.warn("Analytics not available:", error);
+        if (historyRes.status === "fulfilled") {
+          setSessions(historyRes.value.sessions || []);
         }
 
-        try {
-          const jobData = await getJobMatchResults(user.id);
-          setJobMatches(jobData.jobs || []);
-        } catch (error) {
-          console.warn("Job matches not available:", error);
+        if (analyticsRes.status === "fulfilled") {
+          setAnalytics(analyticsRes.value);
+        } else {
+          console.warn("Analytics not available:", analyticsRes.reason);
         }
 
-        try {
-          const resumeData = await getResumeQuality(user.id);
-          setResumeQuality(resumeData);
-        } catch (error) {
-          console.warn("Resume quality not available:", error);
+        if (jobRes.status === "fulfilled") {
+          setJobMatches(jobRes.value.jobs || []);
+        } else {
+          console.warn("Job matches not available:", jobRes.reason);
+        }
+
+        if (resumeRes.status === "fulfilled") {
+          setResumeQuality(resumeRes.value);
+        } else {
+          console.warn("Resume quality not available:", resumeRes.reason);
         }
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);

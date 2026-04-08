@@ -34,7 +34,7 @@ const BADGES = [
 ];
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [profileData, setProfileData] = useState(null);
   const [analytics, setAnalytics] = useState(null);
   const [resumeQuality, setResumeQuality] = useState(null);
@@ -104,13 +104,27 @@ export default function Profile() {
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-10 min-h-screen">
       {/* Header */}
-      <section>
-        <h1 className="text-4xl font-black tracking-tight text-[var(--text-primary)] font-geist mb-2 italic uppercase">
-          OPERATOR PROFILE
-        </h1>
-        <p className="text-[var(--text-secondary)] font-medium">
-          Personal performance identity and verified professional achievements.
-        </p>
+      <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-black tracking-tight text-[var(--text-primary)] font-geist mb-2 italic uppercase">
+            OPERATOR PROFILE
+          </h1>
+          <p className="text-[var(--text-secondary)] font-medium">
+            Personal performance identity and verified professional achievements.
+          </p>
+        </div>
+        <button
+          onClick={signOut}
+          className="group relative flex items-center justify-center gap-3 px-7 py-3.5 bg-[var(--bg-elevated)] border border-[var(--error)]/30 text-[var(--error)] hover:bg-[var(--error)] hover:text-white hover:border-[var(--error)] transition-all duration-300 font-black text-xs rounded-2xl uppercase tracking-[0.2em] shadow-sm hover:shadow-[0_0_20px_rgba(239,68,68,0.3)] overflow-hidden"
+        >
+          <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+          <span className="relative z-10 flex items-center gap-2">
+            <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            DISCONNECT
+          </span>
+        </button>
       </section>
 
       {/* Profile Identity Card */}

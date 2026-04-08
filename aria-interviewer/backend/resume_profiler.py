@@ -2,12 +2,12 @@ import json
 import os
 
 from dotenv import load_dotenv
-from groq import Groq
+from groq import AsyncGroq
 
 ENV_PATH = os.path.join(os.path.dirname(__file__), ".env")
 load_dotenv(ENV_PATH)
 
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
 
 PROFILE_EXTRACTION_PROMPT = """
 You are an expert resume parser for the Indian job market.
@@ -46,8 +46,8 @@ RULES:
 async def extract_profile(resume_text: str) -> dict:
     """Use Groq to extract a structured professional profile from resume text."""
     try:
-        response = client.chat.completions.create(
-            model="openai/gpt-oss-120b",
+        response = await client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
             messages=[
                 {"role": "system", "content": PROFILE_EXTRACTION_PROMPT},
                 {"role": "user", "content": f"Resume:\n{(resume_text or '')[:4000]}"},
@@ -114,8 +114,8 @@ Is fresher: {profile.get('is_fresher', False)}
 Job titles to search: {', '.join(profile.get('job_titles_to_search', []))}
 """
 
-        response = client.chat.completions.create(
-            model="openai/gpt-oss-120b",
+        response = await client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
             messages=[
                 {"role": "system", "content": QUERY_GENERATION_PROMPT},
                 {"role": "user", "content": profile_summary},

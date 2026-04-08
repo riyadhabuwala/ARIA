@@ -199,6 +199,77 @@ def get_latest_job_results(user_id: str) -> dict | None:
     return result.data[0] if result.data else None
 
 
+def create_coach_conversation(user_id: str, title: str, last_message_preview: str = "") -> dict:
+    """Create a new career coach conversation."""
+    result = supabase.table("coach_conversations").insert(
+        {
+            "user_id": user_id,
+            "title": title,
+            "last_message_preview": last_message_preview,
+        }
+    ).execute()
+    return result.data[0] if result.data else {}
+
+
+def update_coach_conversation(
+    conversation_id: str,
+    user_id: str,
+    title: str,
+    last_message_preview: str,
+) -> None:
+    """Update conversation title/preview and timestamp."""
+    supabase.table("coach_conversations").update(
+        {
+            "title": title,
+            "last_message_preview": last_message_preview,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+    ).eq("id", conversation_id).eq("user_id", user_id).execute()
+
+
+def get_coach_conversations(user_id: str) -> list:
+    """Fetch all coach conversations for a user, newest first."""
+    result = (
+        supabase.table("coach_conversations")
+        .select("id, title, created_at, updated_at, last_message_preview")
+        .eq("user_id", user_id)
+        .order("updated_at", desc=True)
+        .execute()
+    )
+    return result.data or []
+
+
+def add_coach_message(
+    conversation_id: str,
+    user_id: str,
+    role: str,
+    content: str,
+) -> dict:
+    """Add a message to a conversation."""
+    result = supabase.table("coach_messages").insert(
+        {
+            "conversation_id": conversation_id,
+            "user_id": user_id,
+            "role": role,
+            "content": content,
+        }
+    ).execute()
+    return result.data[0] if result.data else {}
+
+
+def get_coach_messages(user_id: str, conversation_id: str) -> list:
+    """Fetch messages for a conversation in ascending order."""
+    result = (
+        supabase.table("coach_messages")
+        .select("id, role, content, created_at")
+        .eq("user_id", user_id)
+        .eq("conversation_id", conversation_id)
+        .order("created_at", desc=False)
+        .execute()
+    )
+    return result.data or []
+
+
 def save_resume_quality(user_id: str, quality_data: dict) -> None:
     """Cache resume quality analysis to avoid re-running on every visit."""
     supabase.table("user_resume_profiles").update(

@@ -41,3 +41,45 @@ export async function triggerDebrief(userId, report, confidenceData, previousSco
     }),
   });
 }
+
+// ---- Coach chat persistence ----
+export async function getCoachConversations(userId) {
+  return apiClient(`/api/coach/conversations/${userId}`, { method: "GET" });
+}
+
+export async function createCoachConversation(userId, title = "New Chat") {
+  return apiClient("/api/coach/conversations", {
+    method: "POST",
+    body: JSON.stringify({
+      user_id: userId,
+      title,
+      last_message_preview: "",
+    }),
+  });
+}
+
+export async function getCoachMessages(userId, conversationId) {
+  return apiClient(`/api/coach/conversations/${conversationId}/messages?user_id=${userId}`, {
+    method: "GET",
+  });
+}
+
+export async function addCoachMessage(
+  userId,
+  conversationId,
+  role,
+  content,
+  title = null,
+  lastMessagePreview = null
+) {
+  return apiClient(`/api/coach/conversations/${conversationId}/messages`, {
+    method: "POST",
+    body: JSON.stringify({
+      user_id: userId,
+      role,
+      content,
+      title,
+      last_message_preview: lastMessagePreview,
+    }),
+  });
+}

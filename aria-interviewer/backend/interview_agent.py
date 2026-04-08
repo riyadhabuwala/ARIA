@@ -1,6 +1,6 @@
 import os
 import json
-from groq import Groq
+from groq import AsyncGroq
 from dotenv import load_dotenv
 from prompts import build_system_prompt
 
@@ -10,19 +10,19 @@ load_dotenv(ENV_PATH)
 
 class InterviewAgent:
     def __init__(self):
-        self.client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+        self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
         self.sessions = {}  # session_id -> conversation_history
 
-    def create_session(self, session_id: str, domain: str,
+    async def create_session(self, session_id: str, domain: str,
                        candidate_name: str, resume_text: str = "") -> str:
         """Initialize a new interview session, return AI greeting."""
         system_prompt = build_system_prompt(domain, candidate_name, resume_text)
         self.sessions[session_id] = [
             {"role": "system", "content": system_prompt}
         ]
-        return self._get_ai_response(session_id)
+        return await self._get_ai_response(session_id)
 
-    def send_message(self, session_id: str, user_message: str) -> dict:
+    async def send_message(self, session_id: str, user_message: str) -> dict:
         """Send user answer, get AI next question. Returns response + is_done flag."""
         if session_id not in self.sessions:
             raise ValueError("Session not found")
@@ -32,7 +32,7 @@ class InterviewAgent:
             "content": user_message
         })
 
-        response = self._get_ai_response(session_id)
+        response = await self._get_ai_response(session_id)
         is_done = "INTERVIEW_COMPLETE" in response
         clean_response = response.replace("INTERVIEW_COMPLETE", "").strip()
 
@@ -42,7 +42,7 @@ class InterviewAgent:
             "has_feedback": len(clean_response) > 30
         }
 
-    def generate_report(self, session_id: str) -> dict:
+    async def generate_report(self, session_id: str) -> dict:
         """Request final performance report as JSON."""
         if session_id not in self.sessions:
             raise ValueError("Session not found")
@@ -52,7 +52,7 @@ class InterviewAgent:
             "content": "GENERATE_REPORT_NOW"
         })
 
-        response = self._get_ai_response(session_id)
+        response = await self._get_ai_response(session_id)
 
         # Strip any accidental markdown fences
         clean = response.strip()
@@ -64,9 +64,9 @@ class InterviewAgent:
 
         return json.loads(clean)
 
-    def _get_ai_response(self, session_id: str) -> str:
-        completion = self.client.chat.completions.create(
-            model="openai/gpt-oss-120b",
+    async def _get_ai_response(self, session_id: str) -> str:
+        completion = await self.client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
             messages=self.sessions[session_id],
             temperature=1,
             max_tokens=8192,

@@ -3,11 +3,11 @@ import os
 from typing import Any
 
 from dotenv import load_dotenv
-from groq import Groq
+from groq import AsyncGroq
 
 ENV_PATH = os.path.join(os.path.dirname(__file__), ".env")
 load_dotenv(ENV_PATH)
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
 
 QUALITY_ANALYSIS_PROMPT = """
 You are an expert resume reviewer and ATS specialist with 10 years
@@ -174,8 +174,8 @@ async def analyse_resume_quality(resume_text: str, job_missing_skills: list[str]
         return _empty_result("Resume text too short to analyse")
 
     try:
-        response = client.chat.completions.create(
-            model="openai/gpt-oss-120b",
+        response = await client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
             messages=[
                 {"role": "system", "content": QUALITY_ANALYSIS_PROMPT},
                 {"role": "user", "content": f"Resume to analyse:\n\n{resume_text[:5000]}"},

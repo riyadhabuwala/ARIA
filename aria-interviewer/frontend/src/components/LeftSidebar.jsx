@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useState } from "react";
+import ThemeToggle from "./ThemeToggle";
 
 const navigationSections = [
   {
@@ -82,7 +83,7 @@ export default function LeftSidebar({ isOpen, onToggle }) {
       `}>
 
         {/* Logo Section */}
-        <div className="flex items-center px-7 py-8 border-b border-[var(--border-subtle)]">
+        <div className="flex items-center justify-between px-7 py-8 border-b border-[var(--border-subtle)]">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-[var(--accent-primary)] rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.4)]">
               <span className="text-white font-bold text-lg">A</span>
@@ -91,6 +92,7 @@ export default function LeftSidebar({ isOpen, onToggle }) {
               ARIA
             </h1>
           </div>
+          <ThemeToggle />
         </div>
 
         {/* Navigation Sections */}
@@ -208,9 +210,13 @@ export default function LeftSidebar({ isOpen, onToggle }) {
                 <div className="my-2.5 h-[1px] bg-[var(--border-subtle)] mx-4" />
                 <button
                   onClick={handleSignOut}
-                  className="w-full flex items-center px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-500/10 transition-colors"
+                  className="group w-full flex items-center justify-between px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-[var(--error)] bg-[var(--bg-elevated)] border border-[var(--error)]/30 rounded-xl hover:bg-[var(--error)] hover:text-white transition-all"
                 >
-                  <span className="mr-3 opacity-60">🚪</span> Sign Out
+                  <span className="flex items-center gap-3">
+                    <span className="text-sm opacity-70 group-hover:opacity-100">🚪</span>
+                    Sign Out
+                  </span>
+                  <span className="text-[10px] opacity-60 group-hover:opacity-100">Now</span>
                 </button>
               </div>
             )}

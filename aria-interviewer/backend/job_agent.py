@@ -4,7 +4,7 @@ import uuid
 from typing import Optional, TypedDict
 
 from dotenv import load_dotenv
-from groq import Groq
+from groq import AsyncGroq
 
 from job_apis import fetch_all_jobs
 from resume_profiler import extract_profile, generate_search_queries
@@ -13,7 +13,7 @@ from supabase_client import save_job_results, save_resume_profile
 ENV_PATH = os.path.join(os.path.dirname(__file__), ".env")
 load_dotenv(ENV_PATH)
 
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
 
 
 class AgentState(TypedDict):
@@ -121,8 +121,8 @@ Preferred locations: {', '.join(profile.get('preferred_locations', [])[:3])}
 Education: {profile.get('education', '')}
 """
 
-        response = client.chat.completions.create(
-            model="openai/gpt-oss-120b",
+        response = await client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
             messages=[
                 {"role": "system", "content": RANKING_PROMPT},
                 {
