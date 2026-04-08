@@ -1,5 +1,4 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-console.log('[apiClient] API Base URL:', BASE_URL);
 
 /**
  * Shared API client with common fetch wrapper functionality
@@ -10,11 +9,17 @@ console.log('[apiClient] API Base URL:', BASE_URL);
 export async function apiClient(endpoint, options = {}) {
   const url = `${BASE_URL}${endpoint}`;
 
+  // Set up request timeout (default 30s, configurable per-request)
+  const timeoutMs = options.timeout || 30000;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   const defaultOptions = {
     headers: {
       'Content-Type': 'application/json',
       ...options.headers
     },
+    signal: controller.signal,
     ...options
   };
 
@@ -23,7 +28,17 @@ export async function apiClient(endpoint, options = {}) {
     delete defaultOptions.headers['Content-Type'];
   }
 
-  const response = await fetch(url, defaultOptions);
+  let response;
+  try {
+    response = await fetch(url, defaultOptions);
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error('Request timed out. The server may be starting up — please try again in a moment.');
+    }
+    throw err;
+  }
+  clearTimeout(timeoutId);
 
   // For Server-Sent Events or streaming responses, return the response directly
   if (options.stream || response.headers.get('content-type')?.includes('text/event-stream')) {
@@ -54,7 +69,6 @@ export async function apiClient(endpoint, options = {}) {
   }
 
   const data = await response.json();
-  console.log(`[apiClient] Response from ${endpoint}:`, data);
   return data;
 }
 

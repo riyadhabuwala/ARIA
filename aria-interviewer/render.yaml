@@ -15,4 +15,11 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_KEY
         sync: false
-    rootDir: backend
+      - key: ADZUNA_APP_ID
+        sync: false
+      - key: ADZUNA_APP_KEY
+        sync: false
+      - key: RAPIDAPI_KEY
+        sync: false
+    rootDir: aria-interviewer/backend
+

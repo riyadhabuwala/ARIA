@@ -1,7 +1,64 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Component, useCallback, useEffect, useRef, useState } from "react";
 import { Routes, Route, Navigate, useNavigate, useParams, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { saveSession, getHistory, getSession } from "./api/interviewApi";
+
+// ── Error Boundary ────────────────────────────
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("ErrorBoundary caught:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "var(--bg-base, #000)",
+          color: "var(--text-primary, #fff)",
+          fontFamily: "'Inter', sans-serif",
+          padding: "2rem",
+          textAlign: "center",
+        }}>
+          <div>
+            <h1 style={{ fontSize: "1.5rem", marginBottom: "0.75rem" }}>Something went wrong</h1>
+            <p style={{ color: "var(--text-secondary, #999)", marginBottom: "1.5rem", maxWidth: "400px" }}>
+              ARIA encountered an unexpected error. Please reload the page to continue.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                padding: "0.75rem 2rem",
+                background: "var(--accent-primary, #2563eb)",
+                color: "#fff",
+                border: "none",
+                borderRadius: "12px",
+                fontSize: "1rem",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 import LandingPage from "./pages/LandingPage";
 import AuthPage from "./components/AuthPage";
@@ -199,7 +256,7 @@ function AppContent() {
                   user={user}
                   onNewInterview={() => navigate("/interview")}
                   onViewSession={handleViewSession}
-                  onJobMatch={() => navigate("/job-match")}
+                  onJobMatch={() => navigate("/jobs")}
                 />
               </Layout>
             </ProtectedRoute>
@@ -367,16 +424,7 @@ function AppContent() {
 
         <Route path="/report/:sessionId" element={<SessionReportRoute />} />
 
-        <Route
-          path="/job-match"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <JobMatchPage user={user} onBack={() => navigate("/dashboard")} />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
+
 
         {/* Catch all */}
         <Route path="*" element={
@@ -401,8 +449,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
