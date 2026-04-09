@@ -168,6 +168,70 @@ class ResumeQualityRequest(BaseModel):
 
 # ── ROUTES ──────────────────────────────────────────────────────
 
+@app.get("/health")
+def health_check():
+    """Health check endpoint for keep-alive pings."""
+    return {"status": "ARIA backend is running"}
+
+
+@app.get("/api/dashboard/{user_id}")
+def get_dashboard_data(user_id: str):
+    """Combined endpoint: fetches all dashboard data in one request.
+    Replaces 5 separate API calls with 1, cutting latency significantly.
+    """
+    # All these are simple Supabase reads — fast and parallelizable on the DB side
+    sessions = get_user_sessions(user_id)
+
+    # Analytics
+    analytics = None
+    try:
+        analytics = get_analytics_data(user_id)
+    except Exception:
+        pass
+
+    # Profile
+    profile_data = get_resume_profile(user_id)
+    profile = (
+        {
+            "has_resume": True,
+            "filename": profile_data.get("resume_filename", ""),
+            "extracted_profile": profile_data.get("extracted_profile"),
+            "updated_at": profile_data.get("updated_at"),
+        }
+        if profile_data
+        else {"has_resume": False}
+    )
+
+    # Job match results
+    job_results = get_latest_job_results(user_id)
+    jobs = (
+        {
+            "has_results": True,
+            "jobs": job_results.get("jobs", []),
+            "last_scanned_at": job_results.get("last_scanned_at"),
+        }
+        if job_results
+        else {"has_results": False}
+    )
+
+    # Cached resume quality only (never trigger LLM on dashboard load)
+    resume_quality = None
+    try:
+        cached = get_cached_quality(user_id)
+        if cached:
+            resume_quality = {**cached, "cached": True}
+    except Exception:
+        pass
+
+    return {
+        "sessions": sessions,
+        "analytics": analytics,
+        "profile": profile,
+        "job_results": jobs,
+        "resume_quality": resume_quality,
+    }
+
+
 @app.post("/api/parse-resume")
 async def parse_resume(file: UploadFile = File(...)):
     """Upload PDF resume and get extracted text back."""

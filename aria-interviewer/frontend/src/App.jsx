@@ -2,6 +2,7 @@ import { Component, useCallback, useEffect, useRef, useState } from "react";
 import { Routes, Route, Navigate, useNavigate, useParams, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { saveSession, getHistory, getSession } from "./api/interviewApi";
+import { pingBackend } from "./api/dashboardApi";
 
 // ── Error Boundary ────────────────────────────
 class ErrorBoundary extends Component {
@@ -129,6 +130,11 @@ function AppContent() {
       loadPreviousScore();
     }
   }, [user?.id, loadPreviousScore]);
+
+  // Pre-warm Render backend on app load
+  useEffect(() => {
+    pingBackend();
+  }, []);
 
   // ── Interview completion handler ─────────────
   const handleInterviewComplete = async (report, confidenceData, durationSeconds, messages) => {

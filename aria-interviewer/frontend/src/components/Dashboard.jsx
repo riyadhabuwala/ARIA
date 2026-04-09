@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getHistory } from "../api/interviewApi";
-import { getAnalytics } from "../api/analyticsApi";
-import { getJobMatchResults } from "../api/jobsApi";
-import { getProfile, getResumeQuality } from "../api/profileApi";
+import { getDashboardData } from "../api/dashboardApi";
 import { useChatbot } from "../hooks/useChatbot";
 import ScoreGauge from "./ScoreGauge";
 
@@ -64,50 +61,17 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
   const { messages, isLoading: chatLoading, sendMessage } = useChatbot(user.id);
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const [
-          historyRes,
-          analyticsRes,
-          jobRes,
-          profileRes,
-          resumeRes,
-        ] = await Promise.allSettled([
-          getHistory(user.id),
-          getAnalytics(user.id),
-          getJobMatchResults(user.id),
-          getProfile(user.id),
-          getResumeQuality(user.id)
-        ]);
+        // Single API call replaces 5 separate calls
+        const data = await getDashboardData(user.id);
 
-        if (historyRes.status === "fulfilled") {
-          setSessions(historyRes.value.sessions || []);
-        }
-
-        if (analyticsRes.status === "fulfilled") {
-          setAnalytics(analyticsRes.value);
-        } else {
-          console.warn("Analytics not available:", analyticsRes.reason);
-        }
-
-        if (jobRes.status === "fulfilled") {
-          setJobMatches(jobRes.value.jobs || []);
-        } else {
-          console.warn("Job matches not available:", jobRes.reason);
-        }
-
-        if (profileRes.status === "fulfilled") {
-          setProfileData(profileRes.value);
-        } else {
-          console.warn("Profile not available:", profileRes.reason);
-        }
-
-        if (resumeRes.status === "fulfilled") {
-          setResumeQuality(resumeRes.value);
-        } else {
-          console.warn("Resume quality not available:", resumeRes.reason);
-        }
+        setSessions(data.sessions || []);
+        setAnalytics(data.analytics || null);
+        setJobMatches(data.job_results?.jobs || []);
+        setProfileData(data.profile || null);
+        setResumeQuality(data.resume_quality || null);
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
       } finally {
@@ -115,7 +79,7 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
       }
     };
 
-    fetchDashboardData();
+    fetchData();
   }, [user.id]);
 
   const totalInterviews = sessions.length;
