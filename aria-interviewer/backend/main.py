@@ -77,15 +77,14 @@ HERE IS THE USER'S DATA:
 """
 
 # ── CORS ─────────────────────────────────────────────────────────
-# Allows any localhost port (5173, 5174, 5175, 5176, etc.)
-# so Vite's port auto-increment never causes CORS errors
+# allow_origin_regex handles both localhost (any port) and all
+# Vercel deployments (preview + production subdomains).
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"http://localhost:\d+",
+    allow_origin_regex=r"(http://localhost:\d+|https://.*\.vercel\.app)",
     allow_origins=[
         "https://aria-interviewer.vercel.app",
-        "https://*.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
