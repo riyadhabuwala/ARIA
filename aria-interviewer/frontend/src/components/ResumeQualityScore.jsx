@@ -52,19 +52,19 @@ function scoreState(score, present) {
   };
 }
 
-function ScoreRing({ score, grade }) {
-  const radius = 48;
+function ScoreRing({ score }) {
+  const radius = 44;
   const circumference = 2 * Math.PI * radius;
   const normalized = Math.max(0, Math.min(100, Number(score) || 0));
   const offset = circumference - (normalized / 100) * circumference;
 
   return (
-    <div className="relative flex items-center justify-center" style={{ width: 138, height: 138 }}>
-      <svg width="138" height="138" className="-rotate-90">
-        <circle cx="69" cy="69" r={radius} fill="none" stroke="var(--bg-elevated)" strokeWidth="10" />
+    <div className="relative flex items-center justify-center overflow-hidden" style={{ width: 124, height: 124 }}>
+      <svg width="124" height="124" className="-rotate-90">
+        <circle cx="62" cy="62" r={radius} fill="none" stroke="var(--bg-elevated)" strokeWidth="10" />
         <circle
-          cx="69"
-          cy="69"
+          cx="62"
+          cy="62"
           r={radius}
           fill="none"
           stroke="var(--accent-primary)"
@@ -76,8 +76,12 @@ function ScoreRing({ score, grade }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-5xl leading-none font-black italic text-[var(--text-primary)] heading-font">{grade || "--"}</span>
-        <span className="text-[11px] tracking-[0.2em] uppercase text-[var(--text-muted)] mt-1">Score {normalized}</span>
+        <span className="text-3xl leading-none font-black italic text-[var(--text-primary)] heading-font">
+          {normalized}
+        </span>
+        <span className="text-[10px] tracking-[0.2em] uppercase text-[var(--text-muted)] mt-1">
+          Score
+        </span>
       </div>
     </div>
   );
@@ -202,15 +206,16 @@ export default function ResumeQualityScore({ userId, hasResume }) {
 
       {(loading || quality) && (
         <>
-          <div className="px-5 py-5 flex flex-col md:flex-row items-start md:items-center gap-5 border-b border-[var(--border-subtle)]">
-            <ScoreRing score={score} grade={quality?.grade} />
-
-            <div className="min-w-0 flex-1">
-              <div className="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold mb-2 bg-[var(--warning)]/10 text-[var(--warning)] border border-[var(--warning)]/20">
+          <div className="px-5 py-5 grid grid-cols-1 lg:grid-cols-[160px_minmax(0,1fr)] gap-6 border-b border-[var(--border-subtle)]">
+            <div className="flex flex-col items-center gap-3">
+              <ScoreRing score={score} />
+              <div className="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold bg-[var(--warning)]/10 text-[var(--warning)] border border-[var(--warning)]/20">
                 {statusLabel}
               </div>
+            </div>
 
-              <p className="text-lg md:text-xl font-semibold text-[var(--text-primary)] leading-snug">
+            <div className="min-w-0">
+              <p className="text-sm sm:text-base md:text-lg font-semibold text-[var(--text-primary)] leading-relaxed break-words">
                 {topImprovement?.description || quality?.grade_reason || "Resume quality summary is ready."}
               </p>
 

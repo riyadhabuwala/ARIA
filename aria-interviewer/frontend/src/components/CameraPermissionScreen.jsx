@@ -64,7 +64,7 @@ export default function CameraPermissionScreen({ onReady, candidateName, domain 
       alignItems: "center",
       justifyContent: "center",
       padding: "24px",
-      background: "#000000",
+      background: "var(--bg-base)",
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
     }}>
       {/* Background effects */}
@@ -123,14 +123,14 @@ export default function CameraPermissionScreen({ onReady, candidateName, domain 
           <h1 style={{
             fontSize: "28px",
             fontWeight: "800",
-            color: "#ffffff",
+            color: "var(--text-primary)",
             letterSpacing: "-0.03em",
             fontFamily: "'Geist', 'Inter', sans-serif",
             marginBottom: "8px",
           }}>
             Ready to start, {candidateName}?
           </h1>
-          <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.45)" }}>
+          <p style={{ fontSize: "14px", color: "var(--text-muted)" }}>
             {domain} Interview · ~10–15 minutes
           </p>
         </div>
@@ -141,8 +141,8 @@ export default function CameraPermissionScreen({ onReady, candidateName, domain 
           overflow: "hidden",
           marginBottom: "24px",
           aspectRatio: "16/9",
-          background: "#0a0a0a",
-          border: "1px solid rgba(255,255,255,0.06)",
+          background: "var(--bg-elevated)",
+          border: "1px solid var(--border-subtle)",
           position: "relative",
         }}>
           {previewStream ? (
@@ -175,10 +175,10 @@ export default function CameraPermissionScreen({ onReady, candidateName, domain 
                 alignItems: "center",
                 justifyContent: "center",
                 fontSize: "28px",
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                background: "var(--bg-surface)",
+                border: "1px solid var(--border-subtle)",
               }}>📷</div>
-              <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.25)" }}>
+              <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>
                 Camera preview will appear here
               </p>
             </div>
@@ -195,7 +195,7 @@ export default function CameraPermissionScreen({ onReady, candidateName, domain 
               gap: "8px",
               padding: "6px 12px",
               borderRadius: "8px",
-              background: "rgba(0,0,0,0.65)",
+              background: "var(--bg-overlay)",
               backdropFilter: "blur(8px)",
             }}>
               <div style={{
@@ -203,7 +203,7 @@ export default function CameraPermissionScreen({ onReady, candidateName, domain 
                 background: "#22c55e",
                 boxShadow: "0 0 6px rgba(34,197,94,0.3)",
               }} />
-              <span style={{ fontSize: "11px", fontWeight: "600", color: "#fff" }}>
+              <span style={{ fontSize: "11px", fontWeight: "600", color: "var(--text-primary)" }}>
                 Camera Preview
               </span>
             </div>
@@ -236,10 +236,10 @@ export default function CameraPermissionScreen({ onReady, candidateName, domain 
                 gap: "14px",
                 padding: "14px 16px",
                 borderRadius: "12px",
-                background: "rgba(255,255,255,0.02)",
+                background: "var(--bg-surface)",
                 border: item.granted
                   ? "1px solid rgba(34,197,94,0.2)"
-                  : "1px solid rgba(255,255,255,0.06)",
+                  : "1px solid var(--border-subtle)",
                 transition: "border-color 0.3s ease",
               }}
             >
@@ -253,8 +253,8 @@ export default function CameraPermissionScreen({ onReady, candidateName, domain 
                   justifyContent: "center",
                   fontSize: "18px",
                   flexShrink: 0,
-                  background: item.granted ? "rgba(34,197,94,0.08)" : "rgba(255,255,255,0.03)",
-                  border: "1px solid " + (item.granted ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.06)"),
+                  background: item.granted ? "rgba(34,197,94,0.08)" : "var(--bg-elevated)",
+                  border: "1px solid " + (item.granted ? "rgba(34,197,94,0.15)" : "var(--border-subtle)"),
                 }}
               >
                 {item.granted ? "✅" : item.icon}
@@ -263,7 +263,7 @@ export default function CameraPermissionScreen({ onReady, candidateName, domain 
                 <div style={{
                   fontSize: "13px",
                   fontWeight: "600",
-                  color: "#ffffff",
+                  color: "var(--text-primary)",
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
@@ -282,7 +282,7 @@ export default function CameraPermissionScreen({ onReady, candidateName, domain 
                     }}>Required</span>
                   )}
                 </div>
-                <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginTop: "2px" }}>
+                <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>
                   {item.granted ? "Permission granted ✓" : item.desc}
                 </div>
               </div>
@@ -310,11 +310,11 @@ export default function CameraPermissionScreen({ onReady, candidateName, domain 
           marginBottom: "20px",
           padding: "14px 16px",
           borderRadius: "12px",
-          background: "rgba(37,99,235,0.04)",
-          border: "1px solid rgba(37,99,235,0.1)",
+          background: "rgba(37,99,235,0.06)",
+          border: "1px solid rgba(37,99,235,0.15)",
         }}>
-          <p style={{ fontSize: "12px", lineHeight: "1.6", color: "rgba(255,255,255,0.5)", margin: 0 }}>
-            💡 <strong style={{ color: "rgba(255,255,255,0.7)" }}>How it works:</strong> ARIA will ask questions out loud. Press and hold the
+          <p style={{ fontSize: "12px", lineHeight: "1.6", color: "var(--text-muted)", margin: 0 }}>
+            💡 <strong style={{ color: "var(--text-primary)" }}>How it works:</strong> ARIA will ask questions out loud. Press and hold the
             microphone button to record your answer, then release to send. Speak clearly and take your time.
           </p>
         </div>
@@ -366,7 +366,7 @@ export default function CameraPermissionScreen({ onReady, candidateName, domain 
           textAlign: "center",
           fontSize: "11px",
           marginTop: "14px",
-          color: "rgba(255,255,255,0.2)",
+          color: "var(--text-muted)",
         }}>
           Camera is optional. You can proceed with microphone only.
         </p>

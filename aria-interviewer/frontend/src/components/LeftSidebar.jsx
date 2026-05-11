@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useState } from "react";
+import ThemeToggle from "./ThemeToggle";
 
 const navigationSections = [
   {
@@ -82,7 +83,7 @@ export default function LeftSidebar({ isOpen, onToggle }) {
       `}>
 
         {/* Logo Section */}
-        <div className="flex items-center px-7 py-8 border-b border-[var(--border-subtle)]">
+        <div className="flex items-center justify-between px-7 py-8 border-b border-[var(--border-subtle)]">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-[var(--accent-primary)] rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.4)]">
               <span className="text-white font-bold text-lg">A</span>
@@ -91,6 +92,7 @@ export default function LeftSidebar({ isOpen, onToggle }) {
               ARIA
             </h1>
           </div>
+          <ThemeToggle />
         </div>
 
         {/* Navigation Sections */}
@@ -161,7 +163,10 @@ export default function LeftSidebar({ isOpen, onToggle }) {
             onMouseEnter={() => setShowUserDropdown(true)}
             onMouseLeave={() => setShowUserDropdown(false)}
           >
-            <button className="w-full flex items-center space-x-3 px-3 py-3.5 rounded-2xl hover:bg-[var(--bg-hover)] transition-all group">
+            <button
+              onClick={() => navigate("/settings")}
+              className="w-full flex items-center space-x-3 px-3 py-3.5 rounded-2xl hover:bg-[var(--bg-hover)] transition-all group"
+            >
               {/* Avatar */}
               <div className="w-10 h-10 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:border-[var(--accent-primary)] transition-all">
                 <span className="text-[var(--text-primary)] text-xs font-bold font-geist">
@@ -181,39 +186,15 @@ export default function LeftSidebar({ isOpen, onToggle }) {
 
               {/* Chevron */}
               <svg
-                className={`w-4 h-4 text-[var(--text-muted)] transition-all duration-300 ${showUserDropdown ? 'rotate-180 text-[var(--text-primary)]' : ''}`}
+                className="w-4 h-4 text-[var(--text-muted)] transition-all duration-300 group-hover:text-[var(--text-primary)]"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
               </svg>
             </button>
 
-            {/* User Dropdown */}
-            {showUserDropdown && (
-              <div className="absolute bottom-full left-0 right-0 mb-4 bg-[var(--bg-overlay)] rounded-2xl shadow-2xl border border-[var(--border-subtle)] py-2.5 backdrop-blur-xl transition-all">
-                <Link
-                  to="/profile"
-                  className="flex items-center px-4 py-3 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
-                >
-                  <span className="mr-3 opacity-60">👤</span> View Profile
-                </Link>
-                <Link
-                  to="/settings"
-                  className="flex items-center px-4 py-3 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
-                >
-                  <span className="mr-3 opacity-60">⚙️</span> Settings
-                </Link>
-                <div className="my-2.5 h-[1px] bg-[var(--border-subtle)] mx-4" />
-                <button
-                  onClick={handleSignOut}
-                  className="w-full flex items-center px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-500/10 transition-colors"
-                >
-                  <span className="mr-3 opacity-60">🚪</span> Sign Out
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>
