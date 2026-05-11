@@ -28,7 +28,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{ user, loading, signOut: handleSignOut }}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }

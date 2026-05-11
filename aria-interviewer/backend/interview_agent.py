@@ -1,6 +1,10 @@
+# pyrefly: ignore [missing-import]
 import os
+# pyrefly: ignore [missing-import]
 import json
+# pyrefly: ignore [missing-import]
 from groq import Groq
+# pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 from prompts import build_system_prompt
 
@@ -11,6 +15,9 @@ load_dotenv(ENV_PATH)
 class InterviewAgent:
     def __init__(self):
         self.client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+        # WARNING: In-memory storage — sessions are lost on server restart or
+        # across multiple workers. For production at scale, migrate to Redis
+        # or a database-backed session store.
         self.sessions = {}  # session_id -> conversation_history
 
     def create_session(self, session_id: str, domain: str,

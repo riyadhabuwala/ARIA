@@ -1,7 +1,8 @@
 import os
 from datetime import datetime, timedelta, timezone
-
+# pyrefly: ignore [missing-import]
 from supabase import create_client, Client
+# pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 
 ENV_PATH = os.path.join(os.path.dirname(__file__), ".env")
@@ -340,3 +341,44 @@ def get_user_streak_data(user_id: str) -> dict:
             "streak_dates": [],
             "today_done": False
         }
+
+
+# ── Chat History ─────────────────────────────────────────────────
+
+
+def get_chat_conversations(user_id: str) -> list:
+    """Get all chat conversations for a user, newest first."""
+    result = (
+        supabase.table("chat_conversations")
+        .select("*")
+        .eq("user_id", user_id)
+        .order("updated_at", desc=True)
+        .limit(50)
+        .execute()
+    )
+    return result.data or []
+
+
+def save_chat_conversation(user_id: str, conversation: dict) -> dict:
+    """Upsert a chat conversation (create or update)."""
+    data = {
+        "id": conversation["id"],
+        "user_id": user_id,
+        "title": conversation.get("title", "New Chat"),
+        "messages_json": conversation.get("messages", []),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    result = (
+        supabase.table("chat_conversations")
+        .upsert(data, on_conflict="id")
+        .execute()
+    )
+    return result.data[0] if result.data else {}
+
+
+def delete_chat_conversation(user_id: str, conversation_id: str) -> bool:
+    """Delete a specific chat conversation."""
+    supabase.table("chat_conversations").delete().eq(
+        "id", conversation_id
+    ).eq("user_id", user_id).execute()
+    return True

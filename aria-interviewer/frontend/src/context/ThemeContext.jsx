@@ -25,6 +25,11 @@ export function ThemeProvider({ children }) {
 
       mediaQuery.addEventListener("change", handleChange);
 
+      // Apply system theme immediately
+      document.documentElement.setAttribute("data-theme", actualTheme);
+      document.documentElement.classList.toggle("dark", actualTheme === "dark");
+      localStorage.setItem("aria-theme", theme);
+
       // Cleanup listener on theme change or unmount
       return () => mediaQuery.removeEventListener("change", handleChange);
     }

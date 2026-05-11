@@ -1,4 +1,5 @@
 import { apiClient } from './apiClient.js';
+import { get, post } from './apiClient.js';
 
 /**
  * Send message to AI coach with streaming response
@@ -41,3 +42,37 @@ export async function triggerDebrief(userId, report, confidenceData, previousSco
     }),
   });
 }
+
+/**
+ * Load saved chat conversations from the backend
+ * @param {string} userId - User ID
+ * @returns {Promise<Array>} - List of conversations
+ */
+export async function getChatHistory(userId) {
+  return get(`/api/coach/history/${encodeURIComponent(userId)}`);
+}
+
+/**
+ * Save a chat conversation to the backend
+ * @param {string} userId - User ID
+ * @param {Object} conversation - Conversation object with id, title, messages
+ * @returns {Promise<Object>} - Save result
+ */
+export async function saveChatConversation(userId, conversation) {
+  return post("/api/coach/history/save", {
+    user_id: userId,
+    conversation,
+  });
+}
+
+/**
+ * Delete a chat conversation
+ * @param {string} userId - User ID
+ * @param {string} conversationId - Conversation ID to delete
+ * @returns {Promise<Object>} - Delete result
+ */
+export async function deleteChatConversation(userId, conversationId) {
+  return apiClient(`/api/coach/history/${encodeURIComponent(userId)}/${encodeURIComponent(conversationId)}`, {
+    method: "DELETE",
+  });
+}

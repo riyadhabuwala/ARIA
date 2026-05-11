@@ -1,9 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { getHistory, parseResume } from "../api/interviewApi";
-import { getAnalytics } from "../api/analyticsApi";
-import { getJobMatchResults } from "../api/jobsApi";
-import { getResumeQuality, saveResumeProfile } from "../api/profileApi";
+import { parseResume } from "../api/interviewApi";
+import { getDashboardData } from "../api/dashboardApi";
+import { saveResumeProfile } from "../api/profileApi";
 import { useChatbot } from "../hooks/useChatbot";
 import ScoreGauge from "./ScoreGauge";
 
@@ -67,31 +66,13 @@ export default function Dashboard({ user, onNewInterview, onViewSession, onJobMa
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const historyData = await getHistory(user.id);
-        setSessions(historyData.sessions || []);
-
-        try {
-          const analyticsData = await getAnalytics(user.id);
-          setAnalytics(analyticsData);
-        } catch (error) {
-          console.warn("Analytics not available:", error);
-        }
-
-        try {
-          const jobData = await getJobMatchResults(user.id);
-          setJobMatches(jobData.jobs || []);
-        } catch (error) {
-          console.warn("Job matches not available:", error);
-        }
-
-        try {
-          const resumeData = await getResumeQuality(user.id);
-          setResumeQuality(resumeData);
-        } catch (error) {
-          console.warn("Resume quality not available:", error);
-        }
-      } catch (error) {
-        console.error("Failed to fetch dashboard data:", error);
+        const data = await getDashboardData(user.id);
+        setSessions(data.history || []);
+        setAnalytics(data.analytics || null);
+        setJobMatches(data.job_results?.jobs || []);
+        setResumeQuality(data.resume_quality || null);
+      } catch {
+        // Dashboard load failed — will show empty state
       } finally {
         setLoading(false);
       }

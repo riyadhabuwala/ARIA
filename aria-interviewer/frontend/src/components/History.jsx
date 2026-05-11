@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getHistory } from "../api/interviewApi";
 
@@ -8,13 +8,7 @@ export default function History() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (user?.id) {
-      loadHistory();
-    }
-  }, [user?.id]);
-
-  const loadHistory = async () => {
+  const loadHistory = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -26,7 +20,13 @@ export default function History() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadHistory();
+    }
+  }, [user?.id, loadHistory]);
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -108,7 +108,7 @@ export default function History() {
                     <td className="px-7 py-5">
                       <div className="flex items-center gap-3">
                         <span className="font-black text-[var(--text-primary)]">{session.overall_score || 0}%</span>
-                        <div className="w-16 h-1 w-full bg-[var(--bg-elevated)] rounded-full overflow-hidden">
+                        <div className="h-1 w-full bg-[var(--bg-elevated)] rounded-full overflow-hidden">
                           <div className="h-full bg-[var(--accent-primary)]" style={{ width: `${session.overall_score || 0}%` }}></div>
                         </div>
                       </div>

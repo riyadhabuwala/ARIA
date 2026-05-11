@@ -18,8 +18,16 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  // Network-first for API calls
-  if (event.request.url.includes("/api/")) {
+  // Only cache GET requests
+  if (event.request.method !== "GET") {
+    return;
+  }
+
+  // Bypass API calls and external services like Supabase
+  if (
+    event.request.url.includes("/api/") ||
+    event.request.url.includes("supabase.co")
+  ) {
     return;
   }
 

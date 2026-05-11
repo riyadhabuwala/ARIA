@@ -41,7 +41,7 @@ pip install -r requirements.txt
 #   GROQ_API_KEY=your_groq_api_key
 #   ELEVENLABS_API_KEY=your_elevenlabs_api_key
 #   ELEVENLABS_VOICE_ID=EXAVITQu4vr4xnSDxMaL
-#   SUPABASE_URL=your_supabase_project_url
+#   SUPABASE_URL=your_supabase_project_url![alt text](image.png)
 #   SUPABASE_SERVICE_KEY=your_supabase_service_role_key
 
 # Start the server

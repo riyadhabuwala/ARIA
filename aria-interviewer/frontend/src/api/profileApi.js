@@ -21,8 +21,7 @@ export async function saveResumeProfile(userId, resumeText, profile, resumeFilen
   return post("/api/profile/save-resume", {
     user_id: userId,
     resume_text: resumeText,
-    extracted_profile: profile,
-    resume_filename: resumeFilename,
+    filename: resumeFilename,
   });
 }
 

@@ -37,11 +37,11 @@ export default function Resume() {
     try {
       setIsLoading(true);
       const data = await getProfile(user.id);
-      console.log("[Resume] Profile data loaded:", data);
+
       setProfile(data);
       // Use the has_resume flag directly from the API response
       setHasResume(!!data?.has_resume);
-      console.log("[Resume] hasResumeUploaded:", data?.has_resume);
+
     } catch (err) {
       console.error("Failed to load profile:", err);
     } finally {
@@ -253,19 +253,11 @@ export default function Resume() {
                   <div
                     className="rounded-2xl p-4 bg-[var(--bg-base)] border border-[var(--border-subtle)]"
                   >
-                    <p className="text-xs tracking-[0.18em] uppercase text-[var(--text-muted)] mb-3">Quick Filters</p>
+                    <p className="text-xs tracking-[0.18em] uppercase text-[var(--text-muted)] mb-3">Resume Status</p>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between rounded-lg px-3 py-2 bg-[var(--accent-subtle)] border border-[var(--accent-border)]">
-                        <span className="text-sm text-[var(--accent-primary)] font-medium">Resume Version 1.0</span>
-                        <span className="text-xs text-[var(--accent-primary)] opacity-60">100%</span>
-                      </div>
-                      <div className="flex items-center justify-between rounded-lg px-3 py-2 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
-                        <span className="text-sm text-[var(--text-secondary)]">Backend Focused</span>
-                        <span className="text-xs text-[var(--text-muted)]">80%</span>
-                      </div>
-                      <div className="flex items-center justify-between rounded-lg px-3 py-2 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
-                        <span className="text-sm text-[var(--text-secondary)]">Fullstack Draft</span>
-                        <span className="text-xs text-[var(--text-muted)]">35%</span>
+                        <span className="text-sm text-[var(--accent-primary)] font-medium">Active Resume</span>
+                        <span className="text-xs text-[var(--success)] font-semibold">✓ Uploaded</span>
                       </div>
                     </div>
                   </div>

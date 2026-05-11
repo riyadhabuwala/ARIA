@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { sendChatMessage, triggerDebrief } from "../api/coachApi";
+import { sendChatMessage, triggerDebrief, getChatHistory, saveChatConversation, deleteChatConversation } from "../api/coachApi";
 
 // Context shortcuts for quick prompts
 const CONTEXT_SHORTCUTS = [
@@ -15,7 +15,7 @@ const WELCOME_MESSAGE = {
   id: Date.now(),
   role: "assistant",
   content: "Hi! I'm your ARIA Career Coach. I can analyze your interview performance, help with job searches, and create personalized study plans. How can I assist you today?",
-  timestamp: new Date()
+  timestamp: new Date().toISOString()
 };
 
 export default function CareerCoachPage() {
@@ -23,11 +23,14 @@ export default function CareerCoachPage() {
   const location = useLocation();
   const abortRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const saveTimeoutRef = useRef(null);
+  const hasLoadedRef = useRef(false);
 
   // Conversation management
   const [conversations, setConversations] = useState([]);
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [currentMessages, setCurrentMessages] = useState([WELCOME_MESSAGE]);
+  const [historyLoading, setHistoryLoading] = useState(true);
 
   // UI state
   const [inputMessage, setInputMessage] = useState("");
@@ -43,6 +46,82 @@ export default function CareerCoachPage() {
     scrollToBottom();
   }, [currentMessages, scrollToBottom]);
 
+  // ── Load saved conversations from backend on mount ────────────
+  useEffect(() => {
+    if (!user?.id || hasLoadedRef.current) return;
+    hasLoadedRef.current = true;
+
+    const loadHistory = async () => {
+      try {
+        const data = await getChatHistory(user.id);
+        const saved = (data.conversations || []).map(conv => ({
+          id: conv.id,
+          title: conv.title || "Chat",
+          messages: (conv.messages_json || []).map(m => ({
+            ...m,
+            id: m.id || Date.now() + Math.random(),
+            timestamp: m.timestamp || conv.updated_at,
+          })),
+          createdAt: conv.created_at || conv.updated_at,
+          lastMessagePreview: (conv.messages_json || []).at(-1)?.content?.slice(0, 100) || "No messages"
+        }));
+
+        if (saved.length > 0) {
+          setConversations(saved);
+          setActiveConversationId(saved[0].id);
+          setCurrentMessages(saved[0].messages.length > 0 ? saved[0].messages : [WELCOME_MESSAGE]);
+        } else {
+          // No saved history — create the first conversation
+          createFirstConversation();
+        }
+      } catch {
+        // Could not load history — start fresh
+        createFirstConversation();
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+
+    loadHistory();
+  }, [user?.id]);
+
+  const createFirstConversation = () => {
+    const newConv = {
+      id: crypto.randomUUID(),
+      title: "New Chat",
+      messages: [WELCOME_MESSAGE],
+      createdAt: new Date().toISOString(),
+      lastMessagePreview: "New conversation started"
+    };
+    setConversations([newConv]);
+    setActiveConversationId(newConv.id);
+    setCurrentMessages([WELCOME_MESSAGE]);
+  };
+
+  // ── Debounced save to backend ────────────────────────────────
+  const saveConversationToBackend = useCallback((convId, title, messages) => {
+    if (!user?.id) return;
+
+    // Debounce saves to avoid hammering the backend during streaming
+    clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      const serializable = messages.map(m => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        timestamp: m.timestamp || new Date().toISOString(),
+      }));
+
+      saveChatConversation(user.id, {
+        id: convId,
+        title,
+        messages: serializable,
+      }).catch(() => {
+        // Save failed silently — data is still in local state
+      });
+    }, 1000);
+  }, [user?.id]);
+
   // Handle debrief mode from interview completion
   useEffect(() => {
     const debriefData = location.state?.debrief;
@@ -54,17 +133,20 @@ export default function CareerCoachPage() {
   // Create a new conversation
   const createNewConversation = useCallback(() => {
     const newConversation = {
-      id: Date.now(),
+      id: crypto.randomUUID(),
       title: "New Chat",
       messages: [WELCOME_MESSAGE],
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
       lastMessagePreview: "New conversation started"
     };
 
     setConversations(prev => [newConversation, ...prev]);
     setActiveConversationId(newConversation.id);
     setCurrentMessages([WELCOME_MESSAGE]);
-  }, []);
+
+    // Save to backend immediately
+    saveConversationToBackend(newConversation.id, "New Chat", [WELCOME_MESSAGE]);
+  }, [saveConversationToBackend]);
 
   // Load a conversation
   const loadConversation = useCallback((conversationId) => {
@@ -75,23 +157,55 @@ export default function CareerCoachPage() {
     }
   }, [conversations]);
 
-  // Update current conversation in the list
+  // Delete a conversation
+  const handleDeleteConversation = useCallback(async (e, conversationId) => {
+    e.stopPropagation();
+    if (!user?.id) return;
+
+    setConversations(prev => prev.filter(c => c.id !== conversationId));
+
+    if (activeConversationId === conversationId) {
+      const remaining = conversations.filter(c => c.id !== conversationId);
+      if (remaining.length > 0) {
+        setActiveConversationId(remaining[0].id);
+        setCurrentMessages(remaining[0].messages);
+      } else {
+        createFirstConversation();
+      }
+    }
+
+    try {
+      await deleteChatConversation(user.id, conversationId);
+    } catch {
+      // Delete failed — conversation is already removed from UI
+    }
+  }, [user?.id, activeConversationId, conversations]);
+
+  // Update current conversation in the list + persist
   const updateCurrentConversation = useCallback((newMessages) => {
     if (!activeConversationId) return;
 
+    let convTitle = "New Chat";
     setConversations(prev => prev.map(conv => {
       if (conv.id === activeConversationId) {
         const lastUserMessage = newMessages.filter(m => m.role === 'user').pop();
+        convTitle = lastUserMessage?.content.slice(0, 50) + (lastUserMessage?.content.length > 50 ? '...' : '') || conv.title;
         return {
           ...conv,
           messages: newMessages,
-          title: lastUserMessage?.content.slice(0, 50) + (lastUserMessage?.content.length > 50 ? '...' : '') || conv.title,
+          title: convTitle,
           lastMessagePreview: newMessages[newMessages.length - 1]?.content.slice(0, 100) || "No messages"
         };
       }
+      convTitle = conv.title;
       return conv;
     }));
-  }, [activeConversationId]);
+
+    // Persist to backend (debounced)
+    const lastUser = newMessages.filter(m => m.role === 'user').pop();
+    const title = lastUser?.content.slice(0, 50) || "New Chat";
+    saveConversationToBackend(activeConversationId, title, newMessages);
+  }, [activeConversationId, saveConversationToBackend]);
 
   // Handle debrief from interview completion
   const handleDebrief = useCallback(async (report, confidenceData, previousScore = 0) => {
@@ -103,10 +217,10 @@ export default function CareerCoachPage() {
 
       // Create new conversation for debrief
       const debriefConversation = {
-        id: Date.now(),
+        id: crypto.randomUUID(),
         title: "Interview Debrief",
         messages: [{ ...WELCOME_MESSAGE, content: "" }],
-        createdAt: new Date(),
+        createdAt: new Date().toISOString(),
         lastMessagePreview: "Interview debrief session"
       };
 
@@ -124,23 +238,25 @@ export default function CareerCoachPage() {
       for (let i = 0; i < words.length; i++) {
         revealed += `${i === 0 ? "" : " "}${words[i]}`;
         const updatedMessages = [{
-          id: Date.now(),
+          id: debriefConversation.id + "-debrief",
           role: "assistant",
           content: revealed,
-          timestamp: new Date()
+          timestamp: new Date().toISOString()
         }];
         setCurrentMessages(updatedMessages);
-        updateCurrentConversation(updatedMessages);
+        // Only save the final result, not every intermediate frame
+        if (i === words.length - 1) {
+          updateCurrentConversation(updatedMessages);
+        }
         await new Promise(resolve => setTimeout(resolve, 50));
       }
 
     } catch (err) {
-      console.error("Debrief error:", err);
       const fallbackMessage = [{
         id: Date.now(),
         role: "assistant",
         content: `You scored **${report?.overall_score || 0}/100** (${report?.grade || 'N/A'}). Want me to break down your performance or create a study plan?`,
-        timestamp: new Date()
+        timestamp: new Date().toISOString()
       }];
       setCurrentMessages(fallbackMessage);
       updateCurrentConversation(fallbackMessage);
@@ -159,17 +275,17 @@ export default function CareerCoachPage() {
 
     // Add user message
     const userMessage = {
-      id: Date.now(),
+      id: crypto.randomUUID(),
       role: "user",
       content: text,
-      timestamp: new Date()
+      timestamp: new Date().toISOString()
     };
 
     const assistantMessage = {
-      id: Date.now() + 1,
+      id: crypto.randomUUID(),
       role: "assistant",
       content: "",
-      timestamp: new Date()
+      timestamp: new Date().toISOString()
     };
 
     const newMessages = [...currentMessages, userMessage, assistantMessage];
@@ -230,13 +346,21 @@ export default function CareerCoachPage() {
                 content: fullContent,
               };
               setCurrentMessages(updatedMessages);
-              updateCurrentConversation(updatedMessages);
             }
-          } catch (parseError) {
+          } catch {
             // Ignore malformed SSE chunks
           }
         }
       }
+
+      // Save to backend after streaming completes
+      const finalMessages = [...newMessages];
+      finalMessages[finalMessages.length - 1] = {
+        ...assistantMessage,
+        content: fullContent,
+      };
+      updateCurrentConversation(finalMessages);
+
     } catch (err) {
       if (err.name !== "AbortError") {
         setError("Something went wrong. Please try again.");
@@ -267,12 +391,12 @@ export default function CareerCoachPage() {
     sendMessage(shortcutText);
   }, [sendMessage]);
 
-  // Initialize with first conversation
+  // Initialize with first conversation if none loaded
   useEffect(() => {
-    if (conversations.length === 0) {
-      createNewConversation();
+    if (!historyLoading && conversations.length === 0) {
+      createFirstConversation();
     }
-  }, [conversations.length, createNewConversation]);
+  }, [historyLoading, conversations.length]);
 
   // Format message timestamp
   const formatTimestamp = (timestamp) => {
@@ -319,29 +443,49 @@ export default function CareerCoachPage() {
 
         {/* Conversations List */}
         <div className="flex-1 overflow-y-auto">
-          {conversations.map((conversation) => (
-            <div
-              key={conversation.id}
-              onClick={() => loadConversation(conversation.id)}
-              className={`p-5 border-b border-[var(--border-subtle)] cursor-pointer hover:bg-[var(--bg-hover)] transition-all ${
-                activeConversationId === conversation.id
-                  ? 'bg-[var(--accent-subtle)] border-l-4 border-l-[var(--accent-primary)] shadow-[inset_0_0_20px_rgba(37,99,235,0.05)]'
-                  : ''
-              }`}
-            >
-              <div className="flex justify-between items-start mb-1.5">
-                <h3 className="font-bold text-[var(--text-primary)] text-xs tracking-tight truncate flex-1 uppercase">
-                  {conversation.title}
-                </h3>
-                <span className="text-[10px] font-bold text-[var(--text-muted)] ml-2 uppercase tracking-tighter">
-                  {formatDate(conversation.createdAt)}
-                </span>
-              </div>
-              <p className="text-[11px] text-[var(--text-muted)] truncate font-medium">
-                {conversation.lastMessagePreview}
-              </p>
+          {historyLoading ? (
+            <div className="p-5 space-y-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="animate-pulse">
+                  <div className="h-4 bg-[var(--bg-elevated)] rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-[var(--bg-elevated)] rounded w-full"></div>
+                </div>
+              ))}
             </div>
-          ))}
+          ) : (
+            conversations.map((conversation) => (
+              <div
+                key={conversation.id}
+                onClick={() => loadConversation(conversation.id)}
+                className={`group p-5 border-b border-[var(--border-subtle)] cursor-pointer hover:bg-[var(--bg-hover)] transition-all ${
+                  activeConversationId === conversation.id
+                    ? 'bg-[var(--accent-subtle)] border-l-4 border-l-[var(--accent-primary)] shadow-[inset_0_0_20px_rgba(37,99,235,0.05)]'
+                    : ''
+                }`}
+              >
+                <div className="flex justify-between items-start mb-1.5">
+                  <h3 className="font-bold text-[var(--text-primary)] text-xs tracking-tight truncate flex-1 uppercase">
+                    {conversation.title}
+                  </h3>
+                  <div className="flex items-center gap-1.5 ml-2">
+                    <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tighter">
+                      {formatDate(conversation.createdAt)}
+                    </span>
+                    <button
+                      onClick={(e) => handleDeleteConversation(e, conversation.id)}
+                      className="opacity-0 group-hover:opacity-100 text-[var(--text-muted)] hover:text-red-500 transition-all text-xs"
+                      title="Delete conversation"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+                <p className="text-[11px] text-[var(--text-muted)] truncate font-medium">
+                  {conversation.lastMessagePreview}
+                </p>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

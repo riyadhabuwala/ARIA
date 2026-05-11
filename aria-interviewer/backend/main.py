@@ -1,6 +1,10 @@
+# pyrefly: ignore [missing-import]
 from fastapi import FastAPI, UploadFile, File, HTTPException
+# pyrefly: ignore [missing-import]
 from fastapi.middleware.cors import CORSMiddleware
+# pyrefly: ignore [missing-import]
 from fastapi.responses import Response, StreamingResponse
+# pyrefly: ignore [missing-import]
 from pydantic import BaseModel
 from collections import Counter
 from interview_agent import agent
@@ -20,12 +24,17 @@ from supabase_client import (
     save_resume_profile,
     save_resume_quality,
     get_cached_quality,
+    get_chat_conversations,
+    save_chat_conversation,
+    delete_chat_conversation,
 )
 from job_agent import JobMatchAgent
 import uuid
 import os
 import json
+# pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
+# pyrefly: ignore [missing-import]
 from groq import Groq
 
 ENV_PATH = os.path.join(os.path.dirname(__file__), ".env")
@@ -142,6 +151,11 @@ class DebriefRequest(BaseModel):
 class ResumeQualityRequest(BaseModel):
     user_id: str
     force_refresh: bool = False
+
+
+class SaveConversationRequest(BaseModel):
+    user_id: str
+    conversation: dict
 
 
 # ── ROUTES ──────────────────────────────────────────────────────
@@ -540,6 +554,141 @@ RULES:
             "or create a focused study plan for you?"
         )
         return {"debrief": fallback}
+
+
+# ── Chat History ────────────────────────────────────────────────
+
+
+@app.get("/api/coach/history/{user_id}")
+async def get_coach_history(user_id: str):
+    """Get all saved coach conversations for a user."""
+    try:
+        conversations = get_chat_conversations(user_id)
+        return {"conversations": conversations}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/coach/history/save")
+async def save_coach_history(req: SaveConversationRequest):
+    """Save or update a coach conversation."""
+    try:
+        result = save_chat_conversation(req.user_id, req.conversation)
+        return {"success": True, "conversation": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/coach/history/{user_id}/{conversation_id}")
+async def delete_coach_history(user_id: str, conversation_id: str):
+    """Delete a specific coach conversation."""
+    try:
+        delete_chat_conversation(user_id, conversation_id)
+        return {"success": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+import asyncio
+
+
+@app.get("/api/dashboard/{user_id}")
+async def get_dashboard_data(user_id: str):
+    """Consolidated dashboard endpoint — fetches all data in parallel."""
+    async def _history():
+        return get_user_sessions(user_id)
+
+    async def _analytics():
+        return get_analytics_data(user_id)
+
+    async def _jobs():
+        return get_latest_job_results(user_id)
+
+    async def _quality():
+        cached = get_cached_quality(user_id)
+        if cached:
+            return cached
+        profile = get_resume_profile(user_id)
+        if not profile or not profile.get("resume_text"):
+            return None
+        job_results = get_latest_job_results(user_id)
+        missing_skills = []
+        if job_results and job_results.get("jobs"):
+            for job in job_results["jobs"][:5]:
+                missing_skills.extend(job.get("missing_skills", []))
+        missing_skills = list(set(missing_skills))[:10]
+        quality = await analyse_resume_quality(
+            profile["resume_text"],
+            missing_skills,
+        )
+        save_resume_quality(user_id, quality)
+        return quality
+
+    async def _streak():
+        return get_user_streak_data(user_id)
+
+    history, analytics, jobs, quality, streak = await asyncio.gather(
+        _history(),
+        _analytics(),
+        _jobs(),
+        _quality(),
+        _streak(),
+        return_exceptions=True,
+    )
+
+    return {
+        "history": history if not isinstance(history, Exception) else [],
+        "analytics": analytics if not isinstance(analytics, Exception) else {"has_data": False},
+        "job_results": jobs if not isinstance(jobs, Exception) else None,
+        "resume_quality": quality if not isinstance(quality, Exception) else None,
+        "streak": streak if not isinstance(streak, Exception) else {"current_streak": 0, "longest_streak": 0, "streak_dates": [], "today_done": False},
+    }
+
+
+@app.get("/api/profile-data/{user_id}")
+async def get_profile_data(user_id: str):
+    """Consolidated profile page endpoint — avoids 4 separate round-trips.
+
+    Returns profile, analytics, streak, and cached resume quality in one call.
+    Note: resume quality only returns the cached value (no LLM re-analysis).
+    The user can trigger a fresh analysis from the Resume page.
+    """
+    async def _profile():
+        p = get_resume_profile(user_id)
+        if not p:
+            return {"has_resume": False}
+        return {
+            "has_resume": True,
+            "filename": p.get("resume_filename", ""),
+            "extracted_profile": p.get("extracted_profile"),
+            "updated_at": p.get("updated_at"),
+        }
+
+    async def _analytics():
+        return get_analytics_data(user_id)
+
+    async def _quality():
+        # Only return cached quality — never trigger a fresh LLM analysis
+        # from the profile page (that's a 5-15s operation).
+        return get_cached_quality(user_id)
+
+    async def _streak():
+        return get_user_streak_data(user_id)
+
+    profile, analytics, quality, streak = await asyncio.gather(
+        _profile(),
+        _analytics(),
+        _quality(),
+        _streak(),
+        return_exceptions=True,
+    )
+
+    return {
+        "profile": profile if not isinstance(profile, Exception) else {"has_resume": False},
+        "analytics": analytics if not isinstance(analytics, Exception) else {"has_data": False},
+        "resume_quality": quality if not isinstance(quality, Exception) else None,
+        "streak": streak if not isinstance(streak, Exception) else {"current_streak": 0, "longest_streak": 0, "streak_dates": [], "today_done": False},
+    }
 
 
 @app.get("/health")

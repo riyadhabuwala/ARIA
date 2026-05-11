@@ -114,10 +114,18 @@ export default function Settings() {
   };
 
   const handleChangePassword = async () => {
+    if (!currentPassword) { showToast("Current key required", 'error'); return; }
     if (newPassword !== confirmPassword) { showToast("Security tokens mismatch", 'error'); return; }
-    if (newPassword.length < 6) { showToast("Signal strength too low", 'error'); return; }
+    if (newPassword.length < 6) { showToast("Signal strength too low (min 6 chars)", 'error'); return; }
     setLoading(prev => ({ ...prev, password: true }));
     try {
+      // Re-authenticate with current password first
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      });
+      if (authError) throw new Error("Current access key is incorrect");
+      // Now update to the new password
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
       setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
@@ -129,9 +137,10 @@ export default function Settings() {
   const handleDeleteAccount = async () => {
     setLoading(prev => ({ ...prev, delete: true }));
     try {
-      const { error } = await supabase.auth.admin.deleteUser(user.id);
-      if (error) throw error;
-      showToast("Identity terminated");
+      // Sign the user out — actual account deletion requires a backend
+      // endpoint with the service role key. For now, sign out and show notice.
+      await supabase.auth.signOut();
+      showToast("Signed out. Contact support for full account deletion.");
     } catch (error) { showToast(error.message, 'error'); }
     finally { setLoading(prev => ({ ...prev, delete: false })); setIsDeleteModalOpen(false); }
   };

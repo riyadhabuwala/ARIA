@@ -1,5 +1,5 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-console.log('[apiClient] API Base URL:', BASE_URL);
+
 
 /**
  * Shared API client with common fetch wrapper functionality
@@ -10,12 +10,14 @@ console.log('[apiClient] API Base URL:', BASE_URL);
 export async function apiClient(endpoint, options = {}) {
   const url = `${BASE_URL}${endpoint}`;
 
+  const { headers: customHeaders, ...restOptions } = options;
+
   const defaultOptions = {
+    ...restOptions,
     headers: {
       'Content-Type': 'application/json',
-      ...options.headers
+      ...customHeaders
     },
-    ...options
   };
 
   // Remove Content-Type for FormData (fetch will set it automatically)
@@ -54,7 +56,7 @@ export async function apiClient(endpoint, options = {}) {
   }
 
   const data = await response.json();
-  console.log(`[apiClient] Response from ${endpoint}:`, data);
+
   return data;
 }
 

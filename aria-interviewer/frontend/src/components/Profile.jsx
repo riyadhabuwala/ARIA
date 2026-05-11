@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { getAnalytics } from "../api/analyticsApi";
-import { getProfile, getResumeQuality } from "../api/profileApi";
+import { get } from "../api/apiClient";
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer } from 'recharts';
 import ScoreGauge from "./ScoreGauge";
 
@@ -45,20 +44,30 @@ export default function Profile() {
     const fetchProfileData = async () => {
       if (!user?.id) return;
       try {
-        const [pData, aData, rData] = await Promise.allSettled([
-          getProfile(user.id),
-          getAnalytics(user.id),
-          getResumeQuality(user.id)
-        ]);
+        // Single consolidated API call instead of 4 separate ones
+        const data = await get(`/api/profile-data/${encodeURIComponent(user.id)}`);
 
-        if (pData.status === 'fulfilled') setProfileData(pData.value);
-        if (aData.status === 'fulfilled') {
-          setAnalytics(aData.value);
-          if (aData.value?.sessions) calculateInterviewStreak(aData.value.sessions);
+        if (data.profile) setProfileData(data.profile);
+        if (data.analytics) setAnalytics(data.analytics);
+        if (data.resume_quality) setResumeQuality(data.resume_quality);
+
+        if (data.streak) {
+          const streakResult = data.streak;
+          const today = new Date();
+          const weekData = Array(7).fill(false);
+          const streakDates = new Set(streakResult.streak_dates || []);
+          for (let i = 0; i < 7; i++) {
+            const checkDate = new Date(today);
+            checkDate.setDate(today.getDate() - i);
+            weekData[6 - i] = streakDates.has(checkDate.toISOString().split('T')[0]);
+          }
+          setInterviewStreak({
+            currentStreak: streakResult.current_streak || 0,
+            weekData
+          });
         }
-        if (rData.status === 'fulfilled') setResumeQuality(rData.value);
-      } catch (error) {
-        console.error("Profile fetch error:", error);
+      } catch {
+        // Profile load failed — will show empty state
       } finally {
         setLoading(false);
       }
@@ -66,38 +75,38 @@ export default function Profile() {
     fetchProfileData();
   }, [user?.id]);
 
-  const calculateInterviewStreak = (sessions) => {
-    if (!sessions?.length) return;
-    const today = new Date();
-    const weekData = Array(7).fill(false);
-    for (let i = 0; i < 7; i++) {
-      const checkDate = new Date(today);
-      checkDate.setDate(today.getDate() - i);
-      weekData[6 - i] = sessions.some(s => new Date(s.created_at).toDateString() === checkDate.toDateString());
-    }
-    let currentStreak = 0;
-    for (let i = weekData.length - 1; i >= 0; i--) {
-      if (weekData[i]) currentStreak++; else break;
-    }
-    setInterviewStreak({ currentStreak, weekData });
-  };
-
   const getUserInitials = () => {
     const name = user?.user_metadata?.full_name || user?.email || "U";
     return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
   };
 
-  const getRadarData = () => [
-    { skill: 'TECHNICAL', score: analytics?.technical_score || 75 },
-    { skill: 'COMMUNICATION', score: analytics?.communication_score || 80 },
-    { skill: 'CONFIDENCE', score: analytics?.confidence_score || 70 },
-    { skill: 'BEHAVIORAL', score: analytics?.behavioral_score || 85 },
-    { skill: 'PROBLEM SOLVING', score: analytics?.problem_solving_score || 78 }
-  ];
+  const getRadarData = () => {
+    if (!analytics?.has_data) {
+      return [
+        { skill: 'OVERALL', score: 0 },
+        { skill: 'CONFIDENCE', score: 0 },
+        { skill: 'CONSISTENCY', score: 0 },
+        { skill: 'GROWTH', score: 0 },
+        { skill: 'BREADTH', score: 0 }
+      ];
+    }
+    const avgScore = analytics.average_score || 0;
+    const avgConf = analytics.average_confidence || 0;
+    const bestScore = analytics.best_score || 0;
+    const improvement = analytics.improvement || 0;
+    const domainCount = (analytics.domain_stats || []).length;
+    return [
+      { skill: 'OVERALL', score: avgScore },
+      { skill: 'CONFIDENCE', score: avgConf },
+      { skill: 'CONSISTENCY', score: bestScore > 0 ? Math.round((avgScore / bestScore) * 100) : 0 },
+      { skill: 'GROWTH', score: Math.min(100, Math.max(0, 50 + improvement)) },
+      { skill: 'BREADTH', score: Math.min(100, domainCount * 25) }
+    ];
+  };
 
   const getUserStats = () => ({
-    totalInterviews: analytics?.sessions?.length || 0,
-    bestScore: Math.max(...(analytics?.sessions?.map(s => s.overall_score || 0) || [0])),
+    totalInterviews: analytics?.total_interviews || 0,
+    bestScore: analytics?.best_score || 0,
     currentStreak: interviewStreak.currentStreak
   });
 

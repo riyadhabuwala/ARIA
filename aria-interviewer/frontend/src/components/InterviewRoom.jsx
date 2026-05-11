@@ -34,6 +34,7 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
   const timerRef = useRef(null);
   const messagesRef = useRef([]);
   const transcriptEndRef = useRef(null);
+  const transcriptRef = useRef("");
 
   const setAllMessages = (next) => {
     messagesRef.current = next;
@@ -53,6 +54,11 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
       transcriptEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
+
+  // Keep ref in sync with transcript state so callbacks read the latest value
+  useEffect(() => {
+    transcriptRef.current = transcript;
+  }, [transcript]);
 
   useEffect(() => {
     if (sessionId && !isPermissionScreen && !isDone) {
@@ -140,8 +146,9 @@ export default function InterviewRoom({ name, domain, resumeText, onComplete }) 
   function handleMicRelease() {
     stopListening();
     setTimeout(() => {
-      if (transcript.trim()) {
-        handleSendAnswer(transcript.trim());
+      const finalTranscript = transcriptRef.current;
+      if (finalTranscript.trim()) {
+        handleSendAnswer(finalTranscript.trim());
       }
     }, 500);
   }

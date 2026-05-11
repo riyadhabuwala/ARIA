@@ -175,7 +175,7 @@ function AppContent() {
                   user={user}
                   onNewInterview={() => navigate("/interview")}
                   onViewSession={handleViewSession}
-                  onJobMatch={() => navigate("/job-match")}
+                  onJobMatch={() => navigate("/jobs")}
                 />
               </Layout>
             </ProtectedRoute>
@@ -343,13 +343,7 @@ function AppContent() {
 
         <Route
           path="/job-match"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <JobMatchPage user={user} onBack={() => navigate("/dashboard")} />
-              </Layout>
-            </ProtectedRoute>
-          }
+          element={<Navigate to="/jobs" replace />}
         />
 
         {/* Catch all */}

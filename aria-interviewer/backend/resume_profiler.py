@@ -1,7 +1,9 @@
 import json
 import os
 
+# pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
+# pyrefly: ignore [missing-import]
 from groq import Groq
 
 ENV_PATH = os.path.join(os.path.dirname(__file__), ".env")

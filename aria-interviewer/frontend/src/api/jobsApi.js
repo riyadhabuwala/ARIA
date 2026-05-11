@@ -21,6 +21,6 @@ export async function scanJobMatches(userId, keywords, location) {
  * @returns {Promise<Object>} - Saved job match data
  */
 export async function getJobMatchResults(userId) {
-  console.log(`[jobsApi] Fetching job results for user: ${userId}`);
+
   return get(`/api/job-match/results/${encodeURIComponent(userId)}`);
 }
